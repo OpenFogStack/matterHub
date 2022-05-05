@@ -5,7 +5,7 @@
 
 <img 
   alt="Banner"
-  src="../images/goal.png">
+  src="../images/goals.png">
 
 ## Sub-goals
 - Implement an ecosystem with the hub as an admin
