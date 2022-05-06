@@ -1,3 +1,6 @@
 [submodule "thirdparty/chip/repo"]
 	path = thirdparty/chip/repo
 	url = https://github.com/project-chip/connectedhomeip
+[submodule "thirdparty/esp-idf/repo"]
+	path = thirdparty/esp-idf/repo
+	url = https://github.com/espressif/esp-idf.git
