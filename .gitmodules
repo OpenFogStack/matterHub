@@ -1,0 +1,3 @@
+[submodule "thirdparty/chip/repo"]
+	path = thirdparty/chip/repo
+	url = https://github.com/project-chip/connectedhomeip
