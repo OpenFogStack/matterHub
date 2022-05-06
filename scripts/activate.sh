@@ -1,4 +1,6 @@
 #!/bin/bash
-
+set -e
 # call connectedhomeip setup script
-./third_party/chip/repo/scripts/activate.sh
+pushd thirdparty/chip/repo
+source ./scripts/activate.sh
+popd
