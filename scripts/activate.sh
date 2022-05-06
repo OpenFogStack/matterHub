@@ -1,6 +1,7 @@
 #!/bin/bash
-set -e
+
+git submodule update --recursive
 # call connectedhomeip setup script
-pushd thirdparty/chip/repo
+pushd thirdparty/chip/repo || exit 1
 source ./scripts/activate.sh
-popd
+popd || exit 1
