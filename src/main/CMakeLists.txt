@@ -259,3 +259,12 @@ target_compile_options(${COMPONENT_LIB} PRIVATE
                        "-DPW_TRACE_BACKEND_SET=1")
 
 endif (CONFIG_ENABLE_PW_RPC)
+
+
+
+## Beginning of our code
+
+add_subdirectory(receive)
+add_subdirectory(send)
+
+target_link_libraries(${COMPONENT_LIB} PUBLIC receive)

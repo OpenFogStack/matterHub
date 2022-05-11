@@ -44,6 +44,8 @@
 #include <credentials/examples/DeviceAttestationCredsExample.h>
 #include <platform/ESP32/NetworkCommissioningDriver.h>
 
+#include <Receiver.h>
+
 #if CONFIG_HAVE_DISPLAY
 #include "DeviceWithDisplay.h"
 #endif
