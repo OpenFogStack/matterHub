@@ -34,6 +34,7 @@
 #include "esp_heap_caps.h"
 #include "esp_log.h"
 #include "esp_nimble_hci.h"
+#include "host/ble_hs.h"
 #include "nimble/nimble_port.h"
 #include "route_hook/esp_route_hook.h"
 #include <app-common/zap-generated/attribute-id.h>
