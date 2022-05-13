@@ -44,6 +44,8 @@
 #include <credentials/examples/DeviceAttestationCredsExample.h>
 #include <platform/ESP32/NetworkCommissioningDriver.h>
 
+#include <Receiver.h>
+
 #if CONFIG_HAVE_DISPLAY
 #include "DeviceWithDisplay.h"
 #endif
@@ -150,6 +152,7 @@ extern "C" void app_main()
     }
 
     ESP_LOGI(TAG, "------------------------Starting App Task---------------------------");
+    ESP_LOGI(TAG, "THIS IS OUR CODE: %d", add_two(2));
     error = GetAppTask().StartAppTask();
     if (error != CHIP_NO_ERROR)
     {
