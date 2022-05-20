@@ -8,7 +8,11 @@ Run `source ./scripts/activate.sh`
 
 ## Build
 
-`cd src && idf.py build`
+for esp32:\
+`cd src; rm sdkconfig; idf.py build`
+
+or for m5-Stack:\
+`cd src; rm sdkconfig; idf.py -D 'SDKCONFIG_DEFAULTS=sdkconfig_m5stack.defaults' build`
 
 ## References
 
