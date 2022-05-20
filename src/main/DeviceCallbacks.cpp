@@ -27,7 +27,6 @@
 #include "CHIPDeviceManager.h"
 #include "Globals.h"
 #include "LEDWidget.h"
-#include "WiFiWidget.h"
 #include "esp_bt.h"
 #include "esp_check.h"
 #include "esp_err.h"
@@ -214,7 +213,6 @@ void DeviceCallbacks::OnInternetConnectivityChange(const ChipDeviceEvent * event
     if (event->InternetConnectivityChange.IPv4 == kConnectivity_Established)
     {
         ESP_LOGI(TAG, "IPv4 Server ready...");
-        wifiLED.Set(true);
         chip::app::DnssdServer::Instance().StartServer();
 
         if (!isOTAInitialized)
@@ -227,7 +225,6 @@ void DeviceCallbacks::OnInternetConnectivityChange(const ChipDeviceEvent * event
     else if (event->InternetConnectivityChange.IPv4 == kConnectivity_Lost)
     {
         ESP_LOGE(TAG, "Lost IPv4 connectivity...");
-        wifiLED.Set(false);
     }
     if (event->InternetConnectivityChange.IPv6 == kConnectivity_Established)
     {
