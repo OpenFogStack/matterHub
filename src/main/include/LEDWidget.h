@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "Display.h"
 
 #include "driver/gpio.h"
 
@@ -52,9 +51,7 @@ public:
 
     void HSB2rgb(uint16_t Hue, uint8_t Saturation, uint8_t brightness, uint8_t & red, uint8_t & green, uint8_t & blue);
 #endif
-#if CONFIG_HAVE_DISPLAY
-    void SetVLED(int id1, int id2);
-#endif
+
 
 private:
     int64_t mLastChangeTimeUS;

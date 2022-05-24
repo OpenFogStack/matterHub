@@ -25,7 +25,6 @@
 
 #include "LEDWidget.h"
 
-#include "ScreenManager.h"
 
 #include "esp_log.h"
 #include "esp_system.h"
@@ -117,12 +116,6 @@ void LEDWidget::SetBrightness(uint8_t brightness)
     {
         mDefaultOnBrightness = brightness;
     }
-#if CONFIG_HAVE_DISPLAY
-    if (mVLED1 != -1)
-    {
-        ScreenManager::SetVLED(mVLED1, mState);
-    }
-#endif // CONFIG_HAVE_DISPLAY
 }
 
 void LEDWidget::Blink(uint32_t changeRateMS)
@@ -139,31 +132,10 @@ void LEDWidget::Blink(uint32_t onTimeMS, uint32_t offTimeMS)
 
 void ClearErrorState(TimerHandle_t handle)
 {
-#if CONFIG_HAVE_DISPLAY
-    LEDWidget * pWidget = (LEDWidget *) pvTimerGetTimerID(handle);
-    pWidget->mError     = false;
-    if (pWidget->mVLED2 != -1)
-    {
-        ScreenManager::SetVLED(pWidget->mVLED2, false);
-    }
-#endif
 }
 
 void LEDWidget::BlinkOnError()
 {
-#if CONFIG_HAVE_DISPLAY
-    mError = true;
-    if (errorTimer != NULL)
-    {
-        xTimerDelete(errorTimer, 0);
-    }
-    errorTimer = xTimerCreate("ErrorTimer", pdMS_TO_TICKS(2000), false, this, ClearErrorState);
-    xTimerStart(errorTimer, 0);
-    if (mVLED2 != -1)
-    {
-        ScreenManager::SetVLED(mVLED2, true);
-    }
-#endif
 }
 
 void LEDWidget::Animate()
@@ -204,30 +176,10 @@ void LEDWidget::DoSet(bool state)
 #endif
     if (stateChange)
     {
-#if CONFIG_HAVE_DISPLAY
-        if (mVLED1 != -1)
-        {
-            ScreenManager::SetVLED(mVLED1, mState);
-        }
-#endif
+
     }
 }
 
-#if CONFIG_HAVE_DISPLAY
-void LEDWidget::SetVLED(int id1, int id2)
-{
-    mVLED1 = id1;
-    if (mVLED1 != -1)
-    {
-        ScreenManager::SetVLED(mVLED1, mState);
-    }
-    mVLED2 = id2;
-    if (mVLED2 != -1)
-    {
-        ScreenManager::SetVLED(mVLED2, mError);
-    }
-}
-#endif
 
 #if CONFIG_DEVICE_TYPE_ESP32_C3_DEVKITM
 void LEDWidget::SetColor(uint8_t Hue, uint8_t Saturation)

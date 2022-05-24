@@ -17,15 +17,12 @@
  */
 
 #include "AppTask.h"
-#include "BluetoothWidget.h"
 #include "CHIPDeviceManager.h"
 #include "DeviceCallbacks.h"
 #include "Globals.h"
 #include "LEDWidget.h"
 #include "OpenThreadLaunch.h"
-#include "QRCodeScreen.h"
 #include "ShellCommands.h"
-#include "WiFiWidget.h"
 #include "esp_heap_caps_init.h"
 #include "esp_log.h"
 #include "esp_netif.h"
@@ -45,10 +42,6 @@
 #include <platform/ESP32/NetworkCommissioningDriver.h>
 
 #include <Receiver.h>
-
-#if CONFIG_HAVE_DISPLAY
-#include "DeviceWithDisplay.h"
-#endif
 
 #if CONFIG_ENABLE_PW_RPC
 #include "Rpc.h"
@@ -76,21 +69,6 @@ namespace {
 app::Clusters::NetworkCommissioning::Instance
     sWiFiNetworkCommissioningInstance(0 /* Endpoint Id */, &(NetworkCommissioning::ESPWiFiDriver::GetInstance()));
 
-class AppCallbacks : public AppDelegate
-{
-public:
-    void OnCommissioningSessionStarted() override { bluetoothLED.Set(true); }
-    void OnCommissioningSessionStopped() override
-    {
-        bluetoothLED.Set(false);
-        pairingWindowLED.Set(false);
-    }
-    void OnCommissioningWindowOpened() override { pairingWindowLED.Set(true); }
-    void OnCommissioningWindowClosed() override { pairingWindowLED.Set(false); }
-};
-
-AppCallbacks sCallbacks;
-
 constexpr EndpointId kNetworkCommissioningEndpointSecondary = 0xFFFE;
 
 } // namespace
@@ -100,7 +78,6 @@ static void InitServer(intptr_t context)
     // Init ZCL Data Model and CHIP App Server
     static chip::CommonCaseDeviceServerInitParams initParams;
     (void) initParams.InitializeStaticResourcesBeforeServerInit();
-    initParams.appDelegate = &sCallbacks;
     chip::Server::GetInstance().Init(initParams);
 
     // We only have network commissioning on endpoint 0.
@@ -110,9 +87,6 @@ static void InitServer(intptr_t context)
     SetDeviceAttestationCredentialsProvider(Examples::GetExampleDACProvider());
     sWiFiNetworkCommissioningInstance.Init();
     InitBindingHandlers();
-#if CONFIG_DEVICE_TYPE_M5STACK
-    SetupPretendDevices();
-#endif
 }
 
 extern "C" void app_main()

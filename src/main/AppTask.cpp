@@ -18,10 +18,8 @@
 
 #include "AppTask.h"
 #include "Button.h"
-#include "DeviceWithDisplay.h"
 #include "Globals.h"
 #include "LEDWidget.h"
-#include "ScreenManager.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "esp_spi_flash.h"
@@ -74,16 +72,10 @@ CHIP_ERROR AppTask::Init()
     // Our second LED doesn't map to any physical LEDs so far, just to virtual
     // "LED"s on devices with screens.
     statusLED2.Init(GPIO_NUM_MAX);
-    bluetoothLED.Init();
-    wifiLED.Init();
-    pairingWindowLED.Init();
 
     // Print QR Code URL
     PrintOnboardingCodes(chip::RendezvousInformationFlags(CONFIG_RENDEZVOUS_MODE));
 
-#if CONFIG_HAVE_DISPLAY
-    InitDeviceDisplay();
-#endif
     return err;
 }
 
