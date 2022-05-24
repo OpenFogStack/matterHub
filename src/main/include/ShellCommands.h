@@ -206,5 +206,67 @@ private:
     bool mOnConnecting       = false;
 };
 
+class MatterHubCommands 
+{
+public:
+    // delete the copy constructor
+    MatterHubCommands(const MatterHubCommands &) = delete;
+    // delete the move constructor
+    MatterHubCommands(MatterHubCommands &&) = delete;
+    // delete the assignment operator
+    MatterHubCommands & operator=(const MatterHubCommands &) = delete;
+
+    static MatterHubCommands & GetInstance()
+    {
+        static MatterHubCommands instance;
+        return instance;
+    }
+
+    // Register the OnOff commands
+    void Register();
+
+private:
+    MatterHubCommands() {}
+
+    static CHIP_ERROR SendHandler(int argc, char ** argv)
+    {
+        if (argc != 0)
+            return CHIP_ERROR_INVALID_ARGUMENT;
+	    ESP_LOGI("HUB", "==================================================");
+	    ESP_LOGI("HUB", "SEND");
+	    ESP_LOGI("HUB", "==================================================");
+        return CHIP_NO_ERROR;
+    }
+
+    static CHIP_ERROR SubscribeHandler(int argc, char ** argv)
+    {
+        if (argc != 0)
+            return CHIP_ERROR_INVALID_ARGUMENT;
+	    ESP_LOGI("HUB", "==================================================");
+	    ESP_LOGI("HUB", "Subscribe");
+	    ESP_LOGI("HUB", "==================================================");
+        return CHIP_NO_ERROR;
+    }
+    static CHIP_ERROR MatterHubHandler(int argc, char ** argv)
+    {
+        if (argc == 0)
+        {
+            sSubShell.ForEachCommand(PrintCommandHelp, nullptr);
+            return CHIP_NO_ERROR;
+        }
+
+        CHIP_ERROR error = sSubShell.ExecCommand(argc, argv);
+
+        if (error != CHIP_NO_ERROR)
+        {
+            streamer_printf(streamer_get(), "Error: %" CHIP_ERROR_FORMAT "\r\n", error.Format());
+        }
+
+        return error;
+    }
+
+    static Shell::Engine sSubShell;
+};
+
 } // namespace Shell
 } // namespace chip

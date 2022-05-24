@@ -48,5 +48,18 @@ void CASECommands::Register()
     static const shell_command_t CASECommand = { &CASEHandler, "case", "Case Commands" };
     Engine::Root().RegisterCommands(&CASECommand, 1);
 }
+Shell::Engine MatterHubCommands::sSubShell;
+void MatterHubCommands::Register()
+{
+    static const shell_command_t subCommands[] = { { &SendHandler, "send", "Usage: TODO" },
+                                                   { &SubscribeHandler, "subscribe", "Usage: TODO" }};
+    sSubShell.RegisterCommands(subCommands, ArraySize(subCommands));
+
+    // Register the root `Hub` command in the top-level shell.
+    static const shell_command_t HubCommand = { &MatterHubHandler, "Hub", "Hub commands" };
+
+    Engine::Root().RegisterCommands(&HubCommand, 1);
+}
+
 } // namespace Shell
 } // namespace chip

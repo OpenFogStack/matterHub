@@ -110,6 +110,7 @@ extern "C" void app_main()
     chip::LaunchShell();
     OnOffCommands::GetInstance().Register();
     CASECommands::GetInstance().Register();
+    MatterHubCommands::GetInstance().Register();
 #endif // CONFIG_ENABLE_CHIP_SHELL
 
 #if CONFIG_OPENTHREAD_ENABLED
@@ -126,7 +127,6 @@ extern "C" void app_main()
     }
 
     ESP_LOGI(TAG, "------------------------Starting App Task---------------------------");
-    ESP_LOGI(TAG, "THIS IS OUR CODE: %d", add_two(2));
     error = GetAppTask().StartAppTask();
     if (error != CHIP_NO_ERROR)
     {
