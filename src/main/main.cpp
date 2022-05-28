@@ -16,77 +16,37 @@
  *    limitations under the License.
  */
 
-#include "AppTask.h"
-#include "CHIPDeviceManager.h"
 #include "DeviceCallbacks.h"
-#include "Globals.h"
-#include "LEDWidget.h"
-#include "OpenThreadLaunch.h"
-#include "ShellCommands.h"
-#include "esp_heap_caps_init.h"
+#include <common/CHIPDeviceManager.h>
+#include <common/Esp32AppServer.h>
+
+#include "AppTask.h"
+#include "BindingHandler.h"
 #include "esp_log.h"
-#include "esp_netif.h"
 #include "esp_spi_flash.h"
 #include "esp_system.h"
-#include "esp_wifi.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "nvs_flash.h"
-#include "platform/PlatformManager.h"
 #include "shell_extension/launch.h"
 
-#include <app/clusters/network-commissioning/network-commissioning.h>
 #include <app/server/OnboardingCodesUtil.h>
-#include <app/util/af.h>
-#include <binding-handler.h>
-#include <credentials/DeviceAttestationCredsProvider.h>
-#include <credentials/examples/DeviceAttestationCredsExample.h>
-#include <platform/ESP32/NetworkCommissioningDriver.h>
-
-#include <Receiver.h>
-
-#if CONFIG_ENABLE_PW_RPC
-#include "Rpc.h"
-#endif
-
-#if CONFIG_OPENTHREAD_ENABLED
-#include <platform/ThreadStackManager.h>
-#endif
 
 using namespace ::chip;
-using namespace ::chip::Shell;
-using namespace ::chip::Credentials;
 using namespace ::chip::DeviceManager;
-using namespace ::chip::DeviceLayer;
 
-// Used to indicate that an IP address has been added to the QRCode
-#define EXAMPLE_VENDOR_TAG_IP 1
+static const char * TAG = "light-switch-app";
 
-const char * TAG = "all-clusters-app";
-
-static DeviceCallbacks EchoCallbacks;
-
-namespace {
-
-app::Clusters::NetworkCommissioning::Instance
-    sWiFiNetworkCommissioningInstance(0 /* Endpoint Id */, &(NetworkCommissioning::ESPWiFiDriver::GetInstance()));
-
-constexpr EndpointId kNetworkCommissioningEndpointSecondary = 0xFFFE;
-
-} // namespace
+static AppDeviceCallbacks EchoCallbacks;
 
 static void InitServer(intptr_t context)
 {
-    // Init ZCL Data Model and CHIP App Server
-    static chip::CommonCaseDeviceServerInitParams initParams;
-    (void) initParams.InitializeStaticResourcesBeforeServerInit();
-    chip::Server::GetInstance().Init(initParams);
+    // Print QR Code URL
+    PrintOnboardingCodes(chip::RendezvousInformationFlags(CONFIG_RENDEZVOUS_MODE));
 
-    // We only have network commissioning on endpoint 0.
-    emberAfEndpointEnableDisable(kNetworkCommissioningEndpointSecondary, false);
+    Esp32AppServer::Init(); // Init ZCL Data Model and CHIP App Server AND Initialize device attestation config
 
-    // Initialize device attestation config
-    SetDeviceAttestationCredentialsProvider(Examples::GetExampleDACProvider());
-    sWiFiNetworkCommissioningInstance.Init();
-    InitBindingHandlers();
+    InitBindingHandler();
 }
 
 extern "C" void app_main()
@@ -98,45 +58,41 @@ extern "C" void app_main()
         ESP_LOGE(TAG, "nvs_flash_init() failed: %s", esp_err_to_name(err));
         return;
     }
-#if CONFIG_ENABLE_PW_RPC
-    chip::rpc::Init();
-#endif
 
     ESP_LOGI(TAG, "==================================================");
-    ESP_LOGI(TAG, "chip-esp32-all-cluster-demo starting");
+    ESP_LOGI(TAG, "chip-esp32-light-switch-example starting");
     ESP_LOGI(TAG, "==================================================");
 
 #if CONFIG_ENABLE_CHIP_SHELL
     chip::LaunchShell();
-    OnOffCommands::GetInstance().Register();
-    CASECommands::GetInstance().Register();
 #endif // CONFIG_ENABLE_CHIP_SHELL
 
-#if CONFIG_OPENTHREAD_ENABLED
-    LaunchOpenThread();
-    ThreadStackMgr().InitThreadStack();
-#endif
-
     CHIPDeviceManager & deviceMgr = CHIPDeviceManager::GetInstance();
-    CHIP_ERROR error              = deviceMgr.Init(&EchoCallbacks);
+
+    CHIP_ERROR error = deviceMgr.Init(&EchoCallbacks);
     if (error != CHIP_NO_ERROR)
     {
         ESP_LOGE(TAG, "device.Init() failed: %s", ErrorStr(error));
         return;
     }
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+    if (ThreadStackMgr().InitThreadStack() != CHIP_NO_ERROR)
+    {
+        ESP_LOGE(TAG, "Failed to initialize Thread stack");
+        return;
+    }
+    if (ThreadStackMgr().StartThreadTask() != CHIP_NO_ERROR)
+    {
+        ESP_LOGE(TAG, "Failed to launch Thread task");
+        return;
+    }
+#endif
 
-    ESP_LOGI(TAG, "------------------------Starting App Task---------------------------");
-    ESP_LOGI(TAG, "THIS IS OUR CODE: %d", add_two(2));
+    chip::DeviceLayer::PlatformMgr().ScheduleWork(InitServer, reinterpret_cast<intptr_t>(nullptr));
+
     error = GetAppTask().StartAppTask();
     if (error != CHIP_NO_ERROR)
     {
         ESP_LOGE(TAG, "GetAppTask().StartAppTask() failed : %s", ErrorStr(error));
     }
-
-    chip::DeviceLayer::PlatformMgr().ScheduleWork(InitServer, reinterpret_cast<intptr_t>(nullptr));
-}
-
-bool lowPowerClusterSleep()
-{
-    return true;
 }

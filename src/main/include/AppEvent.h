@@ -17,7 +17,6 @@
  */
 
 #pragma once
-#include "esp_system.h"
 
 struct AppEvent;
 typedef void (*EventHandler)(AppEvent *);
@@ -32,19 +31,23 @@ struct AppEvent
         kEventType_Install,
     };
 
-    uint16_t mType;
+    uint16_t Type;
 
     union
     {
         struct
         {
-            uint8_t mPinNo;
-            uint8_t mAction;
-        } mButtonEvent;
+            uint8_t Action;
+        } ButtonEvent;
         struct
         {
-            void * mContext;
-        } mTimerEvent;
+            void * Context;
+        } TimerEvent;
+        struct
+        {
+            uint8_t Action;
+            int32_t Actor;
+        } LightEvent;
     };
 
     EventHandler mHandler;

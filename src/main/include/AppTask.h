@@ -1,7 +1,6 @@
 /*
  *
- *    Copyright (c) 2020 Project CHIP Authors
- *    Copyright (c) 2018 Nest Labs, Inc.
+ *    Copyright (c) 2022 Project CHIP Authors
  *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +17,12 @@
  */
 
 #pragma once
+
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "AppEvent.h"
+#include "freertos/FreeRTOS.h"
 #include <platform/CHIPDeviceLayer.h>
 
 // Application-defined error codes in the CHIP_ERROR space.
@@ -31,18 +35,21 @@
 
 class AppTask
 {
+
 public:
     CHIP_ERROR StartAppTask();
     static void AppTaskMain(void * pvParameter);
     void PostEvent(const AppEvent * event);
-    void ButtonEventHandler(uint8_t btnIdx, uint8_t btnAction);
-    static void ButtonPressedAction(AppEvent * aEvent);
+
+    void ButtonEventHandler(const uint8_t buttonHandle, uint8_t btnAction);
 
 private:
+    friend AppTask & GetAppTask(void);
     CHIP_ERROR Init();
     void DispatchEvent(AppEvent * event);
+    static void SwitchActionEventHandler(AppEvent * aEvent);
+
     static AppTask sAppTask;
-    friend AppTask & GetAppTask(void);
 };
 
 inline AppTask & GetAppTask(void)
