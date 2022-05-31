@@ -1,6 +1,6 @@
 /*
  *
- *    Copyright (c) 2020 Project CHIP Authors
+ *    Copyright (c) 2022 Project CHIP Authors
  *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,18 @@
 
 #pragma once
 
-#include "LEDWidget.h"
-#include "transport/raw/MessageHeader.h"
+#include "app-common/zap-generated/ids/Clusters.h"
+#include "app-common/zap-generated/ids/Commands.h"
+#include "lib/core/CHIPError.h"
 
-extern LEDWidget statusLED1;
-extern LEDWidget statusLED2;
-extern const chip::NodeId kLocalNodeId;
+CHIP_ERROR InitBindingHandler();
+void SwitchWorkerFunction(intptr_t context);
+void BindingWorkerFunction(intptr_t context);
+
+struct BindingCommandData
+{
+    chip::EndpointId localEndpointId = 1;
+    chip::CommandId commandId;
+    chip::ClusterId clusterId;
+    bool isGroup = false;
+};

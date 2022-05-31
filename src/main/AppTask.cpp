@@ -17,18 +17,17 @@
  */
 
 #include "AppTask.h"
-#include "Button.h"
-#include "Globals.h"
-#include "LEDWidget.h"
-#include "driver/gpio.h"
+#include "BindingHandler.h"
 #include "esp_log.h"
-#include "esp_spi_flash.h"
 #include "freertos/FreeRTOS.h"
-#include <app/server/OnboardingCodesUtil.h>
 
 #define APP_TASK_NAME "APP"
 #define APP_EVENT_QUEUE_SIZE 10
 #define APP_TASK_STACK_SIZE (3072)
+#define BUTTON_PRESSED 1
+#define APP_LIGHT_SWITCH 1
+
+using namespace chip;
 
 static const char * TAG = "app-task";
 
@@ -58,23 +57,7 @@ CHIP_ERROR AppTask::StartAppTask()
 
 CHIP_ERROR AppTask::Init()
 {
-    /* Print chip information */
-    esp_chip_info_t chip_info;
-    esp_chip_info(&chip_info);
-    ESP_LOGI(TAG, "This is ESP32 chip with %d CPU cores, WiFi%s%s, ", chip_info.cores,
-             (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "", (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
-    ESP_LOGI(TAG, "silicon revision %d, ", chip_info.revision);
-    ESP_LOGI(TAG, "%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
-             (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
-
     CHIP_ERROR err = CHIP_NO_ERROR;
-    statusLED1.Init(STATUS_LED_GPIO_NUM);
-    // Our second LED doesn't map to any physical LEDs so far, just to virtual
-    // "LED"s on devices with screens.
-    statusLED2.Init(GPIO_NUM_MAX);
-
-    // Print QR Code URL
-    PrintOnboardingCodes(chip::RendezvousInformationFlags(CONFIG_RENDEZVOUS_MODE));
 
     return err;
 }
@@ -137,37 +120,27 @@ void AppTask::DispatchEvent(AppEvent * aEvent)
     }
 }
 
-void AppTask::ButtonEventHandler(uint8_t btnIdx, uint8_t btnAction)
+void AppTask::SwitchActionEventHandler(AppEvent * aEvent)
 {
-    AppEvent button_event             = {};
-    button_event.mType                = AppEvent::kEventType_Button;
-    button_event.mButtonEvent.mPinNo  = btnIdx;
-    button_event.mButtonEvent.mAction = btnAction;
-
-    if (btnAction == APP_BUTTON_PRESSED)
+    if (aEvent->Type == AppEvent::kEventType_Button)
     {
-        button_event.mHandler = ButtonPressedAction;
-        sAppTask.PostEvent(&button_event);
+        BindingCommandData * data = Platform::New<BindingCommandData>();
+        data->commandId           = chip::app::Clusters::OnOff::Commands::Toggle::Id;
+        data->clusterId           = chip::app::Clusters::OnOff::Id;
+
+        DeviceLayer::PlatformMgr().ScheduleWork(SwitchWorkerFunction, reinterpret_cast<intptr_t>(data));
     }
 }
 
-void AppTask::ButtonPressedAction(AppEvent * aEvent)
+void AppTask::ButtonEventHandler(const uint8_t buttonHandle, uint8_t btnAction)
 {
-#if CONFIG_DEVICE_TYPE_M5STACK
-    uint32_t io_num = aEvent->mButtonEvent.mPinNo;
-    int level       = gpio_get_level((gpio_num_t) io_num);
-    if (level == 0)
+    AppEvent button_event           = {};
+    button_event.Type               = AppEvent::kEventType_Button;
+    button_event.ButtonEvent.Action = btnAction;
+
+    if (buttonHandle == APP_LIGHT_SWITCH && btnAction == BUTTON_PRESSED)
     {
-        bool woken = WakeDisplay();
-        if (woken)
-        {
-            return;
-        }
-        // Button 1 is connected to the pin 39
-        // Button 2 is connected to the pin 38
-        // Button 3 is connected to the pin 37
-        // So we use 40 - io_num to map the pin number to button number
-        ScreenManager::ButtonPressed(40 - io_num);
+        button_event.mHandler = SwitchActionEventHandler;
+        sAppTask.PostEvent(&button_event);
     }
-#endif
 }
