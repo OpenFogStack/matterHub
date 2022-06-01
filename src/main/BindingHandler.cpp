@@ -47,6 +47,8 @@ Engine sShellSwitchGroupsSubCommands;
 Engine sShellSwitchGroupsOnOffSubCommands;
 
 Engine sShellSwitchBindingSubCommands;
+Engine sShellSubscribeBindingSubCommands;
+
 #endif // defined(ENABLE_CHIP_SHELL)
 
 namespace {
@@ -377,6 +379,9 @@ static void RegisterSwitchCommands()
     static const shell_command_t sSwitchCommand = { &SwitchCommandHandler, "switch",
                                                     "Light-switch commands. Usage: switch <subcommand>" };
 
+    static const shell_command_t sSubscribeCommand = { &SwitchCommandHandler, "subscribe",
+                                                    "Subscribtion commands. Usage: subscribe <subcommand>" };
+                                                    
     sShellSwitchGroupsOnOffSubCommands.RegisterCommands(sSwitchGroupsOnOffSubCommands, ArraySize(sSwitchGroupsOnOffSubCommands));
     sShellSwitchOnOffSubCommands.RegisterCommands(sSwitchOnOffSubCommands, ArraySize(sSwitchOnOffSubCommands));
     sShellSwitchGroupsSubCommands.RegisterCommands(sSwitchGroupsSubCommands, ArraySize(sSwitchGroupsSubCommands));
@@ -384,6 +389,7 @@ static void RegisterSwitchCommands()
     sShellSwitchSubCommands.RegisterCommands(sSwitchSubCommands, ArraySize(sSwitchSubCommands));
 
     Engine::Root().RegisterCommands(&sSwitchCommand, 1);
+    Engine::Root().RegisterCommands(&sSubscribeCommand, 1);
 }
 #endif // ENABLE_CHIP_SHELL
 
