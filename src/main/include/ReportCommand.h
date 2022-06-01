@@ -5,7 +5,6 @@
 #pragma once
 
 #include "BindingHandler.h"
-#include "DataModelLogger.h"
 #include <app/tests/suites/commands/interaction_model/InteractionModel.h>
 
 class ReportCommand : public InteractionModelReports,
@@ -26,13 +25,6 @@ class ReportCommand : public InteractionModelReports,
     if (data == nullptr) {
       ChipLogError(chipTool, "Response Failure: No Data");
       mError = CHIP_ERROR_INTERNAL;
-      return;
-    }
-
-    error = DataModelLogger::LogAttribute(path, data);
-    if (CHIP_NO_ERROR != error) {
-      ChipLogError(chipTool, "Response Failure: Can not decode Data");
-      mError = error;
       return;
     }
   }

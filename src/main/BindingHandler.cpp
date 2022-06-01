@@ -47,7 +47,8 @@ Engine sShellSwitchGroupsSubCommands;
 Engine sShellSwitchGroupsOnOffSubCommands;
 
 Engine sShellSwitchBindingSubCommands;
-Engine sShellSubscribeBindingSubCommands;
+
+Engine sShellSubscribeSubCommands;
 
 #endif // defined(ENABLE_CHIP_SHELL)
 
@@ -163,6 +164,27 @@ CHIP_ERROR SwitchCommandHandler(int argc, char ** argv)
 
     return sShellSwitchSubCommands.ExecCommand(argc, argv);
 }
+
+/********************************************************
+ * Subscribe shell functions
+ *********************************************************/
+
+CHIP_ERROR SubscribeHelpHandler(int argc, char ** argv)
+{
+    sShellSubscribeSubCommands.ForEachCommand(Shell::PrintCommandHelp, nullptr);
+    return CHIP_NO_ERROR;
+}
+
+CHIP_ERROR SubscribeCommandHandler(int argc, char ** argv)
+{
+    if (argc == 0)
+    {
+        return SubscribeHelpHandler(argc, argv);
+    }
+
+    return sShellSubscribeSubCommands.ExecCommand(argc, argv);
+}
+
 
 /********************************************************
  * OnOff switch shell functions
@@ -352,6 +374,10 @@ static void RegisterSwitchCommands()
         { &BindingSwitchCommandHandler, "binding", "Usage: switch binding <subcommand>" }
     };
 
+    static const shell_command_t sSubscribeSubCommands[] = {
+        { &SubscribeHelpHandler, "help", "Usage: Subscribe <subcommand>" },
+    };
+
     static const shell_command_t sSwitchOnOffSubCommands[] = {
         { &OnOffHelpHandler, "help", "Usage : switch ononff <subcommand>" },
         { &OnSwitchCommandHandler, "on", "Sends on command to bound lighting app" },
@@ -379,14 +405,18 @@ static void RegisterSwitchCommands()
     static const shell_command_t sSwitchCommand = { &SwitchCommandHandler, "switch",
                                                     "Light-switch commands. Usage: switch <subcommand>" };
 
-    static const shell_command_t sSubscribeCommand = { &SwitchCommandHandler, "subscribe",
+    static const shell_command_t sSubscribeCommand = { &SubscribeCommandHandler, "subscribe",
                                                     "Subscribtion commands. Usage: subscribe <subcommand>" };
-                                                    
+
     sShellSwitchGroupsOnOffSubCommands.RegisterCommands(sSwitchGroupsOnOffSubCommands, ArraySize(sSwitchGroupsOnOffSubCommands));
     sShellSwitchOnOffSubCommands.RegisterCommands(sSwitchOnOffSubCommands, ArraySize(sSwitchOnOffSubCommands));
     sShellSwitchGroupsSubCommands.RegisterCommands(sSwitchGroupsSubCommands, ArraySize(sSwitchGroupsSubCommands));
     sShellSwitchBindingSubCommands.RegisterCommands(sSwitchBindingSubCommands, ArraySize(sSwitchBindingSubCommands));
     sShellSwitchSubCommands.RegisterCommands(sSwitchSubCommands, ArraySize(sSwitchSubCommands));
+
+    sShellSubscribeSubCommands.RegisterCommands(sSubscribeSubCommands, ArraySize(sSubscribeSubCommands));
+
+
 
     Engine::Root().RegisterCommands(&sSwitchCommand, 1);
     Engine::Root().RegisterCommands(&sSubscribeCommand, 1);
