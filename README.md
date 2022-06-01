@@ -19,8 +19,8 @@ or for m5-Stack:\
 1. Cleanup:
 
     ``` bash
-    idf.py erase_flash -p <port_to_hub>
-    idf.py erase_flash -p <port_to_device>
+    idf.py erase-flash -p "${PORT_TO_HUB}"
+    idf.py erase-flash -p "${PORT_TO_DEVICE}"
     rm -rf /tmp/*.ini /tmp/chip_*
     ```
 
@@ -30,7 +30,7 @@ or for m5-Stack:\
 
     ```bash
     idf.py build
-    idf.py flash monitor -p <port_to_hub>
+    idf.py flash monitor -p "${PORT_TO_HUB}"
     ```
 
     &emsp; $chip-tool:
@@ -45,7 +45,7 @@ or for m5-Stack:\
 
     ```bash
     idf.py build
-    idf.py flash monitor -p <port_to_device>
+    idf.py flash monitor -p "${PORT_TO_DEVICE}"
     ```
 
     &emsp; $chip-tool:
