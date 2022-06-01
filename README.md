@@ -16,54 +16,64 @@ or for m5-Stack:\
 
 ## Interaction Example
 
-0. Cleanup:
-```
-idf.py erase_flash -p <port_to_hub>
-idf.py erase_flash -p <port_to_device>
-rm -rf /tmp/*.ini /tmp/chip_*
-```
-1. Setup hub 
+1. Cleanup:
 
-&emsp; $matterhub: 
-```
-idf.py build
-idf.py flash monitor -p <port_to_hub>
-``` 
-&emsp; $chip-tool: 
-```
-chip-tool pairing ble-wifi 111 "${SSID}" "${PASSWORD}" 20202021 3840
-``` 
+    ``` bash
+    idf.py erase_flash -p <port_to_hub>
+    idf.py erase_flash -p <port_to_device>
+    rm -rf /tmp/*.ini /tmp/chip_*
+    ```
 
-2. Setup end-device:
+2. Setup hub
 
-&emsp; $connectedhomeip/examples/lighting-app/esp32
-```
-idf.py build
-idf.py flash monitor -p <port_to_device>
-```
-&emsp; $chip-tool: 
-```
-chip-tool pairing ble-wifi 333 "${SSID}" "${PASSWORD}" 20202021 3840
-```
+    &emsp; $matterhub:
 
-3. Give hub permission to access the end-device: 
-```
-chip-tool accesscontrol write acl '[{"fabricIndex": 1, "privilege": 5, "authMode": 2, "subjects": [112233], "targets": null },{"fabricIndex": 1, "privilege": 5, "authMode": 2, "subjects": [111], "targets": null }]' 333 0
-```
-4. Connect to end-device
+    ```bash
+    idf.py build
+    idf.py flash monitor -p <port_to_hub>
+    ```
 
-&emsp; $ Hub -> Shell (`matter switch binding unicast <fabric index> <node id> <endpoint>`): 
-```
-matter switch binding unicast 1 333 1
-```
+    &emsp; $chip-tool:
 
-5. Switch LED:
-```
-matter switch onoff on 1
-matter switch onoff off 1
-```
+    ```bash
+    chip-tool pairing ble-wifi 111 "${SSID}" "${PASSWORD}" 20202021 3840
+    ```
 
+3. Setup end-device:
 
+    &emsp; $connectedhomeip/examples/lighting-app/esp32
+
+    ```bash
+    idf.py build
+    idf.py flash monitor -p <port_to_device>
+    ```
+
+    &emsp; $chip-tool:
+
+    ```bash
+    chip-tool pairing ble-wifi 333 "${SSID}" "${PASSWORD}" 20202021 3840
+    ```
+
+4. Give hub permission to access the end-device:
+
+    ```bash
+    chip-tool accesscontrol write acl '[{"fabricIndex": 1, "privilege": 5, "authMode": 2, "subjects": [112233], "targets": null },{"fabricIndex": 1, "privilege": 5, "authMode": 2, "subjects": [111], "targets": null }]' 333 0
+    ```
+
+5. Connect to end-device
+
+    &emsp; $ Hub -> Shell (`matter switch binding unicast <fabric index> <node id> <endpoint>`):
+
+    ```bash
+    matter switch binding unicast 1 333 1
+    ```
+
+6. Switch LED:
+
+    ```bash
+    matter switch onoff on 1
+    matter switch onoff off 1
+    ```
 
 ## References
 
