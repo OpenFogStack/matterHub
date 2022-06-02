@@ -4,3 +4,18 @@
 [submodule "thirdparty/esp-idf/repo"]
 	path = thirdparty/esp-idf/repo
 	url = https://github.com/espressif/esp-idf.git
+[submodule "src/components/axp192"]
+	path = src/components/axp192
+	url = https://github.com/tuupola/axp192
+[submodule "src/components/i2c_manager"]
+	path = src/components/i2c_manager
+	url = https://github.com/ropg/i2c_manager.git
+[submodule "src/components/lvgl"]
+	path = src/components/lvgl
+	url = https://github.com/lvgl/lvgl.git
+[submodule "src/components/lvgl_esp32_drivers"]
+	path = src/components/lvgl_esp32_drivers
+	url = https://github.com/ropg/lvgl_esp32_drivers.git
+[submodule "src/components/m5core2_axp192"]
+	path = src/components/m5core2_axp192
+	url = https://github.com/ropg/m5core2_axp192.git
