@@ -20,7 +20,17 @@
 
 #include "app-common/zap-generated/ids/Clusters.h"
 #include "app-common/zap-generated/ids/Commands.h"
+#include "app/util/attribute-metadata.h"
 #include "lib/core/CHIPError.h"
+#include <app/BufferedReadCallback.h>
+#include <app/ChunkedWriteCallback.h>
+#include <app/CommandSender.h>
+#include <app/DeviceProxy.h>
+#include <app/ReadClient.h>
+#include <app/WriteClient.h>
+#include <lib/support/CodeUtils.h>
+#include <lib/support/UnitTestUtils.h>
+
 
 CHIP_ERROR InitBindingHandler();
 void SwitchWorkerFunction(intptr_t context);
@@ -32,4 +42,13 @@ struct BindingCommandData
     chip::CommandId commandId;
     chip::ClusterId clusterId;
     bool isGroup = false;
+};
+
+struct subscribeData {
+    const char * identity; 
+    chip::EndpointId endpointId;
+    chip::ClusterId clusterId;
+    chip::AttributeId attributeId;
+    uint16_t minInterval;
+    uint16_t maxInterval;
 };

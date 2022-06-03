@@ -22,6 +22,7 @@
 #include "app/clusters/bindings/BindingManager.h"
 #include "app/server/Server.h"
 #include "controller/InvokeInteraction.h"
+#include "core/DataModelTypes.h"
 #include "platform/CHIPDeviceLayer.h"
 #include <app/clusters/bindings/bindings.h>
 #include <lib/support/CodeUtils.h>
@@ -183,6 +184,50 @@ CHIP_ERROR SubscribeCommandHandler(int argc, char ** argv)
     }
 
     return sShellSubscribeSubCommands.ExecCommand(argc, argv);
+}
+
+CHIP_ERROR SubscribeSubscribeCommandHandler(int argc, char ** argv)
+{
+    subscribeData * entry = Platform::New<subscribeData>();
+    if (argc != 5)
+    {
+        return SubscribeHelpHandler(argc, argv);
+    }
+    entry->endpointId             = atoi(argv[0]);
+    entry->clusterId              = atoi(argv[1]);
+    entry->attributeId            = atoi(argv[2]);  
+    entry->minInterval            = atoi(argv[3]);
+    entry->maxInterval            = atoi(argv[4]);
+
+    ESP_LOGI("Subscribe", "SubscribeSubscribeCommandHandler");
+    ESP_LOGI("Subscribe", " - EndPoint ID: '0x%02x'", entry->endpointId);
+    ESP_LOGI("Subscribe", " - Cluster ID: '0x%02x'", entry->clusterId);
+    ESP_LOGI("Subscribe", " - Attribute ID: '0x%02x'", entry->attributeId);
+    ESP_LOGI("Subscribe", " - minInterval: '0x%02x'", entry->minInterval);
+    ESP_LOGI("Subscribe", " - maxInterval: '0x%02x'", entry->maxInterval);
+
+    //DeviceLayer::PlatformMgr().ScheduleWork(SubscribeWorkerFunction, reinterpret_cast<intptr_t>(entry));
+    return CHIP_NO_ERROR;
+}
+
+CHIP_ERROR UnsubscribeCommandHandler(int argc, char ** argv)
+{
+    if (argc == 0)
+    {
+        return SubscribeHelpHandler(argc, argv);
+    }
+
+    return sShellSubscribeSubCommands.ExecCommand(argc, argv);
+}
+
+void SubscribeWorkerFunction(intptr_t context)
+{
+    VerifyOrReturn(context != 0, ChipLogError(NotSpecified, "SubscribeWorkerFunction - Invalid work data"));
+
+    BindingCommandData * data = reinterpret_cast<BindingCommandData *>(context);
+    BindingManager::GetInstance().NotifyBoundClusterChanged(data->localEndpointId, data->clusterId, static_cast<void *>(data));
+
+    Platform::Delete(data);
 }
 
 
@@ -374,10 +419,6 @@ static void RegisterSwitchCommands()
         { &BindingSwitchCommandHandler, "binding", "Usage: switch binding <subcommand>" }
     };
 
-    static const shell_command_t sSubscribeSubCommands[] = {
-        { &SubscribeHelpHandler, "help", "Usage: Subscribe <subcommand>" },
-    };
-
     static const shell_command_t sSwitchOnOffSubCommands[] = {
         { &OnOffHelpHandler, "help", "Usage : switch ononff <subcommand>" },
         { &OnSwitchCommandHandler, "on", "Sends on command to bound lighting app" },
@@ -402,23 +443,25 @@ static void RegisterSwitchCommands()
         { &BindingUnicastBindCommandHandler, "unicast", "Usage: switch binding unicast <fabric index> <node id> <endpoint>" }
     };
 
-    static const shell_command_t sSwitchCommand = { &SwitchCommandHandler, "switch",
-                                                    "Light-switch commands. Usage: switch <subcommand>" };
-
-    static const shell_command_t sSubscribeCommand = { &SubscribeCommandHandler, "subscribe",
-                                                    "Subscribtion commands. Usage: subscribe <subcommand>" };
-
     sShellSwitchGroupsOnOffSubCommands.RegisterCommands(sSwitchGroupsOnOffSubCommands, ArraySize(sSwitchGroupsOnOffSubCommands));
     sShellSwitchOnOffSubCommands.RegisterCommands(sSwitchOnOffSubCommands, ArraySize(sSwitchOnOffSubCommands));
     sShellSwitchGroupsSubCommands.RegisterCommands(sSwitchGroupsSubCommands, ArraySize(sSwitchGroupsSubCommands));
     sShellSwitchBindingSubCommands.RegisterCommands(sSwitchBindingSubCommands, ArraySize(sSwitchBindingSubCommands));
     sShellSwitchSubCommands.RegisterCommands(sSwitchSubCommands, ArraySize(sSwitchSubCommands));
+    static const shell_command_t sSwitchCommand = { &SwitchCommandHandler, "switch",
+                                                    "Light-switch commands. Usage: switch <subcommand>" };
+    Engine::Root().RegisterCommands(&sSwitchCommand, 1);
 
+    static const shell_command_t sSubscribeSubCommands[] = {
+        { &SubscribeHelpHandler, "help", "Usage: subscribe <subcommand>" },
+        { &SubscribeSubscribeCommandHandler, "subscribe", "Usage: subscribe <node id> <endpoint> <attribute id> <min_interval> <max_interval>" },
+        { &UnsubscribeCommandHandler, "unsubscribe", "Usage: unsubscribe <subscription id>" },
+    };
     sShellSubscribeSubCommands.RegisterCommands(sSubscribeSubCommands, ArraySize(sSubscribeSubCommands));
 
+    static const shell_command_t sSubscribeCommand = { &SubscribeCommandHandler, "subscribe",
+                                                       "Subscribtion commands. Usage: subscribe <subcommand>" };
 
-
-    Engine::Root().RegisterCommands(&sSwitchCommand, 1);
     Engine::Root().RegisterCommands(&sSubscribeCommand, 1);
 }
 #endif // ENABLE_CHIP_SHELL
