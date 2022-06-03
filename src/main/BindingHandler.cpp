@@ -18,11 +18,13 @@
 
 #include "BindingHandler.h"
 #include "ReportCommand.h"
+#include "SubscriptionManager.h"
 #include "app/CommandSender.h"
 #include "app/clusters/bindings/BindingManager.h"
 #include "app/server/Server.h"
 #include "controller/InvokeInteraction.h"
 #include "core/DataModelTypes.h"
+#include "credentials/FabricTable.h"
 #include "platform/CHIPDeviceLayer.h"
 #include <app/clusters/bindings/bindings.h>
 #include <lib/support/CodeUtils.h>
@@ -188,16 +190,18 @@ CHIP_ERROR SubscribeCommandHandler(int argc, char ** argv)
 
 CHIP_ERROR SubscribeSubscribeCommandHandler(int argc, char ** argv)
 {
-    subscribeData * entry = Platform::New<subscribeData>();
-    if (argc != 5)
+    SubscribeCommandData * entry = Platform::New<SubscribeCommandData>();
+    if (argc != 7)
     {
         return SubscribeHelpHandler(argc, argv);
     }
-    entry->endpointId             = atoi(argv[0]);
-    entry->clusterId              = atoi(argv[1]);
-    entry->attributeId            = atoi(argv[2]);  
-    entry->minInterval            = atoi(argv[3]);
-    entry->maxInterval            = atoi(argv[4]);
+    entry->fabricId    = atoi(argv[0]);
+    entry->nodeId      = atoi(argv[1]);
+    entry->endpointId  = atoi(argv[2]);
+    entry->clusterId   = atoi(argv[3]);
+    entry->attributeId = atoi(argv[4]);
+    entry->minInterval = atoi(argv[5]);
+    entry->maxInterval = atoi(argv[6]);
 
     ESP_LOGI("Subscribe", "SubscribeSubscribeCommandHandler");
     ESP_LOGI("Subscribe", " - EndPoint ID: '0x%02x'", entry->endpointId);
@@ -206,7 +210,7 @@ CHIP_ERROR SubscribeSubscribeCommandHandler(int argc, char ** argv)
     ESP_LOGI("Subscribe", " - minInterval: '0x%02x'", entry->minInterval);
     ESP_LOGI("Subscribe", " - maxInterval: '0x%02x'", entry->maxInterval);
 
-    //DeviceLayer::PlatformMgr().ScheduleWork(SubscribeWorkerFunction, reinterpret_cast<intptr_t>(entry));
+    DeviceLayer::PlatformMgr().ScheduleWork(SubscribeWorkerFunction, reinterpret_cast<intptr_t>(entry));
     return CHIP_NO_ERROR;
 }
 
@@ -224,8 +228,8 @@ void SubscribeWorkerFunction(intptr_t context)
 {
     VerifyOrReturn(context != 0, ChipLogError(NotSpecified, "SubscribeWorkerFunction - Invalid work data"));
 
-    BindingCommandData * data = reinterpret_cast<BindingCommandData *>(context);
-    BindingManager::GetInstance().NotifyBoundClusterChanged(data->localEndpointId, data->clusterId, static_cast<void *>(data));
+    SubscribeCommandData * data = reinterpret_cast<SubscribeCommandData *>(context);
+    SubscriptionManager::GetInstance().CreateSubscription(data);
 
     Platform::Delete(data);
 }
@@ -454,7 +458,8 @@ static void RegisterSwitchCommands()
 
     static const shell_command_t sSubscribeSubCommands[] = {
         { &SubscribeHelpHandler, "help", "Usage: subscribe <subcommand>" },
-        { &SubscribeSubscribeCommandHandler, "subscribe", "Usage: subscribe <node id> <endpoint> <attribute id> <min_interval> <max_interval>" },
+        { &SubscribeSubscribeCommandHandler, "subscribe",
+          "Usage: subscribe <node id> <endpoint> <attribute id> <min_interval> <max_interval>" },
         { &UnsubscribeCommandHandler, "unsubscribe", "Usage: unsubscribe <subscription id>" },
     };
     sShellSubscribeSubCommands.RegisterCommands(sSubscribeSubCommands, ArraySize(sSubscribeSubCommands));
