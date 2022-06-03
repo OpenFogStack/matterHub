@@ -21,6 +21,7 @@
 #include "app-common/zap-generated/ids/Clusters.h"
 #include "app-common/zap-generated/ids/Commands.h"
 #include "app/util/attribute-metadata.h"
+#include "core/PeerId.h"
 #include "lib/core/CHIPError.h"
 #include <app/BufferedReadCallback.h>
 #include <app/ChunkedWriteCallback.h>
@@ -30,6 +31,7 @@
 #include <app/WriteClient.h>
 #include <lib/support/CodeUtils.h>
 #include <lib/support/UnitTestUtils.h>
+ 
 
 
 CHIP_ERROR InitBindingHandler();
@@ -44,8 +46,10 @@ struct BindingCommandData
     bool isGroup = false;
 };
 
-struct subscribeData {
-    const char * identity; 
+struct SubscribeCommandData {
+    const char * identity;
+    chip::FabricId fabricId;
+    chip::NodeId nodeId;
     chip::EndpointId endpointId;
     chip::ClusterId clusterId;
     chip::AttributeId attributeId;

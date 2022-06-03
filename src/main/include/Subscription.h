@@ -7,9 +7,11 @@
 #include "BindingHandler.h"
 #include <InteractionModel.h>
 
-class ReportCommand : public InteractionModelReports,
+class Subscription : public InteractionModelReports,
                       public chip::app::ReadClient::Callback {
-  ReportCommand() : InteractionModelReports(this) {}
+  Subscription() : InteractionModelReports(this) {}
+
+  // TODO: Create all required fields to create and manage a subscription
 
   /////////// ReadClient Callback Interface /////////
   void OnAttributeData(const chip::app::ConcreteDataAttributePath &path,
