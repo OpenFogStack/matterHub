@@ -17,7 +17,6 @@
  */
 
 #include "BindingHandler.h"
-#include "ReportCommand.h"
 #include "SubscriptionManager.h"
 #include "app/CommandSender.h"
 #include "app/clusters/bindings/BindingManager.h"
@@ -188,6 +187,16 @@ CHIP_ERROR SubscribeCommandHandler(int argc, char ** argv)
     return sShellSubscribeSubCommands.ExecCommand(argc, argv);
 }
 
+void SubscribeWorkerFunction(intptr_t context)
+{
+    VerifyOrReturn(context != 0, ChipLogError(NotSpecified, "SubscribeWorkerFunction - Invalid work data"));
+
+    SubscribeCommandData * data = reinterpret_cast<SubscribeCommandData *>(context);
+    //SubscriptionManager::GetInstance()->RegisterSubscription(data);
+
+    Platform::Delete(data);
+}
+
 CHIP_ERROR SubscribeSubscribeCommandHandler(int argc, char ** argv)
 {
     SubscribeCommandData * entry = Platform::New<SubscribeCommandData>();
@@ -224,15 +233,7 @@ CHIP_ERROR UnsubscribeCommandHandler(int argc, char ** argv)
     return sShellSubscribeSubCommands.ExecCommand(argc, argv);
 }
 
-void SubscribeWorkerFunction(intptr_t context)
-{
-    VerifyOrReturn(context != 0, ChipLogError(NotSpecified, "SubscribeWorkerFunction - Invalid work data"));
 
-    SubscribeCommandData * data = reinterpret_cast<SubscribeCommandData *>(context);
-    SubscriptionManager::GetInstance().CreateSubscription(data);
-
-    Platform::Delete(data);
-}
 
 
 /********************************************************

@@ -1,1 +1,1 @@
-#include "SubcriptionManager.h"
+#include "SubscriptionManager.h"
