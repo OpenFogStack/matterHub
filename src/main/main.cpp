@@ -29,13 +29,14 @@
 #include "freertos/task.h"
 #include "nvs_flash.h"
 #include "shell_extension/launch.h"
+#include "ClusterCommands.h"
 
 #include <app/server/OnboardingCodesUtil.h>
 
 using namespace ::chip;
 using namespace ::chip::DeviceManager;
 
-static const char * TAG = "light-switch-app";
+static const char *TAG = "light-switch-app";
 
 static AppDeviceCallbacks EchoCallbacks;
 
@@ -65,9 +66,10 @@ extern "C" void app_main()
 
 #if CONFIG_ENABLE_CHIP_SHELL
     chip::LaunchShell();
+    RegisterClusterCommands();
 #endif // CONFIG_ENABLE_CHIP_SHELL
 
-    CHIPDeviceManager & deviceMgr = CHIPDeviceManager::GetInstance();
+    CHIPDeviceManager &deviceMgr = CHIPDeviceManager::GetInstance();
 
     CHIP_ERROR error = deviceMgr.Init(&EchoCallbacks);
     if (error != CHIP_NO_ERROR)
