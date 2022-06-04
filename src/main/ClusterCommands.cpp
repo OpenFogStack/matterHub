@@ -180,13 +180,19 @@ namespace
     CHIP_ERROR ClusterCommandOnOffOffHandler(int argc, char **argv)
     {
         ESP_LOGI(TAG, "Off Handler -> TODO");
-        /*
-        BindingCommandData *data = Platform::New<BindingCommandData>();
+        if (argc != 3)
+        {
+            return ClusterCommandOnOffHelpHandler(argc, argv);
+        }
+        ClusterCommandData *data = Platform::New<ClusterCommandData>();
+        data->fabricId = atoi(argv[0]);
+        data->nodeId = atoi(argv[1]);
+        data->endpointId = atoi(argv[2]);
         data->commandId = Clusters::OnOff::Commands::Off::Id;
         data->clusterId = Clusters::OnOff::Id;
 
-        DeviceLayer::PlatformMgr().ScheduleWork(ClusterCommandWorkerFunction, reinterpret_cast<intptr_t>(data));
-        */
+        DeviceLayer::PlatformMgr()
+            .ScheduleWork(ClusterCommandWorkerFunction, reinterpret_cast<intptr_t>(data));
         return CHIP_NO_ERROR;
     }
 
@@ -241,23 +247,38 @@ void onFailureCallbackClusterCommandOnOff(void *context, PeerId peerId, CHIP_ERR
 void onConnectedCallbackClusterCommandOnOff(void *context, OperationalDeviceProxy *peer_device)
 {
     ChipLogError(NotSpecified, "Got here!!");
-    Clusters::OnOff::Commands::On::Type onCommand;
-    auto onSuccess = [](const ConcreteCommandPath &commandPath, const StatusIB &status, const auto &dataResponse)
-    {
-        ChipLogProgress(NotSpecified, "OnOff command succeeds");
-    };
-
-    auto onFailure = [](CHIP_ERROR error)
-    {
-        ChipLogError(NotSpecified, "OnOff command failed: %" CHIP_ERROR_FORMAT, error.Format());
-    };
-
     ClusterCommandData *data = reinterpret_cast<ClusterCommandData *>(context);
 
-    Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), data->endpointId,
-                                     onCommand, onSuccess, onFailure);
+    auto onSuccess = [data](const ConcreteCommandPath &commandPath, const StatusIB &status, const auto &dataResponse)
+    {
+        ChipLogProgress(NotSpecified, "OnOff command succeeds");
+        Platform::Delete(data);
+    };
 
-    // TODO place this: Platform::Delete(context);
+    auto onFailure = [data](CHIP_ERROR error)
+    {
+        ChipLogError(NotSpecified, "OnOff command failed: %" CHIP_ERROR_FORMAT, error.Format());
+        Platform::Delete(data);
+    };
+    auto commandId = data->commandId;
+    switch (commandId)
+    {
+    case Clusters::OnOff::Commands::On::Id:
+        Clusters::OnOff::Commands::On::Type onCommand;
+        Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), data->endpointId,
+                                         onCommand, onSuccess, onFailure);
+        break;
+    case Clusters::OnOff::Commands::Off::Id:
+        Clusters::OnOff::Commands::Off::Type offCommand;
+        Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), data->endpointId,
+                                         offCommand, onSuccess, onFailure);
+        break;
+    case Clusters::OnOff::Commands::Toggle::Id:
+        Clusters::OnOff::Commands::Toggle::Type toggleCommand;
+        Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), data->endpointId,
+                                         toggleCommand, onSuccess, onFailure);
+        break;
+    }
 }
 
 void ClusterCommandWorkerFunction(intptr_t context)
