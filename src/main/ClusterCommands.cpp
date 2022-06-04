@@ -160,7 +160,10 @@ namespace
     CHIP_ERROR ClusterCommandOnOffOnHandler(int argc, char **argv)
     {
         ESP_LOGI(TAG, "On Handler -> TODO");
-
+        if (argc != 3)
+        {
+            return ClusterCommandOnOffHelpHandler(argc, argv);
+        }
         ClusterCommandData *data = Platform::New<ClusterCommandData>();
         data->fabricId = atoi(argv[0]);
         data->nodeId = atoi(argv[1]);
@@ -237,6 +240,7 @@ void onFailureCallbackClusterCommandOnOff(void *context, PeerId peerId, CHIP_ERR
 
 void onConnectedCallbackClusterCommandOnOff(void *context, OperationalDeviceProxy *peer_device)
 {
+    ChipLogError(NotSpecified, "Got here!!");
     Clusters::OnOff::Commands::On::Type onCommand;
     auto onSuccess = [](const ConcreteCommandPath &commandPath, const StatusIB &status, const auto &dataResponse)
     {
@@ -248,8 +252,9 @@ void onConnectedCallbackClusterCommandOnOff(void *context, OperationalDeviceProx
         ChipLogError(NotSpecified, "OnOff command failed: %" CHIP_ERROR_FORMAT, error.Format());
     };
 
-    /* TODO REPLACE 1 with endpointId */
-    Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), 1,
+    ClusterCommandData *data = reinterpret_cast<ClusterCommandData *>(context);
+
+    Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), data->endpointId,
                                      onCommand, onSuccess, onFailure);
 
     // TODO place this: Platform::Delete(context);
@@ -257,28 +262,33 @@ void onConnectedCallbackClusterCommandOnOff(void *context, OperationalDeviceProx
 
 void ClusterCommandWorkerFunction(intptr_t context)
 {
-    auto &server = chip::Server::GetInstance();
-    chip::FabricTable *fabricTable = &server.GetFabricTable();
-    CASESessionManager *CASESessionManager = server.GetCASESessionManager();
-    ClusterCommandData *data = reinterpret_cast<ClusterCommandData *>(context);
-
     if (context == 0)
     {
         ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Invalid work data");
         return;
     }
-    if (CASESessionManager != nullptr)
+    ClusterCommandData *data = reinterpret_cast<ClusterCommandData *>(context);
+    auto &server = chip::Server::GetInstance();
+    chip::FabricTable *fabricTable = &server.GetFabricTable();
+    CASESessionManager *CASESessionManager = server.GetCASESessionManager();
+    if (CASESessionManager == nullptr)
     {
         ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Invalid SessionManager");
         return;
     }
+
     PeerId peer = PeerIdForNode(fabricTable, data->fabricId, data->nodeId);
     if (peer.GetNodeId() == kUndefinedNodeId)
     {
         ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Unable to find the mentioned Peer");
+        return;
     }
 
-    CASESessionManager->FindOrEstablishSession(peer, &onConnectedCallbackClusterCommandOnOff, &onFailureCallbackClusterCommandOnOff);
+    Callback::Callback<OnDeviceConnected> mOnConnectedCallback = Callback::Callback<OnDeviceConnected>(onConnectedCallbackClusterCommandOnOff, (void *)context);
+    Callback::Callback<OnDeviceConnectionFailure> mOnConnectionFailureCallback = Callback::Callback<OnDeviceConnectionFailure>(onFailureCallbackClusterCommandOnOff, (void *)context);
+
+    CASESessionManager->FindOrEstablishSession(peer, &mOnConnectedCallback, &mOnConnectionFailureCallback);
+    ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Registration Done");
 }
 
 void RegisterClusterCommands()
