@@ -22,6 +22,7 @@
 #include "platform/CHIPDeviceLayer.h"
 #include <app/clusters/bindings/bindings.h>
 #include <lib/support/CodeUtils.h>
+#include "ClusterCommands.h"
 
 #if CONFIG_ENABLE_CHIP_SHELL
 #include "lib/shell/Engine.h"
@@ -159,12 +160,17 @@ namespace
     CHIP_ERROR ClusterCommandOnOffOnHandler(int argc, char **argv)
     {
         ESP_LOGI(TAG, "On Handler -> TODO");
-        /*BindingCommandData *data = Platform::New<BindingCommandData>();
+
+        ClusterCommandData *data = Platform::New<ClusterCommandData>();
+        data->fabricId = atoi(argv[0]);
+        data->nodeId = atoi(argv[1]);
+        data->endpointId = atoi(argv[2]);
         data->commandId = Clusters::OnOff::Commands::On::Id;
         data->clusterId = Clusters::OnOff::Id;
 
-        DeviceLayer::PlatformMgr().ScheduleWork(ClusterCommandWorkerFunction, reinterpret_cast<intptr_t>(data));
-        */
+        DeviceLayer::PlatformMgr()
+            .ScheduleWork(ClusterCommandWorkerFunction, reinterpret_cast<intptr_t>(data));
+
         return CHIP_NO_ERROR;
     }
 
@@ -206,17 +212,75 @@ namespace
 /********************************************************
  * Switch functions
  *********************************************************/
-/*
+namespace
+{
+
+    chip::PeerId PeerIdForNode(chip::FabricTable *fabricTable, chip::FabricIndex fabric, chip::NodeId node)
+    {
+        chip::FabricInfo *fabricInfo = fabricTable->FindFabricWithIndex(fabric);
+        if (fabricInfo == nullptr)
+        {
+            return chip::PeerId();
+        }
+        return fabricInfo->GetPeerIdForNode(node);
+    }
+}
+
+void onFailureCallbackClusterCommandOnOff(void *context, PeerId peerId, CHIP_ERROR error)
+{
+    auto &server = chip::Server::GetInstance();
+    CASESessionManager *CASESessionManager = server.GetCASESessionManager();
+    // Simply release the entry, the connection will be re-established as needed.
+    ChipLogError(NotSpecified, "Failed to establish connection to node 0x" ChipLogFormatX64, ChipLogValueX64(peerId.GetNodeId()));
+    CASESessionManager->ReleaseSession(peerId);
+}
+
+void onConnectedCallbackClusterCommandOnOff(void *context, OperationalDeviceProxy *peer_device)
+{
+    Clusters::OnOff::Commands::On::Type onCommand;
+    auto onSuccess = [](const ConcreteCommandPath &commandPath, const StatusIB &status, const auto &dataResponse)
+    {
+        ChipLogProgress(NotSpecified, "OnOff command succeeds");
+    };
+
+    auto onFailure = [](CHIP_ERROR error)
+    {
+        ChipLogError(NotSpecified, "OnOff command failed: %" CHIP_ERROR_FORMAT, error.Format());
+    };
+
+    /* TODO REPLACE 1 with endpointId */
+    Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), 1,
+                                     onCommand, onSuccess, onFailure);
+
+    // TODO place this: Platform::Delete(context);
+}
+
 void ClusterCommandWorkerFunction(intptr_t context)
 {
-    VerifyOrReturn(context != 0, ChipLogError(NotSpecified, "SwitchWorkerFunction - Invalid work data"));
+    auto &server = chip::Server::GetInstance();
+    chip::FabricTable *fabricTable = &server.GetFabricTable();
+    CASESessionManager *CASESessionManager = server.GetCASESessionManager();
+    ClusterCommandData *data = reinterpret_cast<ClusterCommandData *>(context);
 
-    BindingCommandData *data = reinterpret_cast<BindingCommandData *>(context);
-    BindingManager::GetInstance().NotifyBoundClusterChanged(data->localEndpointId, data->clusterId, static_cast<void *>(data));
+    if (context == 0)
+    {
+        ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Invalid work data");
+        return;
+    }
+    if (CASESessionManager != nullptr)
+    {
+        ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Invalid SessionManager");
+        return;
+    }
+    PeerId peer = PeerIdForNode(fabricTable, data->fabricId, data->nodeId);
+    if (peer.GetNodeId() == kUndefinedNodeId)
+    {
+        ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Unable to find the mentioned Peer");
+    }
 
-    Platform::Delete(data);
+    CASESessionManager->FindOrEstablishSession(peer, &onConnectedCallbackClusterCommandOnOff, &onFailureCallbackClusterCommandOnOff);
 }
-*/
+
 void RegisterClusterCommands()
 {
 
