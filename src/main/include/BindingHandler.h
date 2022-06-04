@@ -37,6 +37,7 @@
 CHIP_ERROR InitBindingHandler();
 void SwitchWorkerFunction(intptr_t context);
 void BindingWorkerFunction(intptr_t context);
+void SubscribeWorkerFunction(intptr_t context);
 
 struct BindingCommandData
 {
