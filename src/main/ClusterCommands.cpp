@@ -130,8 +130,6 @@ namespace shell
         data->endpointId = atoi(argv[2]);
         data->clusterId = Clusters::OnOff::Id;
         data->commandId = commandId;
-        data->mOnConnectedCallback = Callback::Callback<OnDeviceConnected>(Callback::Callback<OnDeviceConnected>(onConnectedCallbackClusterCommandOnOff, (void *)data));
-        data->mOnConnectionFailureCallback = Callback::Callback<OnDeviceConnectionFailure>(onFailureCallbackClusterCommandOnOff, (void *)data);
         return data;
     }
     CHIP_ERROR ClusterCommandOnOffOnHandler(int argc, char **argv)
@@ -176,7 +174,7 @@ namespace shell
             .ScheduleWork(ClusterCommandWorkerFunction, reinterpret_cast<intptr_t>(data));
         return CHIP_NO_ERROR;
     }
-    ClusterCommandData::ClusterCommandData() : fabricId(), nodeId(), endpointId(), commandId(), clusterId(), mOnConnectedCallback(onConnectedCallbackClusterCommandOnOff, (void *)this), mOnConnectionFailureCallback(onFailureCallbackClusterCommandOnOff, (void *)this) {}
+    ClusterCommandData::ClusterCommandData() : mOnConnectedCallback(onConnectedCallbackClusterCommandOnOff, (void *)this), mOnConnectionFailureCallback(onFailureCallbackClusterCommandOnOff, (void *)this) {}
 
 #endif // ENABLE_CHIP_SHELL
 
