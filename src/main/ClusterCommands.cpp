@@ -47,74 +47,6 @@ static const char *TAG = "Cluster Commands";
 namespace
 {
 
-/*
-    void ProcessOnOffUnicastBindingCommand(CommandId commandId, const EmberBindingTableEntry &binding, DeviceProxy *peer_device)
-    {
-        auto onSuccess = [](const ConcreteCommandPath &commandPath, const StatusIB &status, const auto &dataResponse)
-        {
-            ChipLogProgress(NotSpecified, "OnOff command succeeds");
-        };
-
-        auto onFailure = [](CHIP_ERROR error)
-        {
-            ChipLogError(NotSpecified, "OnOff command failed: %" CHIP_ERROR_FORMAT, error.Format());
-        };
-
-        switch (commandId)
-        {
-        case Clusters::OnOff::Commands::Toggle::Id:
-            Clusters::OnOff::Commands::Toggle::Type toggleCommand;
-            Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), binding.remote,
-                                             toggleCommand, onSuccess, onFailure);
-            break;
-
-        case Clusters::OnOff::Commands::On::Id:
-            Clusters::OnOff::Commands::On::Type onCommand;
-            Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), binding.remote,
-                                             onCommand, onSuccess, onFailure);
-            break;
-
-        case Clusters::OnOff::Commands::Off::Id:
-            Clusters::OnOff::Commands::Off::Type offCommand;
-            Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), binding.remote,
-                                             offCommand, onSuccess, onFailure);
-            break;
-        }
-    }
-
-    void LightSwitchChangedHandler(const EmberBindingTableEntry &binding, DeviceProxy *peer_device, void *context)
-    {
-        VerifyOrReturn(context != nullptr, ChipLogError(NotSpecified, "OnDeviceConnectedFn: context is null"));
-        BindingCommandData *data = static_cast<BindingCommandData *>(context);
-
-        if (binding.type == EMBER_MULTICAST_BINDING && data->isGroup)
-        {
-            switch (data->clusterId)
-            {
-            case Clusters::OnOff::Id:
-                ProcessOnOffGroupBindingCommand(data->commandId, binding);
-                break;
-            }
-        }
-        else if (binding.type == EMBER_UNICAST_BINDING && !data->isGroup)
-        {
-            switch (data->clusterId)
-            {
-            case Clusters::OnOff::Id:
-                ProcessOnOffUnicastBindingCommand(data->commandId, binding, peer_device);
-                break;
-            }
-        }
-    }
-
-    void InitBindingHandlerInternal(intptr_t arg)
-    {
-        auto &server = chip::Server::GetInstance();
-        chip::BindingManager::GetInstance().Init(
-            {&server.GetFabricTable(), server.GetCASESessionManager(), &server.GetPersistentStorage()});
-        chip::BindingManager::GetInstance().RegisterBoundDeviceChangedHandler(LightSwitchChangedHandler);
-    }
-*/
 #ifdef CONFIG_ENABLE_CHIP_SHELL
 
     /********************************************************
@@ -210,10 +142,6 @@ namespace
         return CHIP_NO_ERROR;
     }
 
-    /**
-     * @brief configures switch matter shell
-     *
-     */
 
 #endif // ENABLE_CHIP_SHELL
 
