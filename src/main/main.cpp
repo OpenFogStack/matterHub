@@ -1,19 +1,7 @@
 /*
- *
- *    Copyright (c) 2022 Project CHIP Authors
- *    All rights reserved.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *    Published under MIT License
+ *    Copyright (c) 2022 OpenFogStack
+ *    Based on code written by Project CHIP Authors, which was published under Apache License, Version 2.0 (c) 2022
  */
 
 #include "DeviceCallbacks.h"
@@ -29,13 +17,14 @@
 #include "freertos/task.h"
 #include "nvs_flash.h"
 #include "shell_extension/launch.h"
+#include "ClusterCommands.h"
 
 #include <app/server/OnboardingCodesUtil.h>
 
 using namespace ::chip;
 using namespace ::chip::DeviceManager;
 
-static const char * TAG = "light-switch-app";
+static const char *TAG = "light-switch-app";
 
 static AppDeviceCallbacks EchoCallbacks;
 
@@ -65,9 +54,10 @@ extern "C" void app_main()
 
 #if CONFIG_ENABLE_CHIP_SHELL
     chip::LaunchShell();
+    shell::RegisterClusterCommands();
 #endif // CONFIG_ENABLE_CHIP_SHELL
 
-    CHIPDeviceManager & deviceMgr = CHIPDeviceManager::GetInstance();
+    CHIPDeviceManager &deviceMgr = CHIPDeviceManager::GetInstance();
 
     CHIP_ERROR error = deviceMgr.Init(&EchoCallbacks);
     if (error != CHIP_NO_ERROR)
