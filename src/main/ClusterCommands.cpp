@@ -157,6 +157,16 @@ namespace
         return sShellClusterOnOffSubCommands.ExecCommand(argc, argv);
     }
 
+    ClusterCommandData *ClusterCommandDataOnOffParser(int argc, char **argv, chip::CommandId commandId)
+    {
+        ClusterCommandData *data = Platform::New<ClusterCommandData>();
+        data->fabricId = atoi(argv[0]);
+        data->nodeId = atoi(argv[1]);
+        data->endpointId = atoi(argv[2]);
+        data->clusterId = Clusters::OnOff::Id;
+        data->commandId = commandId;
+        return data;
+    }
     CHIP_ERROR ClusterCommandOnOffOnHandler(int argc, char **argv)
     {
         ESP_LOGI(TAG, "On Handler -> TODO");
@@ -164,12 +174,7 @@ namespace
         {
             return ClusterCommandOnOffHelpHandler(argc, argv);
         }
-        ClusterCommandData *data = Platform::New<ClusterCommandData>();
-        data->fabricId = atoi(argv[0]);
-        data->nodeId = atoi(argv[1]);
-        data->endpointId = atoi(argv[2]);
-        data->commandId = Clusters::OnOff::Commands::On::Id;
-        data->clusterId = Clusters::OnOff::Id;
+        ClusterCommandData *data = ClusterCommandDataOnOffParser(argc, argv, Clusters::OnOff::Commands::On::Id);
 
         DeviceLayer::PlatformMgr()
             .ScheduleWork(ClusterCommandWorkerFunction, reinterpret_cast<intptr_t>(data));
@@ -184,12 +189,7 @@ namespace
         {
             return ClusterCommandOnOffHelpHandler(argc, argv);
         }
-        ClusterCommandData *data = Platform::New<ClusterCommandData>();
-        data->fabricId = atoi(argv[0]);
-        data->nodeId = atoi(argv[1]);
-        data->endpointId = atoi(argv[2]);
-        data->commandId = Clusters::OnOff::Commands::Off::Id;
-        data->clusterId = Clusters::OnOff::Id;
+        ClusterCommandData *data = ClusterCommandDataOnOffParser(argc, argv, Clusters::OnOff::Commands::Off::Id);
 
         DeviceLayer::PlatformMgr()
             .ScheduleWork(ClusterCommandWorkerFunction, reinterpret_cast<intptr_t>(data));
@@ -198,14 +198,15 @@ namespace
 
     CHIP_ERROR ClusterCommandOnOffToggleHandler(int argc, char **argv)
     {
-        ESP_LOGI(TAG, "Toggle Handler -> TODO");
-        /*
-        BindingCommandData *data = Platform::New<BindingCommandData>();
-        data->commandId = Clusters::OnOff::Commands::Toggle::Id;
-        data->clusterId = Clusters::OnOff::Id;
+        ESP_LOGI(TAG, "Off Handler -> TODO");
+        if (argc != 3)
+        {
+            return ClusterCommandOnOffHelpHandler(argc, argv);
+        }
+        ClusterCommandData *data = ClusterCommandDataOnOffParser(argc, argv, Clusters::OnOff::Commands::Toggle::Id);
 
-        DeviceLayer::PlatformMgr().ScheduleWork(ClusterCommandWorkerFunction, reinterpret_cast<intptr_t>(data));
-        */
+        DeviceLayer::PlatformMgr()
+            .ScheduleWork(ClusterCommandWorkerFunction, reinterpret_cast<intptr_t>(data));
         return CHIP_NO_ERROR;
     }
 
