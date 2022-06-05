@@ -141,10 +141,6 @@ namespace
         return CHIP_NO_ERROR;
     }
 
-    /**
-     * @brief configures switch matter shell
-     *
-     */
 
 #endif // ENABLE_CHIP_SHELL
 
