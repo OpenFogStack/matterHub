@@ -1,19 +1,7 @@
 /*
- *
- *    Copyright (c) 2022 Project CHIP Authors
- *    All rights reserved.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ *    Published under MIT License
+ *    Copyright (c) 2022 OpenFogStack
+ *    Based on code written by Project CHIP Authors, which was published under Apache License, Version 2.0 (c) 2022
  */
 #include "app/CommandSender.h"
 #include "app/clusters/bindings/BindingManager.h"
@@ -44,7 +32,7 @@ Engine sShellClusterOnOffSubCommands;
 #endif // defined(ENABLE_CHIP_SHELL)
 
 static const char *TAG = "Cluster Commands";
-namespace
+namespace shell
 {
 
 #ifdef CONFIG_ENABLE_CHIP_SHELL
@@ -88,6 +76,51 @@ namespace
 
         return sShellClusterOnOffSubCommands.ExecCommand(argc, argv);
     }
+    void onFailureCallbackClusterCommandOnOff(void *context, PeerId peerId, CHIP_ERROR error)
+    {
+        auto &server = chip::Server::GetInstance();
+        CASESessionManager *CASESessionManager = server.GetCASESessionManager();
+        // Simply release the entry, the connection will be re-established as needed.
+        ChipLogError(NotSpecified, "Failed to establish connection to node 0x" ChipLogFormatX64, ChipLogValueX64(peerId.GetNodeId()));
+        CASESessionManager->ReleaseSession(peerId);
+    }
+
+    void onConnectedCallbackClusterCommandOnOff(void *context, OperationalDeviceProxy *peer_device)
+    {
+        ChipLogError(NotSpecified, "Got here!!");
+        ClusterCommandData *data = reinterpret_cast<ClusterCommandData *>(context);
+
+        auto onSuccess = [data](const ConcreteCommandPath &commandPath, const StatusIB &status, const auto &dataResponse)
+        {
+            ChipLogProgress(NotSpecified, "OnOff command succeeds");
+            Platform::Delete(data);
+        };
+
+        auto onFailure = [data](CHIP_ERROR error)
+        {
+            ChipLogError(NotSpecified, "OnOff command failed: %" CHIP_ERROR_FORMAT, error.Format());
+            Platform::Delete(data);
+        };
+        auto commandId = data->commandId;
+        switch (commandId)
+        {
+        case Clusters::OnOff::Commands::On::Id:
+            Clusters::OnOff::Commands::On::Type onCommand;
+            Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), data->endpointId,
+                                             onCommand, onSuccess, onFailure);
+            break;
+        case Clusters::OnOff::Commands::Off::Id:
+            Clusters::OnOff::Commands::Off::Type offCommand;
+            Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), data->endpointId,
+                                             offCommand, onSuccess, onFailure);
+            break;
+        case Clusters::OnOff::Commands::Toggle::Id:
+            Clusters::OnOff::Commands::Toggle::Type toggleCommand;
+            Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), data->endpointId,
+                                             toggleCommand, onSuccess, onFailure);
+            break;
+        }
+    }
 
     ClusterCommandData *ClusterCommandDataOnOffParser(int argc, char **argv, chip::CommandId commandId)
     {
@@ -97,11 +130,13 @@ namespace
         data->endpointId = atoi(argv[2]);
         data->clusterId = Clusters::OnOff::Id;
         data->commandId = commandId;
+        data->mOnConnectedCallback = Callback::Callback<OnDeviceConnected>(Callback::Callback<OnDeviceConnected>(onConnectedCallbackClusterCommandOnOff, (void *)data));
+        data->mOnConnectionFailureCallback = Callback::Callback<OnDeviceConnectionFailure>(onFailureCallbackClusterCommandOnOff, (void *)data);
         return data;
     }
     CHIP_ERROR ClusterCommandOnOffOnHandler(int argc, char **argv)
     {
-        ESP_LOGI(TAG, "On Handler -> TODO");
+        ESP_LOGI(TAG, "On Handler");
         if (argc != 3)
         {
             return ClusterCommandOnOffHelpHandler(argc, argv);
@@ -116,7 +151,7 @@ namespace
 
     CHIP_ERROR ClusterCommandOnOffOffHandler(int argc, char **argv)
     {
-        ESP_LOGI(TAG, "Off Handler -> TODO");
+        ESP_LOGI(TAG, "Off Handler");
         if (argc != 3)
         {
             return ClusterCommandOnOffHelpHandler(argc, argv);
@@ -130,7 +165,7 @@ namespace
 
     CHIP_ERROR ClusterCommandOnOffToggleHandler(int argc, char **argv)
     {
-        ESP_LOGI(TAG, "Off Handler -> TODO");
+        ESP_LOGI(TAG, "Toggle Handler");
         if (argc != 3)
         {
             return ClusterCommandOnOffHelpHandler(argc, argv);
@@ -141,7 +176,7 @@ namespace
             .ScheduleWork(ClusterCommandWorkerFunction, reinterpret_cast<intptr_t>(data));
         return CHIP_NO_ERROR;
     }
-
+    ClusterCommandData::ClusterCommandData() : fabricId(), nodeId(), endpointId(), commandId(), clusterId(), mOnConnectedCallback(onConnectedCallbackClusterCommandOnOff, (void *)this), mOnConnectionFailureCallback(onFailureCallbackClusterCommandOnOff, (void *)this) {}
 
 #endif // ENABLE_CHIP_SHELL
 
@@ -164,102 +199,56 @@ namespace
     }
 }
 
-void onFailureCallbackClusterCommandOnOff(void *context, PeerId peerId, CHIP_ERROR error)
+namespace shell
 {
-    auto &server = chip::Server::GetInstance();
-    CASESessionManager *CASESessionManager = server.GetCASESessionManager();
-    // Simply release the entry, the connection will be re-established as needed.
-    ChipLogError(NotSpecified, "Failed to establish connection to node 0x" ChipLogFormatX64, ChipLogValueX64(peerId.GetNodeId()));
-    CASESessionManager->ReleaseSession(peerId);
-}
+    void RegisterClusterCommands()
+    {
+        using namespace shell;
+        static const shell_command_t sClusterSubCommands[] = {
+            {&ClusterHelpHandler, "help", "Usage: cluster <subcommand>"},
+            {&ClusterCommandOnOffHandler, "onoff", " Usage: cluster onoff <subcommand>"},
+        };
 
-void onConnectedCallbackClusterCommandOnOff(void *context, OperationalDeviceProxy *peer_device)
-{
-    ChipLogError(NotSpecified, "Got here!!");
-    ClusterCommandData *data = reinterpret_cast<ClusterCommandData *>(context);
+        static const shell_command_t sClusterCommandOnOffSubCommands[] = {
+            {&ClusterCommandOnOffHelpHandler, "help", "Usage : cluster ononff <subcommand>"},
+            {&ClusterCommandOnOffOnHandler, "on", "Usage: cluster onoff on <Fabric> <Node> <Endpoint>"},
+            {&ClusterCommandOnOffOffHandler, "off", "Usage: cluster onoff off <Fabric> <Node> <Endpoint>"},
+            {&ClusterCommandOnOffToggleHandler, "toggle", "Usage: cluster onoff off <Fabric> <Node> <Endpoint>"}};
 
-    auto onSuccess = [data](const ConcreteCommandPath &commandPath, const StatusIB &status, const auto &dataResponse)
-    {
-        ChipLogProgress(NotSpecified, "OnOff command succeeds");
-        Platform::Delete(data);
-    };
+        static const shell_command_t sClusterCommand = {&ClusterCommandHandler, "cluster",
+                                                        "Cluster commands. Usage: cluster <subcommand>"};
 
-    auto onFailure = [data](CHIP_ERROR error)
-    {
-        ChipLogError(NotSpecified, "OnOff command failed: %" CHIP_ERROR_FORMAT, error.Format());
-        Platform::Delete(data);
-    };
-    auto commandId = data->commandId;
-    switch (commandId)
-    {
-    case Clusters::OnOff::Commands::On::Id:
-        Clusters::OnOff::Commands::On::Type onCommand;
-        Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), data->endpointId,
-                                         onCommand, onSuccess, onFailure);
-        break;
-    case Clusters::OnOff::Commands::Off::Id:
-        Clusters::OnOff::Commands::Off::Type offCommand;
-        Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), data->endpointId,
-                                         offCommand, onSuccess, onFailure);
-        break;
-    case Clusters::OnOff::Commands::Toggle::Id:
-        Clusters::OnOff::Commands::Toggle::Type toggleCommand;
-        Controller::InvokeCommandRequest(peer_device->GetExchangeManager(), peer_device->GetSecureSession().Value(), data->endpointId,
-                                         toggleCommand, onSuccess, onFailure);
-        break;
-    }
-}
+        sShellClusterOnOffSubCommands.RegisterCommands(sClusterCommandOnOffSubCommands, ArraySize(sClusterCommandOnOffSubCommands));
+        sShellClusterSubCommands.RegisterCommands(sClusterSubCommands, ArraySize(sClusterSubCommands));
 
-void ClusterCommandWorkerFunction(intptr_t context)
-{
-    if (context == 0)
-    {
-        ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Invalid work data");
-        return;
-    }
-    ClusterCommandData *data = reinterpret_cast<ClusterCommandData *>(context);
-    auto &server = chip::Server::GetInstance();
-    chip::FabricTable *fabricTable = &server.GetFabricTable();
-    CASESessionManager *CASESessionManager = server.GetCASESessionManager();
-    if (CASESessionManager == nullptr)
-    {
-        ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Invalid SessionManager");
-        return;
+        Engine::Root().RegisterCommands(&sClusterCommand, 1);
     }
 
-    PeerId peer = PeerIdForNode(fabricTable, data->fabricId, data->nodeId);
-    if (peer.GetNodeId() == kUndefinedNodeId)
+    void ClusterCommandWorkerFunction(intptr_t context)
     {
-        ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Unable to find the mentioned Peer");
-        return;
+        if (context == 0)
+        {
+            ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Invalid work data");
+            return;
+        }
+        shell::ClusterCommandData *data = reinterpret_cast<shell::ClusterCommandData *>(context);
+        auto &server = chip::Server::GetInstance();
+        chip::FabricTable *fabricTable = &server.GetFabricTable();
+        CASESessionManager *CASESessionManager = server.GetCASESessionManager();
+        if (CASESessionManager == nullptr)
+        {
+            ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Invalid SessionManager");
+            return;
+        }
+
+        PeerId peer = PeerIdForNode(fabricTable, data->fabricId, data->nodeId);
+        if (peer.GetNodeId() == kUndefinedNodeId)
+        {
+            ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Unable to find the mentioned Peer");
+            return;
+        }
+
+        CASESessionManager->FindOrEstablishSession(peer, &data->mOnConnectedCallback, &data->mOnConnectionFailureCallback);
+        ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Registration Done");
     }
-
-    Callback::Callback<OnDeviceConnected> mOnConnectedCallback = Callback::Callback<OnDeviceConnected>(onConnectedCallbackClusterCommandOnOff, (void *)context);
-    Callback::Callback<OnDeviceConnectionFailure> mOnConnectionFailureCallback = Callback::Callback<OnDeviceConnectionFailure>(onFailureCallbackClusterCommandOnOff, (void *)context);
-
-    CASESessionManager->FindOrEstablishSession(peer, &mOnConnectedCallback, &mOnConnectionFailureCallback);
-    ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Registration Done");
-}
-
-void RegisterClusterCommands()
-{
-
-    static const shell_command_t sClusterSubCommands[] = {
-        {&ClusterHelpHandler, "help", "Usage: cluster <subcommand>"},
-        {&ClusterCommandOnOffHandler, "onoff", " Usage: cluster onoff <subcommand>"},
-    };
-
-    static const shell_command_t sClusterCommandOnOffSubCommands[] = {
-        {&ClusterCommandOnOffHelpHandler, "help", "Usage : cluster ononff <subcommand>"},
-        {&ClusterCommandOnOffOnHandler, "on", "Usage: cluster onoff on <Fabric> <Node> <Endpoint>"},
-        {&ClusterCommandOnOffOffHandler, "off", "Usage: cluster onoff off <Fabric> <Node> <Endpoint>"},
-        {&ClusterCommandOnOffToggleHandler, "toggle", "Usage: cluster onoff off <Fabric> <Node> <Endpoint>"}};
-
-    static const shell_command_t sClusterCommand = {&ClusterCommandHandler, "cluster",
-                                                    "Cluster commands. Usage: cluster <subcommand>"};
-
-    sShellClusterOnOffSubCommands.RegisterCommands(sClusterCommandOnOffSubCommands, ArraySize(sClusterCommandOnOffSubCommands));
-    sShellClusterSubCommands.RegisterCommands(sClusterSubCommands, ArraySize(sClusterSubCommands));
-
-    Engine::Root().RegisterCommands(&sClusterCommand, 1);
-}
+} // End namespace shell
