@@ -7,6 +7,7 @@ It has been developed on and for Linux, but adjusting it for MacOS should be pos
 ## Dependencies
 
 expect `sudo apt-get install expect`
+
 (and if you want tmux) `sudo apt-get install tmux`
 
 ## Configuration
