@@ -17,7 +17,11 @@ public:
         mDevice(device), mEndpointId(endpointId), mClusterId(clusterId), mAttributeId(attributeId), mMinInterval(minInterval),
         mMaxInterval(maxInterval)
     {}
-
+     CHIP_ERROR DoSubscribe()
+    {
+        return SubscribeAttribute(mDevice, mEndpointId, mClusterId, mAttributeId, mMinInterval, mMaxInterval,
+                                  chip::Optional<bool>(true), chip::NullOptional, chip::NullOptional);
+    }
 private:
     // TODO: Create all required fields to create and manage a subscription
     chip::DeviceProxy * mDevice;
@@ -27,11 +31,7 @@ private:
     uint16_t mMinInterval;
     uint16_t mMaxInterval;
 
-    CHIP_ERROR DoSubscribe()
-    {
-        return SubscribeAttribute(mDevice, mEndpointId, mClusterId, mAttributeId, mMinInterval, mMaxInterval,
-                                  chip::Optional<bool>(true), chip::NullOptional, chip::NullOptional);
-    }
+   
     /////////// ReadClient Callback Interface /////////
     void OnAttributeData(const chip::app::ConcreteDataAttributePath & path, chip::TLV::TLVReader * data,
                          const chip::app::StatusIB & status) override

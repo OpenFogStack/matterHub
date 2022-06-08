@@ -70,8 +70,14 @@ void SubscriptionManager::onConnectedCallbackSubscribeRequest(void * context, ch
     Subscription * sub = Platform::New<Subscription>(peer_device, data->endpointId, data->clusterId, data->attributeId,
                                                      data->minInterval, data->maxInterval);
 
-    //TODO Start subscription
-    manager->mSubscriptions.emplace_back(sub, &cleanup);
+    CHIP_ERROR error = sub->DoSubscribe();
+    if (error == CHIP_NO_ERROR) {
+        manager->mSubscriptions.emplace_back(sub, &cleanup);
+    } else {
+        ChipLogError(NotSpecified, "Got error while subscribing: %" CHIP_ERROR_FORMAT, error.Format());
+        cleanup(sub);
+    }
+
     manager->mCurrentSubscription.ClearValue();
     Platform::Delete(data);
 }
