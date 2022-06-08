@@ -47,6 +47,8 @@ private:
     chip::Callback::Callback<chip::OnDeviceConnected> mOnConnectedCallbackSubscribeRequest;
     chip::Callback::Callback<chip::OnDeviceConnectionFailure> mOnFailureCallbackSubscribeRequest;
 
+    std::vector<Subscription> mSubscriptions;
+
     CHIP_ERROR SendSubscribeRequest(SubscribeCommandData * data);
 };
 } // namespace chip
