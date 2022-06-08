@@ -14,7 +14,7 @@ public:
     Subscription(chip::DeviceProxy * device, chip::EndpointId endpointId, chip::ClusterId clusterId, chip::AttributeId attributeId,
                  uint16_t minInterval, uint16_t maxInterval) :
         InteractionModelReports(this),
-        mDevice(device), mEndpointId(endpointId), mClusterId(clusterId), mAttributeId(attributeId), mMinInterval(minInterval),
+        mDevice(device), mEndpointId({endpointId}), mClusterId({clusterId}), mAttributeId({attributeId}), mMinInterval(minInterval),
         mMaxInterval(maxInterval)
     {}
      CHIP_ERROR DoSubscribe()
