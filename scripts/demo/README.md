@@ -23,6 +23,11 @@ set PASSWORD "YOUR PASSWORD"
 
 Adjust those four settings to your environment, if required you can also adjust the TTYs for the ESP32 and the M5 and maybe the shell (on your own risk)
 
+You can ignore changes in the config file by using:
+`
+git update-index --skip-worktree scripts/demo/config
+`
+
 ## Usage
 
 ### Terminals
