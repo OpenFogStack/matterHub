@@ -1,0 +1,22 @@
+#!/usr/bin/expect
+
+# Load the Demo Config
+source ./config
+
+set timeout $EXPECT_TIMEOUT
+
+spawn "$SHELL_PATH"
+set com_shell $spawn_id
+spawn "$SHELL_PATH"
+set device_shell $spawn_id
+send "cd $MATTER_HUB_DIR\r"
+send "source scripts/activate.sh\r"
+# Init IDF
+send ". \$IDF_PATH/export.sh > /dev/null\r"
+send "cd $LIGHTING_EXAMPLE_DIR\r"
+send "idf.py erase_flash -p $ESP32_TTY\r"
+send "idf.py build\r"
+send "idf.py flash monitor -p $ESP32_TTY\r"
+expect "wifi:Haven't to connect to a suitable AP now!"
+send -i $com_shell "echo \"$ESP32_TTY provisioned\" >> $COMMUNICATION_FILE\r"
+interact

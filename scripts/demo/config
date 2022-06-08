@@ -1,0 +1,14 @@
+set MATTER_HUB_DIR "YOUR MATTER HUB DIR"
+set CHIP_TOOL_PATH "YOUR CHIP-TOOL PATH"
+set SSID "YOUR SSID"
+set PASSWORD "YOUR PASSWORD"
+
+set M5_TTY "/dev/ttyACM0"
+set ESP32_TTY "/dev/ttyUSB0"
+
+set SHELL_PATH "/usr/bin/bash"
+
+set EXPECT_TIMEOUT 3600
+set MATTER_HUB_SOURCE "$MATTER_HUB_DIR/src"
+set LIGHTING_EXAMPLE_DIR "$MATTER_HUB_DIR/thirdparty/chip/repo/examples/lighting-app/esp32"
+set COMMUNICATION_FILE "/tmp/matterHubCom"
