@@ -13,10 +13,11 @@ namespace chip {
 SubscriptionManager SubscriptionManager::sSubscriptionManager;
 CHIP_ERROR SubscriptionManager::RegisterSubscription(SubscribeCommandData * data)
 {
-    if(mCurrentSubscription.HasValue()) {
+    if (mCurrentSubscription.HasValue())
+    {
         return CHIP_ERROR_BUSY;
     }
-    mCurrentSubscription.SetValue(data);
+    mCurrentSubscription.SetValue(std::move(data));
     // Send subscribe request
     SubscriptionManager::SendSubscribeRequest(data);
     // Receive report manager?!
@@ -46,8 +47,14 @@ CHIP_ERROR SubscriptionManager::SendSubscribeRequest(SubscribeCommandData * data
         ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Unable to find the mentioned Peer");
         return CHIP_ERROR_INVALID_ARGUMENT;
     }
+    ESP_LOGI("Subscribe", "SubscribeSubscribeCommandHandler");
+    ESP_LOGI("Subscribe", " - EndPoint ID: '0x%02x'", data->endpointId);
+    ESP_LOGI("Subscribe", " - Cluster ID: '0x%02x'", data->clusterId);
+    ESP_LOGI("Subscribe", " - Attribute ID: '0x%02x'", data->attributeId);
+    ESP_LOGI("Subscribe", " - minInterval: '0x%02x'", data->minInterval);
+    ESP_LOGI("Subscribe", " - maxInterval: '0x%02x'", data->maxInterval);
 
-    mCASESessionManager->FindOrEstablishSession(peer, &mOnConnectedCallbackSubscribeRequest, &mOnFailureCallbackSubscribeRequest);
+    mCASESessionManager->FindOrEstablishSession(peer, &data->mOnConnectedCallback, &data->mOnConnectionFailureCallback);
     ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Registration Done");
     return CHIP_NO_ERROR;
 }
@@ -61,24 +68,4 @@ void SubscriptionManager::onFailureCallbackSubscribeRequest(void * context, chip
     CASESessionManager->ReleaseSession(peerId);
 }
 
-void SubscriptionManager::onConnectedCallbackSubscribeRequest(void * context, chip::OperationalDeviceProxy * peer_device)
-{
-    ChipLogError(NotSpecified, "Got here!!");
-    SubscriptionManager * manager = reinterpret_cast<SubscriptionManager *>(context);
-    assert(manager->mCurrentSubscription.HasValue());
-    SubscribeCommandData * data = manager->mCurrentSubscription.Value();
-    Subscription * sub = Platform::New<Subscription>(peer_device, data->endpointId, data->clusterId, data->attributeId,
-                                                     data->minInterval, data->maxInterval);
-
-    CHIP_ERROR error = sub->DoSubscribe();
-    if (error == CHIP_NO_ERROR) {
-        manager->mSubscriptions.emplace_back(sub, &cleanup);
-    } else {
-        ChipLogError(NotSpecified, "Got error while subscribing: %" CHIP_ERROR_FORMAT, error.Format());
-        cleanup(sub);
-    }
-
-    manager->mCurrentSubscription.ClearValue();
-    Platform::Delete(data);
-}
 } // namespace chip

@@ -14,16 +14,17 @@ public:
     Subscription(chip::DeviceProxy * device, chip::EndpointId endpointId, chip::ClusterId clusterId, chip::AttributeId attributeId,
                  uint16_t minInterval, uint16_t maxInterval) :
         InteractionModelReports(this),
-        mDevice(device), mEndpointId({endpointId}), mClusterId({clusterId}), mAttributeId({attributeId}), mMinInterval(minInterval),
-        mMaxInterval(maxInterval)
-    {}
-     CHIP_ERROR DoSubscribe()
+        mDevice(device), mMinInterval(minInterval), mMaxInterval(maxInterval)
+    {
+        mEndpointId  = { endpointId };
+        mClusterId   = { clusterId };
+        mAttributeId = { attributeId };
+    }
+    CHIP_ERROR DoSubscribe()
     {
         return SubscribeAttribute(mDevice, mEndpointId, mClusterId, mAttributeId, mMinInterval, mMaxInterval,
                                   chip::Optional<bool>(true), chip::NullOptional, chip::NullOptional);
     }
-private:
-    // TODO: Create all required fields to create and manage a subscription
     chip::DeviceProxy * mDevice;
     std::vector<chip::EndpointId> mEndpointId;
     std::vector<chip::ClusterId> mClusterId;
@@ -31,7 +32,9 @@ private:
     uint16_t mMinInterval;
     uint16_t mMaxInterval;
 
-   
+private:
+    // TODO: Create all required fields to create and manage a subscription
+
     /////////// ReadClient Callback Interface /////////
     void OnAttributeData(const chip::app::ConcreteDataAttributePath & path, chip::TLV::TLVReader * data,
                          const chip::app::StatusIB & status) override

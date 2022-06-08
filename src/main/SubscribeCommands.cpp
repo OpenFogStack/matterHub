@@ -110,4 +110,50 @@ void RegisterSubscribeCommands()
 
     Engine::Root().RegisterCommands(&sSubscribeCommand, 1);
 }
+SubscribeCommandData::SubscribeCommandData() :
+    mOnConnectedCallback(onConnectedCallbackSubscribeRequest, (void *) this),
+    mOnConnectionFailureCallback(onFailureCallbackSubscribeRequest, (void *) this)
+{}
+void onFailureCallbackSubscribeRequest(void * context, chip::PeerId peerId, CHIP_ERROR error)
+{
+    auto & server                                 = chip::Server::GetInstance();
+    chip::CASESessionManager * CASESessionManager = server.GetCASESessionManager();
+    // Simply release the entry, the connection will be re-established as needed.
+    ChipLogError(NotSpecified, "Failed to establish connection to node 0x" ChipLogFormatX64, ChipLogValueX64(peerId.GetNodeId()));
+    CASESessionManager->ReleaseSession(peerId);
+}
+
+void onConnectedCallbackSubscribeRequest(void * context, chip::OperationalDeviceProxy * peer_device)
+{
+    ChipLogError(NotSpecified, "Got here!!");
+
+    SubscribeCommandData * data = context;
+    ESP_LOGI("Subscribe", "SubscribeSubscribeCommandHandler");
+    ESP_LOGI("Subscribe", " - EndPoint ID: '0x%02x'", data->endpointId);
+    ESP_LOGI("Subscribe", " - Cluster ID: '0x%02x'", data->clusterId);
+    ESP_LOGI("Subscribe", " - Attribute ID: '0x%02x'", data->attributeId);
+    ESP_LOGI("Subscribe", " - minInterval: '0x%02x'", data->minInterval);
+    ESP_LOGI("Subscribe", " - maxInterval: '0x%02x'", data->maxInterval);
+    Subscription * sub = Platform::New<Subscription>(peer_device, data->endpointId, data->clusterId, data->attributeId,
+                                                     data->minInterval, data->maxInterval);
+
+    ESP_LOGI("Subscribe", "SubscribeSubscribeCommandHandler");
+    ESP_LOGI("Subscribe", " - EndPoint ID: '0x%02x'", sub->mEndpointId[0]);
+    ESP_LOGI("Subscribe", " - Cluster ID: '0x%02x'", sub->mClusterId[0]);
+    ESP_LOGI("Subscribe", " - Attribute ID: '0x%02x'", sub->mAttributeId[0]);
+    ESP_LOGI("Subscribe", " - minInterval: '0x%02x'", sub->mMinInterval);
+    ESP_LOGI("Subscribe", " - maxInterval: '0x%02x'", sub->mMaxInterval);
+    CHIP_ERROR error = sub->DoSubscribe();
+    if (error == CHIP_NO_ERROR)
+    {
+        SubscriptionManager::GetInstance()->mSubscriptions.emplace_back(sub, &cleanup);
+    }
+    else
+    {
+        ChipLogError(NotSpecified, "Got error while subscribing: %" CHIP_ERROR_FORMAT, error.Format());
+        cleanup(sub);
+    }
+
+    // Platform::Delete(data);
+}
 } // namespace shell

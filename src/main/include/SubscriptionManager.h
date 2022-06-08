@@ -18,9 +18,7 @@ namespace chip {
 class SubscriptionManager
 {
 public:
-    SubscriptionManager() :
-        mOnConnectedCallbackSubscribeRequest(onConnectedCallbackSubscribeRequest, this),
-        mOnFailureCallbackSubscribeRequest(onFailureCallbackSubscribeRequest, this)
+    SubscriptionManager()
     {
         auto & server       = chip::Server::GetInstance();
         mFabricTable        = &server.GetFabricTable();
@@ -39,20 +37,11 @@ public:
 private:
     static SubscriptionManager sSubscriptionManager;
 
-    static void onConnectedCallbackSubscribeRequest(void * context, chip::OperationalDeviceProxy * peer_device);
-    static void onFailureCallbackSubscribeRequest(void * context, chip::PeerId peerId, CHIP_ERROR error);
-
     chip::FabricTable * mFabricTable               = nullptr;
     chip::CASESessionManager * mCASESessionManager = nullptr;
-    chip::Callback::Callback<chip::OnDeviceConnected> mOnConnectedCallbackSubscribeRequest;
-    chip::Callback::Callback<chip::OnDeviceConnectionFailure> mOnFailureCallbackSubscribeRequest;
 
-    static void cleanup(Subscription * ptr){
-        Platform::Delete(ptr);
-    }
+    static void cleanup(Subscription * ptr) { Platform::Delete(ptr); }
     std::vector<std::unique_ptr<Subscription, decltype(&cleanup)>> mSubscriptions;
-
-    chip::Optional<SubscribeCommandData *> mCurrentSubscription;
 
     CHIP_ERROR SendSubscribeRequest(SubscribeCommandData * data);
 };
