@@ -7,16 +7,34 @@
 #include "BindingHandler.h"
 #include <InteractionModel.h>
 
-class Subscription : public InteractionModelReports, public : public chip::app::ReadClient::Callback
+class Subscription : public InteractionModelReports, public chip::app::ReadClient::Callback
 {
-    Subscription() : InteractionModelReports(this) {}
+
+public:
+    Subscription(chip::DeviceProxy * device, chip::EndpointId endpointId, chip::ClusterId clusterId, chip::AttributeId attributeId,
+                 uint16_t minInterval, uint16_t maxInterval) :
+        InteractionModelReports(this),
+        mDevice(device), mEndpointId(endpointId), mClusterId(clusterId), mAttributeId(attributeId), mMinInterval(minInterval),
+        mMaxInterval(maxInterval)
+    {}
 
 private:
     // TODO: Create all required fields to create and manage a subscription
+    chip::DeviceProxy * mDevice;
+    std::vector<chip::EndpointId> mEndpointId;
+    std::vector<chip::ClusterId> mClusterId;
+    std::vector<chip::AttributeId> mAttributeId;
+    uint16_t mMinInterval;
+    uint16_t mMaxInterval;
 
-    CHP_ERROR DoSubscribe(){ SubscribeAttribute } I ///////this->//// ReadClient Ca()llback Interface /////////
-        void OnAttributeData(const chip::app::ConcreteDataAttributePath & path, chip::TLV::TLVReader * data,
-                             const chip::app::StatusIB & status) override
+    CHIP_ERROR DoSubscribe()
+    {
+        return SubscribeAttribute(mDevice, mEndpointId, mClusterId, mAttributeId, mMinInterval, mMaxInterval,
+                                  chip::Optional<bool>(true), chip::NullOptional, chip::NullOptional);
+    }
+    /////////// ReadClient Callback Interface /////////
+    void OnAttributeData(const chip::app::ConcreteDataAttributePath & path, chip::TLV::TLVReader * data,
+                         const chip::app::StatusIB & status) override
     {
         CHIP_ERROR error = status.ToChipError();
         if (CHIP_NO_ERROR != error)
@@ -54,11 +72,13 @@ private:
             mError = CHIP_ERROR_INTERNAL;
             return;
         }
-    };
+    }
     void OnError(CHIP_ERROR error) override
     {
         ChipLogProgress(chipTool, "Error: %s", chip::ErrorStr(error));
         mError = error;
     }
+
+    void OnDone(chip::app::ReadClient * apReadClient) override{};
     CHIP_ERROR mError = CHIP_NO_ERROR;
 };

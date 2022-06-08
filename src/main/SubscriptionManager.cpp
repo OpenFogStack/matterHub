@@ -11,12 +11,14 @@
 
 namespace chip {
 SubscriptionManager SubscriptionManager::sSubscriptionManager;
-CHIP_ERROR SubscriptionManager::RegisterSubscription(SubscribeCommandData * manager)
+CHIP_ERROR SubscriptionManager::RegisterSubscription(SubscribeCommandData * data)
 {
-    // TODO build some datastructure to store Subscriptions
-
+    if(mCurrentSubscription.HasValue()) {
+        return CHIP_ERROR_BUSY;
+    }
+    mCurrentSubscription.SetValue(data);
     // Send subscribe request
-    SubscriptionManager::SendSubscribeRequest(manager);
+    SubscriptionManager::SendSubscribeRequest(data);
     // Receive report manager?!
 
     // send status response ?!
@@ -50,7 +52,7 @@ CHIP_ERROR SubscriptionManager::SendSubscribeRequest(SubscribeCommandData * data
     return CHIP_NO_ERROR;
 }
 
-static void SubscriptionManager::onFailureCallbackSubscribeRequest(void * context, chip::PeerId peerId, CHIP_ERROR error)
+void SubscriptionManager::onFailureCallbackSubscribeRequest(void * context, chip::PeerId peerId, CHIP_ERROR error)
 {
     auto & server                                 = chip::Server::GetInstance();
     chip::CASESessionManager * CASESessionManager = server.GetCASESessionManager();
@@ -59,11 +61,18 @@ static void SubscriptionManager::onFailureCallbackSubscribeRequest(void * contex
     CASESessionManager->ReleaseSession(peerId);
 }
 
-static void SubscriptionManager::onConnectedCallbackSubscribeRequest(void * context, chip::OperationalDeviceProxy * peer_device)
+void SubscriptionManager::onConnectedCallbackSubscribeRequest(void * context, chip::OperationalDeviceProxy * peer_device)
 {
     ChipLogError(NotSpecified, "Got here!!");
     SubscriptionManager * manager = reinterpret_cast<SubscriptionManager *>(context);
-    auto & sub                    = manager->mSubscriptions.emplace_back();
-    sub.SubscribeAttribute();
+    assert(manager->mCurrentSubscription.HasValue());
+    SubscribeCommandData * data = manager->mCurrentSubscription.Value();
+    Subscription * sub = Platform::New<Subscription>(peer_device, data->endpointId, data->clusterId, data->attributeId,
+                                                     data->minInterval, data->maxInterval);
+
+    //TODO Start subscription
+    manager->mSubscriptions.emplace_back(sub, &cleanup);
+    manager->mCurrentSubscription.ClearValue();
+    Platform::Delete(data);
 }
 } // namespace chip

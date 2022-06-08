@@ -47,7 +47,12 @@ private:
     chip::Callback::Callback<chip::OnDeviceConnected> mOnConnectedCallbackSubscribeRequest;
     chip::Callback::Callback<chip::OnDeviceConnectionFailure> mOnFailureCallbackSubscribeRequest;
 
-    std::vector<Subscription> mSubscriptions;
+    static void cleanup(Subscription * ptr){
+        Platform::Delete(ptr);
+    }
+    std::vector<std::unique_ptr<Subscription, decltype(&cleanup)>> mSubscriptions;
+
+    chip::Optional<SubscribeCommandData *> mCurrentSubscription;
 
     CHIP_ERROR SendSubscribeRequest(SubscribeCommandData * data);
 };
