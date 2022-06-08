@@ -5,6 +5,7 @@
  */
 #pragma once
 
+#include "app/server/Server.h"
 #include <app/OperationalDeviceProxy.h>
 namespace shell {
 

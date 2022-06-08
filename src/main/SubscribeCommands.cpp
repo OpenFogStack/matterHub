@@ -53,7 +53,8 @@ void SubscribeWorkerFunction(intptr_t context)
     VerifyOrReturn(context != 0, ChipLogError(NotSpecified, "SubscribeWorkerFunction - Invalid work data"));
 
     SubscribeCommandData * data = reinterpret_cast<SubscribeCommandData *>(context);
-    // SubscriptionManager::GetInstance()->RegisterSubscription(data);
+
+    SubscriptionManager::GetInstance().RegisterSubscription(data);
 
     Platform::Delete(data);
 }
