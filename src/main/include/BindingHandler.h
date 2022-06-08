@@ -31,8 +31,6 @@
 #include <app/WriteClient.h>
 #include <lib/support/CodeUtils.h>
 #include <lib/support/UnitTestUtils.h>
- 
-
 
 CHIP_ERROR InitBindingHandler();
 void SwitchWorkerFunction(intptr_t context);
@@ -45,15 +43,4 @@ struct BindingCommandData
     chip::CommandId commandId;
     chip::ClusterId clusterId;
     bool isGroup = false;
-};
-
-struct SubscribeCommandData {
-    const char * identity;
-    chip::FabricId fabricId;
-    chip::NodeId nodeId;
-    chip::EndpointId endpointId;
-    chip::ClusterId clusterId;
-    chip::AttributeId attributeId;
-    uint16_t minInterval;
-    uint16_t maxInterval;
 };

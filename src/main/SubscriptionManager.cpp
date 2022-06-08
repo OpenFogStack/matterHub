@@ -11,13 +11,8 @@
 
 namespace chip {
 SubscriptionManager SubscriptionManager::sSubscriptionManager;
-CHIP_ERROR SubscriptionManager::RegisterSubscription(SubscribeCommandData * data)
+CHIP_ERROR SubscriptionManager::RegisterSubscription(shell::SubscribeCommandData * data)
 {
-    if (mCurrentSubscription.HasValue())
-    {
-        return CHIP_ERROR_BUSY;
-    }
-    mCurrentSubscription.SetValue(std::move(data));
     // Send subscribe request
     SubscriptionManager::SendSubscribeRequest(data);
     // Receive report manager?!
@@ -38,7 +33,7 @@ chip::PeerId PeerIdForNode(chip::FabricTable * fabricTable, chip::FabricIndex fa
 }
 } // namespace
 
-CHIP_ERROR SubscriptionManager::SendSubscribeRequest(SubscribeCommandData * data)
+CHIP_ERROR SubscriptionManager::SendSubscribeRequest(shell::SubscribeCommandData * data)
 {
 
     PeerId peer = PeerIdForNode(mFabricTable, data->fabricId, data->nodeId);
@@ -57,15 +52,6 @@ CHIP_ERROR SubscriptionManager::SendSubscribeRequest(SubscribeCommandData * data
     mCASESessionManager->FindOrEstablishSession(peer, &data->mOnConnectedCallback, &data->mOnConnectionFailureCallback);
     ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Registration Done");
     return CHIP_NO_ERROR;
-}
-
-void SubscriptionManager::onFailureCallbackSubscribeRequest(void * context, chip::PeerId peerId, CHIP_ERROR error)
-{
-    auto & server                                 = chip::Server::GetInstance();
-    chip::CASESessionManager * CASESessionManager = server.GetCASESessionManager();
-    // Simply release the entry, the connection will be re-established as needed.
-    ChipLogError(NotSpecified, "Failed to establish connection to node 0x" ChipLogFormatX64, ChipLogValueX64(peerId.GetNodeId()));
-    CASESessionManager->ReleaseSession(peerId);
 }
 
 } // namespace chip

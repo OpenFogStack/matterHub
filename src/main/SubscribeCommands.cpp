@@ -110,10 +110,7 @@ void RegisterSubscribeCommands()
 
     Engine::Root().RegisterCommands(&sSubscribeCommand, 1);
 }
-SubscribeCommandData::SubscribeCommandData() :
-    mOnConnectedCallback(onConnectedCallbackSubscribeRequest, (void *) this),
-    mOnConnectionFailureCallback(onFailureCallbackSubscribeRequest, (void *) this)
-{}
+
 void onFailureCallbackSubscribeRequest(void * context, chip::PeerId peerId, CHIP_ERROR error)
 {
     auto & server                                 = chip::Server::GetInstance();
@@ -127,7 +124,7 @@ void onConnectedCallbackSubscribeRequest(void * context, chip::OperationalDevice
 {
     ChipLogError(NotSpecified, "Got here!!");
 
-    SubscribeCommandData * data = context;
+    SubscribeCommandData * data = reinterpret_cast<shell::SubscribeCommandData *>(context);
     ESP_LOGI("Subscribe", "SubscribeSubscribeCommandHandler");
     ESP_LOGI("Subscribe", " - EndPoint ID: '0x%02x'", data->endpointId);
     ESP_LOGI("Subscribe", " - Cluster ID: '0x%02x'", data->clusterId);
@@ -146,14 +143,19 @@ void onConnectedCallbackSubscribeRequest(void * context, chip::OperationalDevice
     CHIP_ERROR error = sub->DoSubscribe();
     if (error == CHIP_NO_ERROR)
     {
-        SubscriptionManager::GetInstance()->mSubscriptions.emplace_back(sub, &cleanup);
+        SubscriptionManager::GetInstance().mSubscriptions.emplace_back(sub, &SubscriptionManager::cleanup);
     }
     else
     {
         ChipLogError(NotSpecified, "Got error while subscribing: %" CHIP_ERROR_FORMAT, error.Format());
-        cleanup(sub);
+        SubscriptionManager::cleanup(sub);
+        // TODO remove cleanup, use platform::Delete
     }
 
     // Platform::Delete(data);
 }
+SubscribeCommandData::SubscribeCommandData() :
+    mOnConnectedCallback(onConnectedCallbackSubscribeRequest, (void *) this),
+    mOnConnectionFailureCallback(onFailureCallbackSubscribeRequest, (void *) this)
+{}
 } // namespace shell
