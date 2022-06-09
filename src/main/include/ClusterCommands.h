@@ -6,20 +6,19 @@
 #pragma once
 
 #include <app/OperationalDeviceProxy.h>
-namespace shell
-{
+namespace shell {
 
-    void RegisterClusterCommands();
-    void ClusterCommandWorkerFunction(intptr_t context);
-    struct ClusterCommandData
-    {
-        ClusterCommandData();
-        chip::FabricId fabricId;
-        chip::NodeId nodeId;
-        chip::EndpointId endpointId;
-        chip::CommandId commandId;
-        chip::ClusterId clusterId;
-        chip::Callback::Callback<chip::OnDeviceConnected> mOnConnectedCallback;
-        chip::Callback::Callback<chip::OnDeviceConnectionFailure> mOnConnectionFailureCallback;
-    };
-}
+void RegisterClusterCommands();
+void ClusterCommandWorkerFunction(intptr_t context);
+struct ClusterCommandData
+{
+    ClusterCommandData();
+    chip::FabricId fabricId;
+    chip::NodeId nodeId;
+    chip::EndpointId endpointId;
+    chip::CommandId commandId;
+    chip::ClusterId clusterId;
+    chip::Callback::Callback<chip::OnDeviceConnected> mOnConnectedCallback;
+    chip::Callback::Callback<chip::OnDeviceConnectionFailure> mOnConnectionFailureCallback;
+};
+} // namespace shell
