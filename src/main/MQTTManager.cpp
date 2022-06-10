@@ -17,12 +17,12 @@ https://github.com/espressif/esp-idf/tree/01d014c42d/examples/protocols/mqtt/ssl
 */
 
 #if CONFIG_BROKER_CERTIFICATE_OVERRIDDEN == 1
-static const uint8_t mqtt_eclipseprojects_io_pem_start[] =
+static const uint8_t mqtt_hivemq_pem_start[] =
     "-----BEGIN CERTIFICATE-----\n" CONFIG_BROKER_CERTIFICATE_OVERRIDE "\n-----END CERTIFICATE-----";
 #else
-extern const uint8_t mqtt_eclipseprojects_io_pem_start[] asm("_binary_mqtt_eclipseprojects_io_pem_start");
+extern const uint8_t mqtt_hivemq_pem_start[] asm("_binary_mqtt_hivemq_pem_start");
 #endif
-extern const uint8_t mqtt_eclipseprojects_io_pem_end[] asm("_binary_mqtt_eclipseprojects_io_pem_end");
+extern const uint8_t mqtt_hivemq_pem_end[] asm("_binary_mqtt_hivemq_pem_end");
 
 namespace chip {
 MQTTManager MQTTManager::sMQTTManager;
@@ -191,7 +191,7 @@ void MQTTManager::initMQTTManager()
         .uri      = "***REMOVED***",
         .username = "Someone",
         .password = "***REMOVED***",
-        .cert_pem = (const char *) mqtt_eclipseprojects_io_pem_start,
+        .cert_pem = (const char *) mqtt_hivemq_pem_start,
 
     };
     ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
