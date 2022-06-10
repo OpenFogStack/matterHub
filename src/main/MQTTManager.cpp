@@ -24,7 +24,6 @@ extern const uint8_t mqtt_hivemq_pem_start[] asm("_binary_mqtt_hivemq_pem_start"
 #endif
 extern const uint8_t mqtt_hivemq_pem_end[] asm("_binary_mqtt_hivemq_pem_end");
 
-
 namespace chip {
 MQTTManager MQTTManager::sMQTTManager;
 bool MQTTManager::mInit = false;
@@ -32,12 +31,11 @@ bool mConnected         = false;
 std::vector<shell::MQTTCommandData *> mStoredCommands;
 esp_mqtt_client_handle_t mClient;
 
-
-void MQTTManager::Publish(shell::MQTTCommandData * data) {
+void MQTTManager::Publish(shell::MQTTCommandData * data)
+{
     if (!mConnected)
     {
         ESP_LOGI(TAG, "Currently not connected, delay command until connection is established (again)");
-        mStoredCommands.push_back(data);
         return;
     }
     int msg_id;
@@ -90,6 +88,7 @@ void MQTTManager::ProcessCommand(shell::MQTTCommandData * data)
         break;
     }
 }
+
 //
 // Note: this function is for testing purposes only publishing part of the active partition
 //       (to be checked against the original binary)

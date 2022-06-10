@@ -18,7 +18,6 @@ public:
         }
         return sMQTTManager;
     }
-
     void Publish(shell::MQTTCommandData * data);
     void Subscribe(shell::MQTTCommandData * data);
     void Unsubscribe(shell::MQTTCommandData * data);

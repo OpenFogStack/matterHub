@@ -70,6 +70,21 @@ CHIP_ERROR MQTTSubHandler(int argc, char ** argv)
     MQTTCommandData * data = Platform::New<MQTTCommandData>();
     data->topic            = argv[0];
     data->data             = NULL;
+    data->task             = MQTTCommandTask::subscribe;
+    DeviceLayer::PlatformMgr().ScheduleWork(MQTTCommandWorkerFunction, reinterpret_cast<intptr_t>(data));
+    return CHIP_NO_ERROR;
+}
+
+CHIP_ERROR MQTTUnsubHandler(int argc, char ** argv)
+{
+    if (argc != 1)
+    {
+        return MQTTSubCommandHelpHandler(argc, argv);
+    }
+    MQTTCommandData * data = Platform::New<MQTTCommandData>();
+    data->topic            = argv[0];
+    data->data             = NULL;
+    data->task             = MQTTCommandTask::unsubscribe;
     DeviceLayer::PlatformMgr().ScheduleWork(MQTTCommandWorkerFunction, reinterpret_cast<intptr_t>(data));
     return CHIP_NO_ERROR;
 }
@@ -83,6 +98,7 @@ CHIP_ERROR MQTTPubHandler(int argc, char ** argv)
     MQTTCommandData * data = Platform::New<MQTTCommandData>();
     data->topic            = argv[0];
     data->data             = argv[1];
+    data->task             = MQTTCommandTask::publish;
     DeviceLayer::PlatformMgr().ScheduleWork(MQTTCommandWorkerFunction, reinterpret_cast<intptr_t>(data));
     return CHIP_NO_ERROR;
 }
@@ -97,6 +113,7 @@ void RegisterMQTTCommands()
     using namespace shell;
     static const shell_command_t sMQTTSubCommands[] = { { &MQTTSubCommandHelpHandler, "help", "Usage: mqtt <subcommand>" },
                                                         { &MQTTSubHandler, "sub", " Usage: cluster sub <topic>" },
+                                                        { &MQTTUnsubHandler, "unsub", " Usage: cluster unsub <topic>" },
                                                         { &MQTTPubHandler, "pub", " Usage: cluster pub <topic> <data>" } };
 
     static const shell_command_t sMQTTCommand = { &MQTTCommandHandler, "mqtt", "MQTT commands. Usage: mqtt <subcommand>" };
@@ -119,8 +136,21 @@ void MQTTCommandWorkerFunction(intptr_t context)
     {
         ESP_LOGI(TAG, " - Data: '%s'", data->data);
     }
-    chip::MQTTManager::GetInstance();
-    ChipLogError(NotSpecified, "MQTTCommandWorkerFunction - mischief managed ");
+    switch (data->task)
+    {
+    case MQTTCommandTask::subscribe:
+        chip::MQTTManager::GetInstance().Subscribe(data);
+        break;
+    case MQTTCommandTask::unsubscribe:
+        chip::MQTTManager::GetInstance().Unsubscribe(data);
+        break;
+    case MQTTCommandTask::publish:
+        chip::MQTTManager::GetInstance().Publish(data);
+        break;
+    default:
+        ChipLogError(NotSpecified, "MQTTCommandWorkerFunction - Invalid Task");
+        break;
+    }
 }
 } // End namespace shell
 
