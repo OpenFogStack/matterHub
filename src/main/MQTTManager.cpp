@@ -11,6 +11,11 @@
 #include <sys/param.h>
 static const char * TAG = "MQTT";
 
+/* Most of the MQTT code is stolen from the ESP-Idf mqtt example:
+https://github.com/espressif/esp-idf/tree/01d014c42d/examples/protocols/mqtt/ssl
+
+*/
+
 #if CONFIG_BROKER_CERTIFICATE_OVERRIDDEN == 1
 static const uint8_t mqtt_eclipseprojects_io_pem_start[] =
     "-----BEGIN CERTIFICATE-----\n" CONFIG_BROKER_CERTIFICATE_OVERRIDE "\n-----END CERTIFICATE-----";
@@ -23,25 +28,66 @@ namespace chip {
 MQTTManager MQTTManager::sMQTTManager;
 bool MQTTManager::mInit = false;
 bool mConnected         = false;
+std::vector<shell::MQTTCommandData *> mStoredCommands;
 esp_mqtt_client_handle_t mClient;
 
 void MQTTManager::Publish(shell::MQTTCommandData * data)
 {
+    if (!mConnected)
+    {
+        ESP_LOGI(TAG, "Currently not connected, delay command until connection is established (again)");
+        mStoredCommands.push_back(data);
+        return;
+    }
     int msg_id;
     msg_id = esp_mqtt_client_publish(mClient, data->topic, data->data, 0, 0, 0);
     ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+    Platform::Delete(data);
 }
 void MQTTManager::Subscribe(shell::MQTTCommandData * data)
 {
+    if (!mConnected)
+    {
+        ESP_LOGI(TAG, "Currently not connected, delay command until connection is established (again)");
+        mStoredCommands.push_back(data);
+        return;
+    }
     int msg_id;
     msg_id = esp_mqtt_client_subscribe(mClient, data->topic, 0);
     ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+    Platform::Delete(data);
 }
 void MQTTManager::Unsubscribe(shell::MQTTCommandData * data)
 {
+    if (!mConnected)
+    {
+        ESP_LOGI(TAG, "Currently not connected, delay command until connection is established (again)");
+        mStoredCommands.push_back(data);
+        return;
+    }
     int msg_id;
     msg_id = esp_mqtt_client_unsubscribe(mClient, data->topic);
     ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
+    Platform::Delete(data);
+}
+
+void MQTTManager::ProcessCommand(shell::MQTTCommandData * data)
+{
+    switch (data->task)
+    {
+    case shell::MQTTCommandTask::subscribe:
+        chip::MQTTManager::GetInstance().Subscribe(data);
+        break;
+    case shell::MQTTCommandTask::unsubscribe:
+        chip::MQTTManager::GetInstance().Unsubscribe(data);
+        break;
+    case shell::MQTTCommandTask::publish:
+        chip::MQTTManager::GetInstance().Publish(data);
+        break;
+    default:
+        ChipLogError(NotSpecified, "MQTTCommandWorkerFunction - Invalid Task");
+        break;
+    }
 }
 //
 // Note: this function is for testing purposes only publishing part of the active partition
@@ -74,6 +120,21 @@ static void mqtt_event_handler(void * handler_args, esp_event_base_t base, int32
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
         mConnected = true;
+        for (auto & storedCommand : mStoredCommands)
+        {
+            // Ugly edge-case, but this could happen I guess
+            if (!mConnected)
+            {
+                break;
+            }
+            ESP_LOGI(TAG, "Processing delay command:");
+            ESP_LOGI(TAG, " - Topic: '%s'", storedCommand->topic);
+            if (storedCommand->data)
+            {
+                ESP_LOGI(TAG, " - Data: '%s'", storedCommand->data);
+            }
+            MQTTManager::GetInstance().ProcessCommand(storedCommand);
+        }
         break;
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");

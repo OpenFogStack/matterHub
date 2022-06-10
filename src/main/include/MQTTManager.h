@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MQTTCommands.h"
+#include <vector>
 
 namespace chip {
 class MQTTManager
@@ -21,6 +22,7 @@ public:
     void Publish(shell::MQTTCommandData * data);
     void Subscribe(shell::MQTTCommandData * data);
     void Unsubscribe(shell::MQTTCommandData * data);
+    void ProcessCommand(shell::MQTTCommandData * data);
 
 private:
     static MQTTManager sMQTTManager;
