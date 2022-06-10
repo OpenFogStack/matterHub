@@ -4,6 +4,7 @@
  *    Based on code written by Project CHIP Authors, which was published under Apache License, Version 2.0 (c) 2022
  */
 #include "MQTTCommands.h"
+#include "MQTTManager.h"
 #include "app/server/Server.h"
 #include <lib/support/CodeUtils.h>
 
@@ -118,6 +119,7 @@ void MQTTCommandWorkerFunction(intptr_t context)
     {
         ESP_LOGI(TAG, " - Data: '%s'", data->data);
     }
+    chip::MQTTManager::GetInstance();
     ChipLogError(NotSpecified, "MQTTCommandWorkerFunction - mischief managed ");
 }
 } // End namespace shell

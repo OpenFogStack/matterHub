@@ -41,4 +41,5 @@ idf_build_set_property(COMPILE_OPTIONS "-Wno-format-nonliteral;-Wno-format-secur
 idf_build_set_property(COMPILE_OPTIONS "-Wno-error=maybe-uninitialized" APPEND)
 target_add_binary_data(matterHub.elf "main/mqtt_hivemq.pem" TEXT)
 
+
 flashing_script()
