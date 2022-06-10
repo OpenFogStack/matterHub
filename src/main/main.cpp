@@ -11,6 +11,7 @@
 #include "AppTask.h"
 #include "BindingHandler.h"
 #include "ClusterCommands.h"
+#include "MQTTCommands.h"
 #include "SubscribeCommands.h"
 #include "esp_log.h"
 #include "esp_spi_flash.h"
@@ -57,6 +58,7 @@ extern "C" void app_main()
     chip::LaunchShell();
     shell::RegisterClusterCommands();
     shell::RegisterSubscribeCommands();
+    shell::RegisterMQTTCommands();
 #endif // CONFIG_ENABLE_CHIP_SHELL
 
     CHIPDeviceManager & deviceMgr = CHIPDeviceManager::GetInstance();
