@@ -136,21 +136,7 @@ void MQTTCommandWorkerFunction(intptr_t context)
     {
         ESP_LOGI(TAG, " - Data: '%s'", data->data);
     }
-    switch (data->task)
-    {
-    case MQTTCommandTask::subscribe:
-        chip::MQTTManager::GetInstance().Subscribe(data);
-        break;
-    case MQTTCommandTask::unsubscribe:
-        chip::MQTTManager::GetInstance().Unsubscribe(data);
-        break;
-    case MQTTCommandTask::publish:
-        chip::MQTTManager::GetInstance().Publish(data);
-        break;
-    default:
-        ChipLogError(NotSpecified, "MQTTCommandWorkerFunction - Invalid Task");
-        break;
-    }
+    MQTTManager::GetInstance().ProcessCommand(data);
 }
 } // End namespace shell
 
