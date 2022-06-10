@@ -203,3 +203,4 @@ void MQTTManager::initMQTTManager()
 }
 
 } // namespace chip
+
