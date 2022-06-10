@@ -3,7 +3,6 @@
 #include "esp_netif.h"
 #include "esp_system.h"
 #include "nvs_flash.h"
-//#include "protocol_examples_common.h"
 
 #include "esp_log.h"
 #include "esp_ota_ops.h"
@@ -23,8 +22,27 @@ extern const uint8_t mqtt_eclipseprojects_io_pem_end[] asm("_binary_mqtt_eclipse
 namespace chip {
 MQTTManager MQTTManager::sMQTTManager;
 bool MQTTManager::mInit = false;
+bool mConnected         = false;
+esp_mqtt_client_handle_t mClient;
 
-void MQTTManager::SendPub(shell::MQTTCommandData * data) {}
+void MQTTManager::Publish(shell::MQTTCommandData * data)
+{
+    int msg_id;
+    msg_id = esp_mqtt_client_publish(mClient, data->topic, data->data, 0, 0, 0);
+    ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+}
+void MQTTManager::Subscribe(shell::MQTTCommandData * data)
+{
+    int msg_id;
+    msg_id = esp_mqtt_client_subscribe(mClient, data->topic, 0);
+    ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+}
+void MQTTManager::Unsubscribe(shell::MQTTCommandData * data)
+{
+    int msg_id;
+    msg_id = esp_mqtt_client_unsubscribe(mClient, data->topic);
+    ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
+}
 //
 // Note: this function is for testing purposes only publishing part of the active partition
 //       (to be checked against the original binary)
@@ -51,28 +69,19 @@ static void mqtt_event_handler(void * handler_args, esp_event_base_t base, int32
     ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%d", base, event_id);
     esp_mqtt_event_handle_t event   = (esp_mqtt_event_handle_t) event_data;
     esp_mqtt_client_handle_t client = event->client;
-    int msg_id;
     switch ((esp_mqtt_event_id_t) event_id)
     {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-        msg_id = esp_mqtt_client_subscribe(client, "/topic/qos0", 0);
-        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-        msg_id = esp_mqtt_client_subscribe(client, "/topic/qos1", 1);
-        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-        msg_id = esp_mqtt_client_unsubscribe(client, "/topic/qos1");
-        ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
+        mConnected = true;
         break;
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+        mConnected = false;
         break;
 
     case MQTT_EVENT_SUBSCRIBED:
         ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
-        msg_id = esp_mqtt_client_publish(client, "/topic/qos0", "data", 0, 0, 0);
-        ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
         break;
     case MQTT_EVENT_UNSUBSCRIBED:
         ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
@@ -125,10 +134,10 @@ void MQTTManager::initMQTTManager()
 
     };
     ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
-    esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
+    mClient = esp_mqtt_client_init(&mqtt_cfg);
 
-    esp_mqtt_client_register_event(client, ((esp_mqtt_event_id_t) ESP_EVENT_ANY_ID), mqtt_event_handler, NULL);
-    esp_mqtt_client_start(client);
+    esp_mqtt_client_register_event(mClient, ((esp_mqtt_event_id_t) ESP_EVENT_ANY_ID), mqtt_event_handler, NULL);
+    esp_mqtt_client_start(mClient);
 }
 
 } // namespace chip

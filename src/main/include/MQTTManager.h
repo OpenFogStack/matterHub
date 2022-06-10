@@ -17,7 +17,10 @@ public:
         }
         return sMQTTManager;
     }
-    void SendPub(shell::MQTTCommandData * data);
+
+    void Publish(shell::MQTTCommandData * data);
+    void Subscribe(shell::MQTTCommandData * data);
+    void Unsubscribe(shell::MQTTCommandData * data);
 
 private:
     static MQTTManager sMQTTManager;

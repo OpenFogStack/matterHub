@@ -10,8 +10,15 @@ namespace shell {
 
 void RegisterMQTTCommands();
 void MQTTCommandWorkerFunction(intptr_t context);
+enum MQTTCommandTask
+{
+    publish,
+    subscribe,
+    unsubscribe,
+};
 struct MQTTCommandData
 {
+    enum MQTTCommandTask task;
     char * topic;
     char * data;
 };
