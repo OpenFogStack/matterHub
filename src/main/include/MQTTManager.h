@@ -10,9 +10,10 @@ public:
 
     static MQTTManager & GetInstance()
     {
-        if (!init)
+        if (!mInit)
         {
             initMQTTManager();
+            mInit = true;
         }
         return sMQTTManager;
     }
@@ -21,6 +22,6 @@ public:
 private:
     static MQTTManager sMQTTManager;
     static void initMQTTManager();
-    static bool init;
+    static bool mInit;
 };
 } // namespace chip
