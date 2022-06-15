@@ -1,0 +1,75 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://example.com/product.schema.json",
+    "title": "creation message",
+    "description": "A message that creates a certain device on the receiver side",
+    "type": "object",
+    "properties": {
+        "fabricId": {
+            "description": "The unique identifier for a product",
+            "type": "integer"
+        },
+        "nodeId": {
+            "description": "Name of the product",
+            "type": "integer"
+        },
+        "endpoints": {
+            "description": "All active endpoints on the detected device",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "endpointId": {
+                        "type": "integer"
+                    },
+                    "clusters": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "clusterId": {
+                                    "type": "integer"
+                                },
+                                "isServer": {
+                                    "type": "boolean"
+                                },
+                                "isClient": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    }
+                },
+                "devices": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "deviceId": {
+                                "type": "integer"
+                            },
+                            "deviceVersion": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "attributeId": {
+            "description": "The unique identifier for a product",
+            "type": "integer"
+        },
+        "attributeValue": {
+            "description": "The unique identifier for a product",
+            "type": "integer"
+        }
+    },
+    "required": [
+        "fabricId",
+        "nodeId",
+        "endpointId",
+        "attributeId",
+        "attributeValue"
+    ]
+}

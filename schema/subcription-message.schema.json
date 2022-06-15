@@ -1,0 +1,41 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://example.com/product.schema.json",
+    "title": "change attribute value message",
+    "description": "A message to update the value of an attribute on the receiver side",
+    "type": "object",
+    "properties": {
+        "fabricId": {
+            "description": "The unique identifier for a product",
+            "type": "integer"
+        },
+        "nodeId": {
+            "description": "Name of the product",
+            "type": "integer"
+        },
+        "endpointId": {
+            "description": "The unique identifier for a product",
+            "type": "integer"
+        },
+        "clusterId": {
+            "description": "The unique identifier for a product",
+            "type": "integer"
+        },
+        "attributeId": {
+            "description": "The unique identifier for a product",
+            "type": "integer"
+        },
+        "attributeValue": {
+            "description": "The unique identifier for a product",
+            "type": "integer"
+        }
+    },
+    "required": [
+        "fabricId",
+        "nodeId",
+        "endpointId",
+        "clusterId",
+        "attributeId",
+        "attributeValue"
+    ]
+}
