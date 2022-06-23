@@ -17,7 +17,6 @@
  */
 
 #include "BindingHandler.h"
-#include "SubscriptionManager.h"
 #include "app/CommandSender.h"
 #include "app/clusters/bindings/BindingManager.h"
 #include "app/server/Server.h"
