@@ -188,12 +188,13 @@ void MQTTManager::initMQTTManager()
 {
 
     const esp_mqtt_client_config_t mqtt_cfg = {
-        .uri      = "***REMOVED***",
-        .username = "Someone",
-        .password = "***REMOVED***",
+        .uri      = CONFIG_MQTT_CLIENT_URI,
+        .username = CONFIG_MQTT_CLIENT_USERNAME,
+        .password = CONFIG_MQTT_CLIENT_PASSWORD,
         .cert_pem = (const char *) mqtt_hivemq_pem_start,
 
     };
+    ESP_LOGI(TAG, "This is my name: %s and this is my key %s", CONFIG_MQTT_CLIENT_USERNAME, CONFIG_MQTT_CLIENT_PASSWORD);
     ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
     mClient = esp_mqtt_client_init(&mqtt_cfg);
 
