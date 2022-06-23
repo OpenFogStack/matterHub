@@ -39,12 +39,6 @@ CHIP_ERROR SubscriptionManager::SendSubscribeRequest(shell::SubscribeCommandData
         ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Unable to find the mentioned Peer");
         return CHIP_ERROR_INVALID_ARGUMENT;
     }
-    ESP_LOGI("Subscribe", "SubscribeSubscribeCommandHandler");
-    ESP_LOGI("Subscribe", " - EndPoint ID: '0x%02x'", data->endpointId);
-    ESP_LOGI("Subscribe", " - Cluster ID: '0x%02x'", data->clusterId);
-    ESP_LOGI("Subscribe", " - Attribute ID: '0x%02x'", data->attributeId);
-    ESP_LOGI("Subscribe", " - minInterval: '0x%02x'", data->minInterval);
-    ESP_LOGI("Subscribe", " - maxInterval: '0x%02x'", data->maxInterval);
 
     mCASESessionManager->FindOrEstablishSession(peer, &data->mOnConnectedCallback, &data->mOnConnectionFailureCallback);
     ChipLogError(NotSpecified, "ClusterCommandWorkerFunction - Registration Done");
