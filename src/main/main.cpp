@@ -11,8 +11,13 @@
 #include "AppTask.h"
 #include "BindingHandler.h"
 #include "ClusterCommands.h"
+<<<<<<< HEAD
 #include "MQTTCommands.h"
 #include "SubscribeCommands.h"
+    ||||||| parent of 33978ea (feat(subscribe): WIP for subscription (#33))
+=======
+#include "SubscribeCommands.h"
+    >>>>>>> 33978ea (feat(subscribe): WIP for subscription (#33))
 #include "esp_log.h"
 #include "esp_spi_flash.h"
 #include "esp_system.h"
@@ -23,7 +28,7 @@
 
 #include <app/server/OnboardingCodesUtil.h>
 
-using namespace ::chip;
+    using namespace ::chip;
 using namespace ::chip::DeviceManager;
 
 static const char * TAG = "light-switch-app";
@@ -59,6 +64,7 @@ extern "C" void app_main()
     shell::RegisterClusterCommands();
     shell::RegisterSubscribeCommands();
     shell::RegisterMQTTCommands();
+
 #endif // CONFIG_ENABLE_CHIP_SHELL
 
     CHIPDeviceManager & deviceMgr = CHIPDeviceManager::GetInstance();

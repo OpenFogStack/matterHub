@@ -139,4 +139,3 @@ void MQTTCommandWorkerFunction(intptr_t context)
     MQTTManager::GetInstance().ProcessCommand(data);
 }
 } // End namespace shell
-
