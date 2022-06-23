@@ -46,6 +46,7 @@ Engine sShellSwitchGroupsSubCommands;
 Engine sShellSwitchGroupsOnOffSubCommands;
 
 Engine sShellSwitchBindingSubCommands;
+
 #endif // defined(ENABLE_CHIP_SHELL)
 
 namespace {
@@ -373,15 +374,13 @@ static void RegisterSwitchCommands()
         { &BindingUnicastBindCommandHandler, "unicast", "Usage: switch binding unicast <fabric index> <node id> <endpoint>" }
     };
 
-    static const shell_command_t sSwitchCommand = { &SwitchCommandHandler, "switch",
-                                                    "Light-switch commands. Usage: switch <subcommand>" };
-
     sShellSwitchGroupsOnOffSubCommands.RegisterCommands(sSwitchGroupsOnOffSubCommands, ArraySize(sSwitchGroupsOnOffSubCommands));
     sShellSwitchOnOffSubCommands.RegisterCommands(sSwitchOnOffSubCommands, ArraySize(sSwitchOnOffSubCommands));
     sShellSwitchGroupsSubCommands.RegisterCommands(sSwitchGroupsSubCommands, ArraySize(sSwitchGroupsSubCommands));
     sShellSwitchBindingSubCommands.RegisterCommands(sSwitchBindingSubCommands, ArraySize(sSwitchBindingSubCommands));
     sShellSwitchSubCommands.RegisterCommands(sSwitchSubCommands, ArraySize(sSwitchSubCommands));
-
+    static const shell_command_t sSwitchCommand = { &SwitchCommandHandler, "switch",
+                                                    "Light-switch commands. Usage: switch <subcommand>" };
     Engine::Root().RegisterCommands(&sSwitchCommand, 1);
 }
 #endif // ENABLE_CHIP_SHELL

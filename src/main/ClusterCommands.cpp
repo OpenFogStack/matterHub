@@ -86,7 +86,6 @@ void onFailureCallbackClusterCommandOnOff(void * context, PeerId peerId, CHIP_ER
 
 void onConnectedCallbackClusterCommandOnOff(void * context, OperationalDeviceProxy * peer_device)
 {
-    ChipLogError(NotSpecified, "Got here!!");
     ClusterCommandData * data = reinterpret_cast<ClusterCommandData *>(context);
 
     auto onSuccess = [data](const ConcreteCommandPath & commandPath, const StatusIB & status, const auto & dataResponse) {
