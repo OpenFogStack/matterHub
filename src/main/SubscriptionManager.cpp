@@ -15,9 +15,6 @@ CHIP_ERROR SubscriptionManager::RegisterSubscription(shell::SubscribeCommandData
 {
     // Send subscribe request
     SubscriptionManager::SendSubscribeRequest(data);
-    // Receive report manager?!
-
-    // send status response ?!
     return CHIP_NO_ERROR;
 }
 namespace {
