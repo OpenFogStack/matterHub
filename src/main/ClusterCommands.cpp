@@ -75,6 +75,7 @@ CHIP_ERROR ClusterCommandOnOffHandler(int argc, char ** argv)
 
     return sShellClusterOnOffSubCommands.ExecCommand(argc, argv);
 }
+
 void onFailureCallbackClusterCommandOnOff(void * context, PeerId peerId, CHIP_ERROR error)
 {
     auto & server                           = chip::Server::GetInstance();
@@ -172,6 +173,27 @@ ClusterCommandData::ClusterCommandData() :
     mOnConnectionFailureCallback(onFailureCallbackClusterCommandOnOff, (void *) this)
 {}
 
+
+
+/********************************************************
+ * Discover shell functions
+ *********************************************************/
+
+CHIP_ERROR ClusterDiscoverHandler(int argc, char ** argv)
+{
+    if (argc != 2)
+    {
+        return ClusterHelpHandler(argc, argv);
+    }
+    int fabricId = atoi(argv[0]);
+    int nodeId = atoi(argv[1]);
+    ESP_LOGI("Discover", "Discover command called with:");
+    ESP_LOGI("Discover", " - Fabric ID: '0x%02x'", fabricId);
+    ESP_LOGI("Discover", " - Node ID: '0x%02x'", nodeId);
+
+    return CHIP_NO_ERROR;
+}
+
 #endif // ENABLE_CHIP_SHELL
 
 } // namespace shell
@@ -199,6 +221,7 @@ void RegisterClusterCommands()
     static const shell_command_t sClusterSubCommands[] = {
         { &ClusterHelpHandler, "help", "Usage: cluster <subcommand>" },
         { &ClusterCommandOnOffHandler, "onoff", " Usage: cluster onoff <subcommand>" },
+        { &ClusterDiscoverHandler, "discover", " Usage: cluster discover <fabric_id> <node_id>" },
     };
 
     static const shell_command_t sClusterCommandOnOffSubCommands[] = {
