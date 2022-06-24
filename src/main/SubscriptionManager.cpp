@@ -9,6 +9,7 @@
 #include <app/clusters/bindings/bindings.h>
 #include <lib/support/CodeUtils.h>
 
+static const char * TAG = "Subscribe Commands";
 namespace chip {
 SubscriptionManager SubscriptionManager::sSubscriptionManager;
 CHIP_ERROR SubscriptionManager::RegisterSubscription(shell::SubscribeCommandData * data)

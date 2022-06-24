@@ -17,6 +17,7 @@
  */
 
 #include "InteractionModel.h"
+#include "esp_log.h"
 
 using namespace chip;
 using namespace chip::app;
@@ -100,11 +101,13 @@ void InteractionModel::Shutdown()
 /////////// ReadClient Callback Interface /////////
 void InteractionModel::OnAttributeData(const ConcreteDataAttributePath & path, TLV::TLVReader * data, const StatusIB & status)
 {
+    ESP_LOGE("ATTRIBUTE DATA", "EndpointId: %x", path.mEndpointId);
     OnResponse(status, data);
 }
 
 void InteractionModel::OnEventData(const EventHeader & eventHeader, TLV::TLVReader * data, const StatusIB * status)
 {
+    ESP_LOGE("ATTRIBUTE DATA", "Event Data");
     OnResponse(status == nullptr ? StatusIB() : *status, data);
 }
 
