@@ -11,7 +11,7 @@
 #include <sys/param.h>
 static const char * TAG = "MQTT";
 
-/* Most of the MQTT code is stolen from the ESP-Idf mqtt example:
+/* Most of the MQTT code is taken from the ESP-Idf mqtt example:
 https://github.com/espressif/esp-idf/tree/01d014c42d/examples/protocols/mqtt/ssl
 
 */
