@@ -12,6 +12,7 @@
 #include "BindingHandler.h"
 #include "ClusterCommands.h"
 #include "SubscribeCommands.h"
+#include "DiscoverCommands.h"
 #include "esp_log.h"
 #include "esp_spi_flash.h"
 #include "esp_system.h"
@@ -57,6 +58,7 @@ extern "C" void app_main()
     chip::LaunchShell();
     shell::RegisterClusterCommands();
     shell::RegisterSubscribeCommands();
+    shell::RegisterDiscoverCommands();
 #endif // CONFIG_ENABLE_CHIP_SHELL
 
     CHIPDeviceManager & deviceMgr = CHIPDeviceManager::GetInstance();
