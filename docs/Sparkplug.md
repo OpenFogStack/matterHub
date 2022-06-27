@@ -17,21 +17,22 @@ spBv1.0/matterhub/NDEATH/0 : MatterHub has been deprovisioned <br>
 
 ## Payload
 ### DDATA (Updating Endpoint Data)
+```
     {
 	    "timestamp": 1234,
 	    "metrics": [
 	    {
 		    "name": "Cluster/clusterId/Attribute/AttributeId",
-		    "timestamp": 1234
-		    "dataType": "Boolean" 
-		    "value": true
+		    "timestamp": 1234,
+		    "dataType": "Boolean",
+		    "value": true,
 		    "properties": ["endpointId", "kind"],
 		    "values": ["1", "server"]
 		}
 		],
 		"seq": 0
 }
-		    
+```		    
 
 # Matter Centered Design
 A different design is imaginable: 
@@ -54,38 +55,38 @@ However maybe it is much more useful to split the digital representation of the 
 ### DDATA (Updating Endpoint Data)
 Publisher: MatterHub
 Subscriber: Server
-
-       {
-            "timestamp": 1234,
-            "metrics": [
-            {
-        	    "name": "clusterId/AttributeId",
-        	    "timestamp": 1234
-        	      "dataType": "Boolean"
-        	    "value": true 		
-        	} 		
-        	],
-	        "seq": 0
-       }
-
+```
+{
+	"timestamp": 1234,
+	"metrics": [
+	{
+		"name": "clusterId/AttributeId",
+		"timestamp": 1234,
+		"dataType": "Boolean",
+		"value": true,	
+	} 		
+	],
+	"seq": 0
+}
+```
 The "dataType" is not really necessary and maybe we can go even one step further and send, as Jonathan suggested, just the raw data we receive and let the server interpret it.
 ### DCMD (Control Endpoints)
 Publisher: Server
 Subscriber: MatterHub
-
-        {
-    	    "timestamp": 1234,
-    	    "metrics": [
-    	    {
-    		    "name": "clusterId/AttributeId/Command/Argument",
-    		    "timestamp": 1234
-    		    "dataType":  datatype
-    		    "value": value
-    		}
-    		],
-    		"seq": 0
-    }
-
+```
+{
+	"timestamp": 1234,
+	"metrics": [
+	{
+		"name": "clusterId/AttributeId/Command/Argument",
+		"timestamp": 1234,
+		"dataType":  datatype,
+		"value": value
+	}
+	],
+	"seq": 0
+}
+```
 	
 "Command":
 write (to set specific parameters) <br>
@@ -93,32 +94,33 @@ cmd (to send commands to the device) <br>
 read (for example if we went out of sync and need to know the current state) <br>
 subscribe (to un/subscribe specific endpoints) <br>
 
-
+```
 Example 
+{
+	"timestamp": 1234,
+	"metrics": [
+	{
+		"name": "6/0/cmd/toggle",
+		"timestamp": 1234
+		"dataType":  ""
+		"value": ""
+	}
+	],
+	"seq": 0
+}
+```
 
-        {
-    	    "timestamp": 1234,
-    	    "metrics": [
-    	    {
-    		    "name": "6/0/cmd/toggle",
-    		    "timestamp": 1234
-    		    "dataType":  ""
-    		    "value": ""
-    		}
-    		],
-    		"seq": 0
-    }
-
-        {
-    	    "timestamp": 1234,
-    	    "metrics": [
-    	    {
-    		    "name": "6/0/write/on-time",
-    		    "timestamp": 1234
-    		    "dataType":  "int16u"
-    		    "value": "10"
-    		}
-    		],
-    		"seq": 0
-    }
-
+```
+{
+	"timestamp": 1234,
+	"metrics": [
+	{
+		"name": "6/0/write/on-time",
+		"timestamp": 1234
+		"dataType":  "int16u"
+		"value": "10"
+	}
+	],
+	"seq": 0
+}
+```
