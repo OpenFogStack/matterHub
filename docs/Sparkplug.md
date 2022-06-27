@@ -6,14 +6,14 @@ spBv1.0/matterhub/command/MatterhubID/NodeId
 
 example:
 
-spBv1.0/matterhub/DBIRTH/0  : New Matterhub has been provisioned
-sbBv1.0/matterhub/DBIRTH/0/333 : MatterHub discovered a new Device
-spBv1.0/matterhub/DDATA/0/333 : A device changed the state
-spBv1.0/matterhub/DCMD/0/333 : Sending a Command to the device
-spBv1.0/matterhub/NDATA/0/333 : MatterHub sending Meta Information (logs, firmware, ...)
-spBv1.0/matterhub/DCMD/0/333 : Sending a Command to the device
-spBv1.0/matterhub/DDEATH/0/333 : Device has been deprovisioned
-spBv1.0/matterhub/NDEATH/0 : MatterHub has been deprovisioned
+spBv1.0/matterhub/DBIRTH/0  : New Matterhub has been provisioned <br>
+sbBv1.0/matterhub/DBIRTH/0/333 : MatterHub discovered a new Device  <br>
+spBv1.0/matterhub/DDATA/0/333 : A device changed the state <br>
+spBv1.0/matterhub/DCMD/0/333 : Sending a Command to the device <br>
+spBv1.0/matterhub/NDATA/0/333 : MatterHub sending Meta Information (logs, firmware, ...) <br>
+spBv1.0/matterhub/DCMD/0/333 : Sending a Command to the device <br>
+spBv1.0/matterhub/DDEATH/0/333 : Device has been deprovisioned <br>
+spBv1.0/matterhub/NDEATH/0 : MatterHub has been deprovisioned <br>
 
 ## Payload
 ### DDATA (Updating Endpoint Data)
@@ -37,12 +37,12 @@ spBv1.0/matterhub/NDEATH/0 : MatterHub has been deprovisioned
 A different design is imaginable: 
 spBv1.0/MatterhubID/command/NodeId/ClusterId
 
-spBv1.0/0/DBIRTH/0  : New Device (Node) has been provisioned
-sbBv1.0/matterhub/DBIRTH/0/333 : New Endpoint was discovered
-spBv1.0/matterhub/DDATA/0/333 :  Endpoint specific data
-spBv1.0/matterhub/DCMD/0/333 : Sending a Command to an Endpoint
-spBv1.0/matterhub/DDEATH/0/333 : Endpoint is no longer available (?)
-spBv1.0/matterhub/NDEATH/0 : Device is no longer available
+spBv1.0/0/DBIRTH/0  : New Device (Node) has been provisioned <br>
+sbBv1.0/matterhub/DBIRTH/0/333 : New Endpoint was discovered <br>
+spBv1.0/matterhub/DDATA/0/333 :  Endpoint specific data <br>
+spBv1.0/matterhub/DCMD/0/333 : Sending a Command to an Endpoint <br>
+spBv1.0/matterhub/DDEATH/0/333 : Endpoint is no longer available (?)  <br>
+spBv1.0/matterhub/NDEATH/0 : Device is no longer available <br>
 
 With this design a smaller and simpler payload is possible, however the NDATA and NCMD would never be used, since Matter uses endpoint 0 for nodelevel configuration. 
 This also has no formal correct way to communicate with the matterHub for example to upload the current firmware level, logs, etc. 
@@ -88,10 +88,10 @@ Subscriber: MatterHub
 
 	
 "Command":
-write (to set specific parameters)
-cmd (to send commands to the device)
-read (for example if we went out of sync and need to know the current state)
-subscribe (to un/subscribe specific endpoints)
+write (to set specific parameters) <br>
+cmd (to send commands to the device) <br>
+read (for example if we went out of sync and need to know the current state) <br>
+subscribe (to un/subscribe specific endpoints) <br>
 
 
 Example 
