@@ -99,7 +99,7 @@ This is currently my favorite design. Following the specification it makes more 
 It moves the endpointId into the name field which makes sense, since endpoint and cluster are hierarchically related to each other, additinally it turns the name field unique for a device.
 To be even more flexible the whole name could be prefixed with an "m:" to indicate that it is a matter-attribute path.
 
-The dataType is strictly speaking not required, since the combination of clusterId and attributeId alrea
+The dataType is strictly speaking not required, since the combination of clusterId and attributeId already dictate the data type of the value
 
 
 # Matter Centered Design
