@@ -1,8 +1,13 @@
 # Sparkplug Mapping
 
 
+
+
 # Flexible Design
-spBv1.0/matterhub/command/MatterhubID/NodeId
+spBv1.0/matterhub/command/MatterhubID/MatterNodeId
+
+GroupId: Matterhub (maybe matterHub:Production, or MatterHub:<ModelName>) <br>
+NodeId: Has to be unique. 
 
 example:
 
@@ -10,55 +15,51 @@ spBv1.0/matterhub/DBIRTH/0  : New Matterhub has been provisioned <br>
 sbBv1.0/matterhub/DBIRTH/0/333 : MatterHub discovered a new Device  <br>
 spBv1.0/matterhub/DDATA/0/333 : A device changed the state <br>
 spBv1.0/matterhub/DCMD/0/333 : Sending a Command to the device <br>
-spBv1.0/matterhub/NDATA/0/333 : MatterHub sending Meta Information (logs, firmware, ...) <br>
-spBv1.0/matterhub/DCMD/0/333 : Sending a Command to the device <br>
+spBv1.0/matterhub/NDATA/0 : MatterHub sending Meta Information (logs, firmware, ...) <br>
+spBv1.0/matterhub/NCMD/0 : Sending a Command to the MatterHub <br>
 spBv1.0/matterhub/DDEATH/0/333 : Device has been deprovisioned <br>
 spBv1.0/matterhub/NDEATH/0 : MatterHub has been deprovisioned <br>
 
 ## Payload
-### DDATA (Updating Endpoint Data)
-```
-    {
-	    "timestamp": 1234,
-	    "metrics": [
-	    {
-		    "name": "Cluster/clusterId/Attribute/AttributeId",
-		    "timestamp": 1234,
-		    "dataType": "Boolean",
-		    "value": true,
-		    "properties": ["endpointId", "kind"],
-		    "values": ["1", "server"]
-		}
-		],
-		"seq": 0
-}
-```		    
-
-# Simpler Flexible Design
-spBv1.0/matterhub/command/MatterhubID/MatterNodeId:EndpointId
-
-GroupId: Matterhub (maybe matterHub:Production, or MatterHub:<ModelName>) <br>
-NodeId: Has to be unique. 
-DeviceId: MatterNodeId:MatterEndpointId
-example:
-
-spBv1.0/matterhub/DBIRTH/0  : New Matterhub has been provisioned <br>
-sbBv1.0/matterhub/DBIRTH/0/333:0 : MatterHub discovered a new Device  <br>
-spBv1.0/matterhub/DDATA/0/333:1 : A device changed the state <br>
-spBv1.0/matterhub/DCMD/0/333:1 : Sending a Command to the device <br>
-spBv1.0/matterhub/NDATA/0 : MatterHub sending Meta Information (logs, firmware, ...) <br>
-spBv1.0/matterhub/NCMD/0 : Sending a Command to the MatterHub <br>
-spBv1.0/matterhub/DDEATH/0/333:0 : Device has been deprovisioned <br>
-spBv1.0/matterhub/NDEATH/0 : MatterHub has been deprovisioned <br>
-
-## Payload
-### DDATA (Updating Endpoint Data)
+### DBIRTH (Inform about a new Device)
+Publisher: MatterHub<br>
+Subscriber: Server
 ```
 {
 	"timestamp": 1234,
 	"metrics": [
 	{
-		"name": "clusterId/AttributeId",
+		"name": "endpointId/clusterId/AttributeId",
+		"timestamp": 1234,
+		"dataType": "Boolean",
+		"value": true,
+	},
+	{
+		"name": "endpointId/clusterId/AttributeId",
+		"timestamp": 1234,
+		"dataType": "String",
+		"value": "someText",
+	},
+	{
+		"name": "endpointId/clusterId/side",
+		"timestamp": 1234,
+		"dataType": "String",
+		"value": "server",
+	}
+	],
+	"seq": 0
+}
+```	
+
+### DDATA (Updating Endpoint Data)
+Publisher: MatterHub<br>
+Subscriber: Server
+```
+{
+	"timestamp": 1234,
+	"metrics": [
+	{
+		"name": "endpointId/clusterId/AttributeId",
 		"timestamp": 1234,
 		"dataType": "Boolean",
 		"value": true,
@@ -66,7 +67,40 @@ spBv1.0/matterhub/NDEATH/0 : MatterHub has been deprovisioned <br>
 	],
 	"seq": 0
 }
-```		    
+```	
+### DCMD (Control Endpoints)
+Publisher: Server<br>
+Subscriber: MatterHub
+```
+{
+	"timestamp": 1234,
+	"metrics": [
+	{
+		"name": "endpointId/clusterId/AttributeId/Command/Argument",
+		"timestamp": 1234,
+		"dataType":  datatype,
+		"value": value
+	}
+	],
+	"seq": 0
+}
+```
+	
+"Command":
+write (to set specific parameters) <br>
+cmd (to send commands to the device) <br>
+read (for example if we went out of sync and need to know the current state) <br>
+subscribe (to un/subscribe specific endpoints) <br>
+
+### Comment
+This is currently my favorite design. Following the specification it makes more sense to use the MatterHub as Node: 
+> Node is any V3.1.1 compliant MQTT Client application that manages an MQTT Session and provides the physical and/or logical gateway functions [...]. The EoN node is responsible for any local protocol interface to existing legacy devices
+
+It moves the endpointId into the name field which makes sense, since endpoint and cluster are hierarchically related to each other, additinally it turns the name field unique for a device.
+To be even more flexible the whole name could be prefixed with an "m:" to indicate that it is a matter-attribute path.
+
+The dataType is strictly speaking not required, since the combination of clusterId and attributeId alrea
+
 
 # Matter Centered Design
 A different design is imaginable: <br>
