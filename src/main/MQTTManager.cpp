@@ -14,6 +14,7 @@
 #include "esp_ota_ops.h"
 #include "esp_tls.h"
 #include "mqtt_client.h"
+#include <map>
 #include <sys/param.h>
 static const char * TAG = "MQTT";
 
@@ -34,6 +35,7 @@ namespace chip {
 MQTTManager MQTTManager::sMQTTManager;
 bool MQTTManager::mInit = false;
 bool mConnected         = false;
+std::map<std::string, std::function<void()>> topicCallbacks;
 std::vector<shell::MQTTCommandData *> mStoredCommands;
 esp_mqtt_client_handle_t mClient;
 
@@ -51,6 +53,23 @@ void MQTTManager::Publish(shell::MQTTCommandData * data)
     Platform::Delete(data->topic);
     Platform::Delete(data);
 }
+void MQTTManager::Subscribe(shell::MQTTCommandData * data, std::function<void()> callback)
+{
+    std::string key(data->topic);
+    ESP_LOGI(TAG, "key is: %s", key.c_str());
+    topicCallbacks[key] = callback;
+    if (!mConnected)
+    {
+        ESP_LOGI(TAG, "Currently not connected, delay command until connection is established (again)");
+        mStoredCommands.push_back(data);
+        return;
+    }
+    int msg_id;
+    msg_id = esp_mqtt_client_subscribe(mClient, data->topic, 0);
+    ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+    Platform::Delete(data);
+}
+
 void MQTTManager::Subscribe(shell::MQTTCommandData * data)
 {
     if (!mConnected)
@@ -84,6 +103,7 @@ void MQTTManager::ProcessCommand(shell::MQTTCommandData * data)
     {
     case shell::MQTTCommandTask::subscribe:
         chip::MQTTManager::GetInstance().Subscribe(data);
+        ESP_LOGI(TAG, "Subscribe via cmd is no longer supported");
         break;
     case shell::MQTTCommandTask::unsubscribe:
         chip::MQTTManager::GetInstance().Unsubscribe(data);
@@ -158,7 +178,7 @@ static void mqtt_event_handler(void * handler_args, esp_event_base_t base, int32
     case MQTT_EVENT_PUBLISHED:
         ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
         break;
-    case MQTT_EVENT_DATA:
+    case MQTT_EVENT_DATA: {
         ESP_LOGI(TAG, "MQTT_EVENT_DATA");
         printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
         printf("DATA=%.*s\r\n", event->data_len, event->data);
@@ -167,7 +187,12 @@ static void mqtt_event_handler(void * handler_args, esp_event_base_t base, int32
             ESP_LOGI(TAG, "Sending the binary");
             send_binary(client);
         }
+        std::string key(event->topic, event->topic_len);
+        ESP_LOGI(TAG, "key is: %s", key.c_str());
+        /* BIG TODO: add safety check */
+        topicCallbacks[key]();
         break;
+    }
     case MQTT_EVENT_ERROR:
         ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
         if (event->error_handle->error_type == MQTT_ERROR_TYPE_TCP_TRANSPORT)

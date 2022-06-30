@@ -12,7 +12,9 @@
 #include "BindingHandler.h"
 #include "ClusterCommands.h"
 
+#include "CloudConnector.h"
 #include "MQTTCommands.h"
+#include "MQTTManager.h"
 #include "SubscribeCommands.h"
 #include "esp_log.h"
 #include "esp_spi_flash.h"
@@ -83,9 +85,8 @@ extern "C" void app_main()
         return;
     }
 #endif
-
+    matterHub::CloudConnector::InitDCMD();
     chip::DeviceLayer::PlatformMgr().ScheduleWork(InitServer, reinterpret_cast<intptr_t>(nullptr));
-
     error = GetAppTask().StartAppTask();
     if (error != CHIP_NO_ERROR)
     {
