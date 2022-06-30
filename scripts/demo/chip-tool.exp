@@ -12,12 +12,12 @@ send "rm -rf /tmp/*.ini /tmp/chip_*\r"
 send "tail -f $COMMUNICATION_FILE\r"
 expect "$ESP32_TTY provisioned"
 send \x03
-send "$CHIP_TOOL_PATH pairing ble-wifi 333 \"${SSID}\" \"${PASSWORD}\" 20202021 3840\r"
+send "$CHIP_TOOL_PATH pairing ble-wifi 333 \'${SSID}\' \"${PASSWORD}\" 20202021 3840\r"
 expect "Commissioning stage next step: 'SendComplete' -> 'Cleanup'"
 send "$CHIP_TOOL_PATH accesscontrol write acl \'\[\{\"fabricIndex\": 1, \"privilege\": 5, \"authMode\": 2, \"subjects\": \[112233\], \"targets\": null },{\"fabricIndex\": 1, \"privilege\": 5, \"authMode\": 2, \"subjects\": \[111\], \"targets\": null }\]\' 333 0\r"
 send -i $com_shell "echo \"flash $M5_TTY\" >> $COMMUNICATION_FILE\r"
 send "tail -f $COMMUNICATION_FILE\r"
 expect "$M5_TTY provisioned"
 send \x03
-send "$CHIP_TOOL_PATH pairing ble-wifi 111 \"${SSID}\" \"${PASSWORD}\" 20202021 3840\r"
+send "$CHIP_TOOL_PATH pairing ble-wifi 111 \'${SSID}\' \"${PASSWORD}\" 20202021 3840\r"
 interact
