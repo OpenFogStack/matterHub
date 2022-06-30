@@ -1,5 +1,8 @@
-/**
- *
+/*
+ *    Published under MIT License
+ *    Copyright (c) 2022 OpenFogStack
+ *    Based on code written by Project CHIP Authors, which was published under Apache License, Version 2.0 (c) 2022
+ *    and the cJSON examples: https://github.com/nopnop2002/esp-idf-json, which are under Public Domain
  */
 // TODO Source this
 #pragma once
