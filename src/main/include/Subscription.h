@@ -9,7 +9,6 @@
 #include "MQTTManager.h"
 #include "cJSON.h"
 #include "esp_log.h"
-#include <Attributes.h>
 #include <InteractionModel.h>
 
 class Subscription : public InteractionModelReports, public chip::app::ReadClient::Callback
