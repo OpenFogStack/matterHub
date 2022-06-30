@@ -1,3 +1,7 @@
+/*
+ *    Published under MIT License
+ *    Copyright (c) 2022 OpenFogStack
+ */
 #pragma once
 
 #include "MQTTCommands.h"

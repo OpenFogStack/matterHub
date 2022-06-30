@@ -1,3 +1,8 @@
+/*
+ *    Published under MIT License
+ *    Copyright (c) 2022 OpenFogStack
+ *    Based on: https://github.com/espressif/esp-idf/tree/c2ccc383da/examples/protocols/mqtt/ssl, which is in the Public Domain
+ */
 #include "MQTTManager.h"
 #include "esp_event.h"
 #include "esp_netif.h"
