@@ -9,6 +9,7 @@
 #include "esp_system.h"
 #include "nvs_flash.h"
 
+#include "cJSON.h"
 #include "esp_log.h"
 #include "esp_ota_ops.h"
 #include "esp_tls.h"
@@ -46,6 +47,8 @@ void MQTTManager::Publish(shell::MQTTCommandData * data)
     int msg_id;
     msg_id = esp_mqtt_client_publish(mClient, data->topic, data->data, 0, 0, 0);
     ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+    cJSON_free(data->data);
+    Platform::Delete(data->topic);
     Platform::Delete(data);
 }
 void MQTTManager::Subscribe(shell::MQTTCommandData * data)

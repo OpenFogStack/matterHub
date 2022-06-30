@@ -86,11 +86,11 @@ private:
                 }
                 ESP_LOGI("Subscription", "OnOff: OnOff: %d", value);
                 shell::MQTTCommandData * mqttCommand = chip::Platform::New<shell::MQTTCommandData>();
-                /*
-                std::string * topic                  = chip::Platform::New<std::string>(256, ' ');*/
+
                 char * topic = (char *) chip::Platform::MemoryAlloc(sizeof(char) * 256);
-                snprintf(topic, 256, "/spbv1.0/matterHub0/ddata/%llu/%llu/%u/%u", mfabricId, mDevice->GetDeviceId(),
-                         path.mEndpointId, path.mClusterId);
+                snprintf(topic, 256, "/spBv1.0/matterhub/DDATA/0/%llu", mDevice->GetDeviceId());
+                char name[256] = { 0 };
+                snprintf(name, sizeof(name), "%u/%u/%u", path.mEndpointId, path.mClusterId, path.mAttributeId);
                 cJSON * root;
                 root = cJSON_CreateObject();
                 cJSON_AddNumberToObject(root, "timestamp", 13371337);
@@ -98,15 +98,17 @@ private:
                 metrics = cJSON_AddArrayToObject(root, "metrics");
                 cJSON * element;
                 element = cJSON_CreateObject();
-                cJSON_AddNumberToObject(element, "id", path.mAttributeId);
+                cJSON_AddStringToObject(element, "name", name);
                 cJSON_AddNumberToObject(element, "timestamp", 13371337);
                 cJSON_AddStringToObject(element, "dataType", "Bool");
                 cJSON_AddBoolToObject(element, "value", value);
                 cJSON_AddItemToArray(metrics, element);
                 char * my_json_string = cJSON_Print(root);
-                mqttCommand->topic    = topic;
-                mqttCommand->data     = my_json_string;
-                mqttCommand->task     = shell::MQTTCommandTask::publish;
+                cJSON_Delete(root);
+
+                mqttCommand->topic = topic;
+                mqttCommand->data  = my_json_string;
+                mqttCommand->task  = shell::MQTTCommandTask::publish;
 
                 chip::MQTTManager::GetInstance().ProcessCommand(mqttCommand);
             }
