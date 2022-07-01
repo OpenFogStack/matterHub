@@ -76,7 +76,7 @@ Subscriber: MatterHub
 	"timestamp": 1234,
 	"metrics": [
 	{
-		"name": "endpointId/clusterId/AttributeId/Command/Argument",
+		"name": "endpointId/clusterId/Command/Argument",
 		"timestamp": 1234,
 		"dataType":  datatype,
 		"value": value
@@ -86,11 +86,17 @@ Subscriber: MatterHub
 }
 ```
 	
-"Command":
+"Command": <br>
 write (to set specific parameters) <br>
 cmd (to send commands to the device) <br>
 read (for example if we went out of sync and need to know the current state) <br>
 subscribe (to un/subscribe specific endpoints) <br>
+
+"Argument": Depends on the Command <br>
+write: AttributeID  <br>
+read: AttributeID <br>
+subscribe: AttributeID <br>
+cmd: CommandID  <br>
 
 ### Comment
 This is currently my favorite design. Following the specification it makes more sense to use the MatterHub as Node: 
