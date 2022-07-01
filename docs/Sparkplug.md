@@ -98,6 +98,22 @@ read: AttributeID <br>
 subscribe: AttributeID <br>
 cmd: CommandID  <br>
 
+Example: (Turn on a light)
+```
+{
+	"timestamp": 1234,
+	"metrics": [
+	{
+		"name": "333/6/cmd/1",
+		"timestamp": 1234,
+		"dataType":  datatype,
+		"value": value
+	}
+	],
+	"seq": 0
+}
+```
+
 ### Comment
 This is currently my favorite design. Following the specification it makes more sense to use the MatterHub as Node: 
 > Node is any V3.1.1 compliant MQTT Client application that manages an MQTT Session and provides the physical and/or logical gateway functions [...]. The EoN node is responsible for any local protocol interface to existing legacy devices
