@@ -16,7 +16,7 @@
 #### If you run matterHub for the first time or have deleted the build directory, the Enddevice and Hub build the dependencies. Be patient, this could take a bit!
 
 
-## Troubleshooting
+# Troubleshooting
 #### If your Hub Console gives you an ``` Error: -1 ``` after this matter command: ``` matter switch binding unicast 1 333 1 ``` autostart.sh probably tried to insert the code while matter was executing something else.
 #### Type in ``` matter switch binding unicast 1 333 1 ``` and the result should be  ``` Done ```.
 
