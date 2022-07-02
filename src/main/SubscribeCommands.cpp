@@ -129,8 +129,8 @@ void onConnectedCallbackSubscribeRequest(void * context, chip::OperationalDevice
     ESP_LOGI("Subscribe", " - Attribute ID: '0x%02x'", data->attributeId);
     ESP_LOGI("Subscribe", " - minInterval: '0x%02x'", data->minInterval);
     ESP_LOGI("Subscribe", " - maxInterval: '0x%02x'", data->maxInterval);
-    Subscription * sub = Platform::New<Subscription>(peer_device, data->fabricId, data->endpointId, data->clusterId,
-                                                     data->attributeId, data->minInterval, data->maxInterval);
+    Subscription * sub = Platform::New<Subscription>(peer_device, data->endpointId, data->clusterId, data->attributeId,
+                                                     data->minInterval, data->maxInterval);
 
     CHIP_ERROR error = sub->DoSubscribe();
     if (error == CHIP_NO_ERROR)

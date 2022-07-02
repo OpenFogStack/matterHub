@@ -13,6 +13,7 @@
 #include "ClusterCommands.h"
 
 #include "CloudConnector.h"
+#include "DiscoverCommands.h"
 #include "MQTTCommands.h"
 #include "MQTTManager.h"
 #include "SubscribeCommands.h"
@@ -62,7 +63,7 @@ extern "C" void app_main()
     shell::RegisterClusterCommands();
     shell::RegisterSubscribeCommands();
     shell::RegisterMQTTCommands();
-
+    shell::RegisterDiscoverCommands();
 #endif // CONFIG_ENABLE_CHIP_SHELL
 
     CHIPDeviceManager & deviceMgr = CHIPDeviceManager::GetInstance();

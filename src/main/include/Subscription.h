@@ -14,24 +14,39 @@
 #include "esp_log.h"
 #include <InteractionModel.h>
 
+typedef void (*SubscriptionCallback)(const chip::app::ConcreteDataAttributePath &, chip::TLV::TLVReader *);
+
 class Subscription : public InteractionModelReports, public chip::app::ReadClient::Callback
 {
 
 public:
-    Subscription(chip::DeviceProxy * device, chip::FabricId fabricId, chip::EndpointId endpointId, chip::ClusterId clusterId,
-                 chip::AttributeId attributeId, uint16_t minInterval, uint16_t maxInterval) :
+    Subscription(chip::DeviceProxy * device, chip::EndpointId endpointId, chip::ClusterId clusterId, chip::AttributeId attributeId,
+                 uint16_t minInterval, uint16_t maxInterval, SubscriptionCallback callback = nullptr) :
         InteractionModelReports(this),
-        mDevice(device), mfabricId(fabricId), mMinInterval(minInterval), mMaxInterval(maxInterval)
+        mDevice(device), mMinInterval(minInterval), mMaxInterval(maxInterval), mCallback(callback)
     {
         mEndpointId  = { endpointId };
         mClusterId   = { clusterId };
         mAttributeId = { attributeId };
     }
+
+    Subscription(chip::DeviceProxy * device, chip::EndpointId endpointId, chip::ClusterId clusterId, chip::AttributeId attributeId,
+                 SubscriptionCallback callback = nullptr) :
+        InteractionModelReports(this),
+        mDevice(device), mMinInterval(1), mMaxInterval(10), mCallback(callback)
+    {
+        mEndpointId  = { endpointId };
+        mClusterId   = { clusterId };
+        mAttributeId = { attributeId };
+    }
+
     CHIP_ERROR DoSubscribe()
     {
         return SubscribeAttribute(mDevice, mEndpointId, mClusterId, mAttributeId, mMinInterval, mMaxInterval,
                                   chip::Optional<bool>(true), chip::NullOptional, chip::NullOptional);
     }
+
+    CHIP_ERROR Read() { return ReadAttribute(mDevice, mEndpointId, mClusterId, mAttributeId, chip::Optional<bool>(true)); }
 
     chip::DeviceProxy * mDevice;
     chip::FabricId mfabricId;
@@ -124,6 +139,11 @@ private:
             ESP_LOGE("Subscription", "Unknown Cluster ID");
             break;
         }
+
+        if (mCallback != nullptr)
+        {
+            mCallback(path, data);
+        }
     }
 
     void OnEventData(const chip::app::EventHeader & eventHeader, chip::TLV::TLVReader * data,
@@ -155,4 +175,6 @@ private:
 
     void OnDone(chip::app::ReadClient * apReadClient) override{};
     CHIP_ERROR mError = CHIP_NO_ERROR;
+
+    SubscriptionCallback mCallback;
 };
