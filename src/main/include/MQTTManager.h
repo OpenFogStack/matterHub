@@ -23,7 +23,7 @@ public:
         return sMQTTManager;
     }
     void Publish(shell::MQTTCommandData * data);
-    void Subscribe(shell::MQTTCommandData * data, std::function<void()> callback);
+    void Subscribe(shell::MQTTCommandData * data, std::function<void(char *, int, char *, int)> callback);
     void Unsubscribe(shell::MQTTCommandData * data);
     void ProcessCommand(shell::MQTTCommandData * data);
 

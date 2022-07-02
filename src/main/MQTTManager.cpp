@@ -35,7 +35,7 @@ namespace chip {
 MQTTManager MQTTManager::sMQTTManager;
 bool MQTTManager::mInit = false;
 bool mConnected         = false;
-std::map<std::string, std::function<void()>> topicCallbacks;
+std::map<std::string, std::function<void(char *, int, char *, int)>> topicCallbacks;
 std::vector<shell::MQTTCommandData *> mStoredCommands;
 esp_mqtt_client_handle_t mClient;
 
@@ -53,7 +53,7 @@ void MQTTManager::Publish(shell::MQTTCommandData * data)
     Platform::Delete(data->topic);
     Platform::Delete(data);
 }
-void MQTTManager::Subscribe(shell::MQTTCommandData * data, std::function<void()> callback)
+void MQTTManager::Subscribe(shell::MQTTCommandData * data, std::function<void(char *, int, char *, int)> callback)
 {
     std::string key(data->topic);
     ESP_LOGI(TAG, "key is: %s", key.c_str());
@@ -189,8 +189,13 @@ static void mqtt_event_handler(void * handler_args, esp_event_base_t base, int32
         }
         std::string key(event->topic, event->topic_len);
         ESP_LOGI(TAG, "key is: %s", key.c_str());
-        /* BIG TODO: add safety check */
-        topicCallbacks[key]();
+
+        for (std::pair<std::string, std::function<void(char *, int, char *, int)>> element : topicCallbacks)
+        {
+            // TODO match that pattern...
+            element.second(event->topic, event->topic_len, event->data, event->data_len);
+        }
+
         break;
     }
     case MQTT_EVENT_ERROR:
@@ -219,7 +224,6 @@ static void mqtt_event_handler(void * handler_args, esp_event_base_t base, int32
 
 void MQTTManager::initMQTTManager()
 {
-
     const esp_mqtt_client_config_t mqtt_cfg = {
         .uri      = CONFIG_MQTT_CLIENT_URI,
         .username = CONFIG_MQTT_CLIENT_USERNAME,
