@@ -1,4 +1,6 @@
 #include "ConnectionHelper.h"
+#include "InteractionModelHelper.h"
+
 #include "app/CommandSender.h"
 #include "app/clusters/bindings/BindingManager.h"
 #include "app/server/Server.h"
@@ -28,9 +30,7 @@ chip::PeerId PeerIdForNode(chip::FabricTable * fabricTable, chip::FabricIndex fa
     }
     return fabricInfo->GetPeerIdForNode(node);
 }
-}
-
-
+} // namespace
 
 CHIP_ERROR ConnectionHelper::RequestConnection(shell::BaseCommandData * data)
 {
@@ -47,5 +47,19 @@ CHIP_ERROR ConnectionHelper::RequestConnection(shell::BaseCommandData * data)
     return CHIP_NO_ERROR;
 }
 
+/*CHIP_ERROR ConnectionHelper::RequestConnection(chip::CommandData * data)
+{
+
+    PeerId peer = PeerIdForNode(mFabricTable, data->fabricId, data->nodeId);
+    if (peer.GetNodeId() == kUndefinedNodeId)
+    {
+        ChipLogError(NotSpecified, "ConnectionHelper - Unable to find the mentioned Peer");
+        return CHIP_ERROR_INVALID_ARGUMENT;
+    }
+
+    mCASESessionManager->FindOrEstablishSession(peer, &data->onConnectedCallback, &mOnConnectionFailureCallback);
+    ChipLogError(NotSpecified, "ConnectionHelper - Registration Done");
+    return CHIP_NO_ERROR;
+}*/
 
 } // namespace chip

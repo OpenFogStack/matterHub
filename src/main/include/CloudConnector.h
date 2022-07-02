@@ -1,3 +1,4 @@
+#include "InteractionModelHelper.h"
 #include "MQTTCommands.h"
 #include "MQTTManager.h"
 #include "cJSON.h"
@@ -105,28 +106,9 @@ public:
             ESP_LOGE(TAG, "Cluster %u", clusterId);
             ESP_LOGE(TAG, "action %s", action.c_str());
             ESP_LOGE(TAG, "action_specific_id: %d", action_specific_id);
-            if (clusterId == 6)
+            if (!action.compare("cmd"))
             {
-                ESP_LOGI(TAG, "CLUSTER OnOff");
-                if (!action.compare("cmd"))
-                {
-                    ESP_LOGI(TAG, "Server sent command");
-                    switch (action_specific_id)
-                    {
-                    case 0:
-                        ESP_LOGI(TAG, "command: Off");
-                        break;
-
-                    case 1:
-                        ESP_LOGI(TAG, "command: On");
-                        break;
-                    case 2:
-                        ESP_LOGI(TAG, "command: toggle");
-                        break;
-                    default:
-                        break;
-                    }
-                }
+                CHIP_ERROR error = chip::InteractionModelHelper::command(nodeId, endpointId, clusterId, action_specific_id);
             }
         }
 
