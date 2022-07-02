@@ -14,8 +14,7 @@
 #include "esp_log.h"
 #include <InteractionModel.h>
 
-typedef void (*SubscriptionCallback)(const chip::app::ConcreteDataAttributePath &, chip::TLV::TLVReader *);
-
+typedef void (*SubscriptionCallback)(const chip::app::ConcreteDataAttributePath &, chip::TLV::TLVReader *, void * context);
 class Subscription : public InteractionModelReports, public chip::app::ReadClient::Callback
 {
 
@@ -84,65 +83,11 @@ private:
             return;
         }
 
-        // TODO: What we want to use:
-        // https://github.com/project-chip/connectedhomeip/blob/cb116b9fba7f738e5efb52115d891c5094de1442/examples/chip-tool/templates/logging/DataModelLogger-src.zapt
-        switch (path.mClusterId)
-        {
-        case chip::app::Clusters::OnOff::Id: {
-            switch (path.mAttributeId)
-            {
-            case chip::app::Clusters::OnOff::Attributes::OnOff::Id: {
-                bool value;
-                CHIP_ERROR error = data->Get(value);
-                if (error != CHIP_NO_ERROR)
-                {
-                    ESP_LOGE("Subscription", "Decoding error: %s", error.AsString());
-                    return;
-                }
-                ESP_LOGI("Subscription", "OnOff: OnOff: %d", value);
-                shell::MQTTCommandData * mqttCommand = chip::Platform::New<shell::MQTTCommandData>();
-
-                char * topic = (char *) chip::Platform::MemoryAlloc(sizeof(char) * 256);
-                snprintf(topic, 256, "/spBv1.0/matterhub/DDATA/0/%llu", mDevice->GetDeviceId());
-                char name[256] = { 0 };
-                snprintf(name, sizeof(name), "%u/%u/%u", path.mEndpointId, path.mClusterId, path.mAttributeId);
-                cJSON * root;
-                root = cJSON_CreateObject();
-                cJSON_AddNumberToObject(root, "timestamp", 13371337);
-                cJSON * metrics;
-                metrics = cJSON_AddArrayToObject(root, "metrics");
-                cJSON * element;
-                element = cJSON_CreateObject();
-                cJSON_AddStringToObject(element, "name", name);
-                cJSON_AddNumberToObject(element, "timestamp", 13371337);
-                cJSON_AddStringToObject(element, "dataType", "Bool");
-                cJSON_AddBoolToObject(element, "value", value);
-                cJSON_AddItemToArray(metrics, element);
-                char * my_json_string = cJSON_Print(root);
-                cJSON_Delete(root);
-
-                mqttCommand->topic = topic;
-                mqttCommand->data  = my_json_string;
-                mqttCommand->task  = shell::MQTTCommandTask::publish;
-
-                chip::MQTTManager::GetInstance().ProcessCommand(mqttCommand);
-            }
-            break;
-            default:
-                ESP_LOGE("Subscription", "Unknown Attribute ID");
-                break;
-            }
-        }
-        break;
-
-        default:
-            ESP_LOGE("Subscription", "Unknown Cluster ID");
-            break;
-        }
-
+        ESP_LOGI("Subscription", "This: %p", this);
+        ESP_LOGI("Subscription", "mdevice: %p", mDevice);
         if (mCallback != nullptr)
         {
-            mCallback(path, data);
+            mCallback(path, data, this);
         }
     }
 

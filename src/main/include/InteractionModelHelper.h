@@ -1,11 +1,11 @@
 #pragma once
 #include "ConnectionHelper.h"
+#include "Subscription.h"
 #include <InteractionModel.h>
 #include <app/OperationalDeviceProxy.h>
 
 namespace chip {
-typedef void (*SubscriptionCallback)(const chip::app::ConcreteDataAttributePath &, chip::TLV::TLVReader *);
-class InteractionModelHelper
+class InteractionModelHelper : public InteractionModelReports, public chip::app::ReadClient::Callback
 {
 public:
     InteractionModelHelper();
@@ -14,7 +14,8 @@ public:
                                 uint16_t minInterval, uint16_t maxInterval, SubscriptionCallback callback);
     static CHIP_ERROR command(NodeId nodeId, EndpointId endpointId, ClusterId clusterId, CommandId commandId);
 
-    static CHIP_ERROR read(NodeId nodeId, EndpointId endpointId, ClusterId clusterId, AttributeId commandId);
+    static CHIP_ERROR read(NodeId nodeId, EndpointId endpointId, ClusterId clusterId, AttributeId attributeId,
+                           SubscriptionCallback callback);
 
     // CHIP_ERROR write(NodeId nodeId, EndpointId endpointId, ClusterId clusterId, AttributeId commandId, const T value);
 

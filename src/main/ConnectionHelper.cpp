@@ -47,19 +47,4 @@ CHIP_ERROR ConnectionHelper::RequestConnection(shell::BaseCommandData * data)
     return CHIP_NO_ERROR;
 }
 
-/*CHIP_ERROR ConnectionHelper::RequestConnection(chip::CommandData * data)
-{
-
-    PeerId peer = PeerIdForNode(mFabricTable, data->fabricId, data->nodeId);
-    if (peer.GetNodeId() == kUndefinedNodeId)
-    {
-        ChipLogError(NotSpecified, "ConnectionHelper - Unable to find the mentioned Peer");
-        return CHIP_ERROR_INVALID_ARGUMENT;
-    }
-
-    mCASESessionManager->FindOrEstablishSession(peer, &data->onConnectedCallback, &mOnConnectionFailureCallback);
-    ChipLogError(NotSpecified, "ConnectionHelper - Registration Done");
-    return CHIP_NO_ERROR;
-}*/
-
 } // namespace chip

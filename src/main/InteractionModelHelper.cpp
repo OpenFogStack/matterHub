@@ -1,5 +1,6 @@
 #include "InteractionModelHelper.h"
 #include "BaseCommand.h"
+#include "Subscription.h"
 
 // todo
 #include "app/CommandSender.h"
@@ -8,7 +9,9 @@
 #include "controller/InvokeInteraction.h"
 #include "controller/ReadInteraction.h"
 #include "platform/CHIPDeviceLayer.h"
+#include <app-common/zap-generated/cluster-objects.h>
 #include <app/clusters/bindings/bindings.h>
+#include <controller-clusters/zap-generated/CHIPClusters.h>
 #include <lib/support/CodeUtils.h>
 
 namespace chip {
@@ -26,15 +29,35 @@ CHIP_ERROR InteractionModelHelper::command(NodeId nodeId, EndpointId endpointId,
     data->fabricId            = 1;
     data->nodeId              = nodeId;
     data->endpointId          = endpointId;
+    data->clusterId           = clusterId;
     data->commandId           = commandId;
     ConnectionHelper::GetInstance().RequestConnection(data);
     return CHIP_NO_ERROR;
 }
-CHIP_ERROR InteractionModelHelper::read(NodeId nodeId, EndpointId endpointId, ClusterId clusterId, AttributeId attributeId)
+CHIP_ERROR InteractionModelHelper::read(NodeId nodeId, EndpointId endpointId, ClusterId clusterId, AttributeId attributeId,
+                                        SubscriptionCallback callback)
 {
-
+    ReadCommandData * data = Platform::New<ReadCommandData>();
+    data->fabricId         = 1;
+    data->nodeId           = nodeId;
+    data->endpointId       = endpointId;
+    data->clusterId        = clusterId;
+    data->attributeId      = attributeId;
+    data->callback         = callback;
+    ConnectionHelper::GetInstance().RequestConnection(data);
     return CHIP_NO_ERROR;
 }
+
+void onConnectedCallbackRead(void * context, chip::OperationalDeviceProxy * peer_device)
+{
+    ReadCommandData * data = reinterpret_cast<chip::ReadCommandData *>(context);
+
+    Subscription * sub =
+        Platform::New<Subscription>(peer_device, data->endpointId, data->clusterId, data->attributeId, data->callback);
+
+    CHIP_ERROR error = sub->Read();
+}
+
 void onConnectedCallbackCommand(void * context, chip::OperationalDeviceProxy * peer_device)
 {
     CommandCommandData * data = reinterpret_cast<chip::CommandCommandData *>(context);
@@ -72,4 +95,6 @@ void onConnectedCallbackCommand(void * context, chip::OperationalDeviceProxy * p
     }
 }
 CommandCommandData::CommandCommandData() : BaseCommandData(onConnectedCallbackCommand, (void *) this) {}
+ReadCommandData::ReadCommandData() : BaseCommandData(onConnectedCallbackRead, (void *) this) {}
+
 } // namespace chip
