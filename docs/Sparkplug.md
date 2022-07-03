@@ -1,120 +1,128 @@
 # Sparkplug Mapping
 
+## Flexible Design
 
+spBv1.0/matterhub/\<command\>/\<matterhubID\>/\<nodeId\>
 
+GroupId: Matterhub (maybe matterHub:Production, or MatterHub:\<ModelName\>)  
+NodeId: Has to be unique.
 
-# Flexible Design
-spBv1.0/matterhub/command/MatterhubID/MatterNodeId
-
-GroupId: Matterhub (maybe matterHub:Production, or MatterHub:<ModelName>) <br>
-NodeId: Has to be unique. 
-
-example:
-
-spBv1.0/matterhub/DBIRTH/0  : New Matterhub has been provisioned <br>
-sbBv1.0/matterhub/DBIRTH/0/333 : MatterHub discovered a new Device  <br>
-spBv1.0/matterhub/DDATA/0/333 : A device changed the state <br>
-spBv1.0/matterhub/DCMD/0/333 : Sending a Command to the device <br>
-spBv1.0/matterhub/NDATA/0 : MatterHub sending Meta Information (logs, firmware, ...) <br>
-spBv1.0/matterhub/NCMD/0 : Sending a Command to the MatterHub <br>
-spBv1.0/matterhub/DDEATH/0/333 : Device has been deprovisioned <br>
-spBv1.0/matterhub/NDEATH/0 : MatterHub has been deprovisioned <br>
+Examples:
+| Topic                          | Meaning                                                  |
+| ------------------------------ | -------------------------------------------------------- |
+| spBv1.0/matterhub/DBIRTH/0     | New Matterhub has been provisioned                       |
+| sbBv1.0/matterhub/DBIRTH/0/333 | MatterHub discovered a new Device                        |
+| spBv1.0/matterhub/DDATA/0/333  | A device changed the state                               |
+| spBv1.0/matterhub/DCMD/0/333   | Sending a Command to the device                          |
+| spBv1.0/matterhub/NDATA/0      | MatterHub sending Meta Information (logs, firmware, ...) |
+| spBv1.0/matterhub/NCMD/0       | Sending a Command to the MatterHub                       |
+| spBv1.0/matterhub/DDEATH/0/333 | Device has been deprovisioned                            |
+| spBv1.0/matterhub/NDEATH/0     | MatterHub has been deprovisioned                         |
 
 ## Payload
+
 ### DBIRTH (Inform about a new Device)
-Publisher: MatterHub<br>
+
+Publisher: MatterHub  
 Subscriber: Server
-```
+
+```json
 {
-	"timestamp": 1234,
-	"metrics": [
-	{
-		"name": "endpointId/clusterId/AttributeId",
-		"timestamp": 1234,
-		"dataType": "Boolean",
-		"value": true,
-	},
-	{
-		"name": "endpointId/clusterId/AttributeId",
-		"timestamp": 1234,
-		"dataType": "String",
-		"value": "someText",
-	},
-	{
-		"name": "endpointId/clusterId/side",
-		"timestamp": 1234,
-		"dataType": "String",
-		"value": "server",
-	}
-	],
-	"seq": 0
+    "timestamp": 1234,
+    "metrics": [
+    {
+        "name": "<endpointID>/<clusterID>/<attributeID>",
+        "timestamp": 1234,
+        "dataType": "Boolean",
+        "value": true,
+    },
+    {
+        "name": "<endpointID>/<clusterID>/<attributeID>",
+        "timestamp": 1234,
+        "dataType": "String",
+        "value": "someText",
+    },
+    {
+        "name": "<endpointID>/<clusterID>/side",
+        "timestamp": 1234,
+        "dataType": "String",
+        "value": "server",
+    }
+    ],
+    "seq": 0
 }
-```	
+```
 
 ### DDATA (Updating Endpoint Data)
-Publisher: MatterHub<br>
-Subscriber: Server
-```
-{
-	"timestamp": 1234,
-	"metrics": [
-	{
-		"name": "endpointId/clusterId/AttributeId",
-		"timestamp": 1234,
-		"dataType": "Boolean",
-		"value": true,
-	}
-	],
-	"seq": 0
-}
-```	
-### DCMD (Control Endpoints)
-Publisher: Server<br>
-Subscriber: MatterHub
-```
-{
-	"timestamp": 1234,
-	"metrics": [
-	{
-		"name": "endpointId/clusterId/Command/Argument",
-		"timestamp": 1234,
-		"dataType":  datatype,
-		"value": value
-	}
-	],
-	"seq": 0
-}
-```
-	
-"Command": <br>
-write (to set specific parameters) <br>
-cmd (to send commands to the device) <br>
-read (for example if we went out of sync and need to know the current state) <br>
-subscribe (to un/subscribe specific endpoints) <br>
 
-"Argument": Depends on the Command <br>
-write: AttributeID  <br>
-read: AttributeID <br>
-subscribe: AttributeID <br>
-cmd: CommandID  <br>
+Publisher: MatterHub  
+Subscriber: Server
+
+```json
+{
+    "timestamp": 1234,
+    "metrics": [
+    {
+        "name": "<endpointID>/<clusterID>/<attributeID>",
+        "timestamp": 1234,
+        "dataType": "Boolean",
+        "value": true,
+    }
+    ],
+    "seq": 0
+}
+```
+
+### DCMD (Control Endpoints)
+
+Publisher: Server  
+Subscriber: MatterHub
+
+```json
+{
+    "timestamp": 1234,
+    "metrics": [
+    {
+        "name": "<endpointID>/<clusterId>/<InteractionType>/<Argument>",
+        "timestamp": 1234,
+        "dataType":  datatype,
+        "value": value
+    }
+    ],
+    "seq": 0
+}
+```
+
+"InteractionType":  
+write (to set specific parameters)  
+cmd (to send commands to the device)   
+read (for example if we went out of sync and need to know the current state)  
+subscribe (to un/subscribe specific endpoints)  
+
+"Argument": Depends on the InteractionType  
+write: AttributeID  
+read: AttributeID  
+subscribe: AttributeID  
+cmd: CommandID  
 
 Example: (Turn on a light)
-```
+```json
 {
-	"timestamp": 1234,
-	"metrics": [
-	{
-		"name": "333/6/cmd/1",
-		"timestamp": 1234,
-		"dataType":  datatype,
-		"value": value
-	}
-	],
-	"seq": 0
+    "timestamp": 1234,
+    "metrics": [
+    {
+        "name": "333/6/cmd/1",
+        "timestamp": 1234,
+        "dataType":  datatype,
+        "value": value
+    }
+    ],
+    "seq": 0
 }
 ```
 
 ### Comment
+
 This is currently my favorite design. Following the specification it makes more sense to use the MatterHub as Node: 
 > Node is any V3.1.1 compliant MQTT Client application that manages an MQTT Session and provides the physical and/or logical gateway functions [...]. The EoN node is responsible for any local protocol interface to existing legacy devices
 
@@ -124,93 +132,102 @@ To be even more flexible the whole name could be prefixed with an "m:" to indica
 The dataType is strictly speaking not required, since the combination of clusterId and attributeId already dictate the data type of the value
 
 
-# Matter Centered Design
-A different design is imaginable: <br>
-spBv1.0/MatterhubID/command/NodeId/ClusterId
+## Matter Centered Design
 
-spBv1.0/0/DBIRTH/0  : New Device (Node) has been provisioned <br>
-sbBv1.0/matterhub/DBIRTH/0/333 : New Endpoint was discovered <br>
-spBv1.0/matterhub/DDATA/0/333 :  Endpoint specific data <br>
-spBv1.0/matterhub/DCMD/0/333 : Sending a Command to an Endpoint <br>
-spBv1.0/matterhub/DDEATH/0/333 : Endpoint is no longer available (?)  <br>
-spBv1.0/matterhub/NDEATH/0 : Device is no longer available <br>
+A different design is imaginable:   
+spBv1.0/\<matterhubID\>/command/\<nodeID\>/\<clusterID\>
 
-With this design a smaller and simpler payload is possible, however the NDATA and NCMD would never be used, since Matter uses endpoint 0 for nodelevel configuration. 
-This also has no formal correct way to communicate with the matterHub for example to upload the current firmware level, logs, etc. 
+| Topic                  | Meaning                                |
+| ---------------------- | -------------------------------------- |
+| spBv1.0/0/DBIRTH/0     | New Device (Node) has been provisioned |
+| sbBv1.0/0/DBIRTH/0/333 | New Endpoint was discovered            |
+| spBv1.0/0/DDATA/0/333  | Endpoint specific data                 |
+| spBv1.0/0/DCMD/0/333   | Sending a Command to an Endpoint       |
+| spBv1.0/0/DDEATH/0/333 | Endpoint is no longer available (?)    |
+| spBv1.0/0/NDEATH/0     | Device is no longer available          |
+
+With this design a smaller and simpler payload is possible, however the NDATA and NCMD would never be used, since Matter uses endpoint 0 for nodelevel configuration.
+This also has no formal correct way to communicate with the matterHub for example to upload the current firmware level, logs, etc.
 However maybe it is much more useful to split the digital representation of the Matter network from the administrative tasks
 
+### Payload
 
-## Payload
+#### DDATA (Updating Endpoint Data)
 
-### DDATA (Updating Endpoint Data)
-Publisher: MatterHub<br>
-Subscriber: Server<br>
-```
+Publisher: MatterHub  
+Subscriber: Server
+
+```json
 {
-	"timestamp": 1234,
-	"metrics": [
-	{
-		"name": "clusterId/AttributeId",
-		"timestamp": 1234,
-		"dataType": "Boolean",
-		"value": true,	
-	} 		
-	],
-	"seq": 0
+    "timestamp": 1234,
+    "metrics": [
+    {
+        "name": "clusterId/<attributeID>",
+        "timestamp": 1234,
+        "dataType": "Boolean",
+        "value": true,
+    }
+    ],
+    "seq": 0
 }
 ```
+
 The "dataType" is not really necessary and maybe we can go even one step further and send, as Jonathan suggested, just the raw data we receive and let the server interpret it.
+
 ### DCMD (Control Endpoints)
-Publisher: Server<br>
+
+Publisher: Server  
 Subscriber: MatterHub
-```
-{
-	"timestamp": 1234,
-	"metrics": [
-	{
-		"name": "clusterId/AttributeId/Command/Argument",
-		"timestamp": 1234,
-		"dataType":  datatype,
-		"value": value
-	}
-	],
-	"seq": 0
-}
-```
-	
-"Command":
-write (to set specific parameters) <br>
-cmd (to send commands to the device) <br>
-read (for example if we went out of sync and need to know the current state) <br>
-subscribe (to un/subscribe specific endpoints) <br>
 
-```
-Example 
+```json
 {
-	"timestamp": 1234,
-	"metrics": [
-	{
-		"name": "6/0/cmd/toggle",
-		"timestamp": 1234
-		"dataType":  ""
-		"value": ""
-	}
-	],
-	"seq": 0
+    "timestamp": 1234,
+    "metrics": [
+    {
+        "name": "<clusterID>/<attributeID>/<InteractionType>/<Argument>",
+        "timestamp": 1234,
+        "dataType":  datatype,
+        "value": value
+    }
+    ],
+    "seq": 0
 }
 ```
 
-```
+"InteractionType":
+write (to set specific parameters)   
+cmd (to send commands to the device)   
+read (for example if we went out of sync and need to know the current state)   
+subscribe (to un/subscribe specific endpoints)   
+
+Example
+
+```json
 {
-	"timestamp": 1234,
-	"metrics": [
-	{
-		"name": "6/0/write/on-time",
-		"timestamp": 1234
-		"dataType":  "int16u"
-		"value": "10"
-	}
-	],
-	"seq": 0
+    "timestamp": 1234,
+    "metrics": [
+    {
+        "name": "6/0/cmd/toggle",
+        "timestamp": 1234,
+        "dataType":  "",
+        "value": ""
+    }
+    ],
+    "seq": 0
+}
+```
+
+```json
+{
+    "timestamp": 1234,
+    "metrics": [
+    {
+        "name": "6/0/write/on-time",
+        "timestamp": 1234,
+        "dataType":  "int16u",
+        "value": "10"
+    }
+    ],
+    "seq": 0
 }
 ```
