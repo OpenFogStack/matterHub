@@ -21,16 +21,14 @@ namespace {
 
 chip::PeerId PeerIdForNode(chip::FabricTable * fabricTable, chip::FabricIndex fabric, chip::NodeId node)
 {
-    chip::FabricInfo * fabricInfo = fabricTable->FindFabricWithIndex(fabric);
+    chip::FabricInfo const * const fabricInfo = fabricTable->FindFabricWithIndex(fabric);
     if (fabricInfo == nullptr)
     {
         return chip::PeerId();
     }
     return fabricInfo->GetPeerIdForNode(node);
 }
-}
-
-
+} // namespace
 
 CHIP_ERROR ConnectionHelper::RequestConnection(shell::BaseCommandData * data)
 {
@@ -46,6 +44,5 @@ CHIP_ERROR ConnectionHelper::RequestConnection(shell::BaseCommandData * data)
     ChipLogError(NotSpecified, "ConnectionHelper - Registration Done");
     return CHIP_NO_ERROR;
 }
-
 
 } // namespace chip

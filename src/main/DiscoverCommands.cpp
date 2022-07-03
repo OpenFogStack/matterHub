@@ -2,9 +2,9 @@
 
 #include "DiscoverCommands.h"
 #include "ConnectionHelper.h"
-#include "lib/shell/Engine.h"
 #include "InteractionModel.h"
 #include "Subscription.h"
+#include "lib/shell/Engine.h"
 
 #include "app/clusters/bindings/BindingManager.h"
 #include "app/server/Server.h"
@@ -31,9 +31,6 @@ namespace shell {
  *********************************************************/
 
 Engine sDiscoverShellSubCommands;
- 
-
-
 
 CHIP_ERROR DiscoverHelpHandler(int argc, char ** argv)
 {
@@ -51,33 +48,32 @@ CHIP_ERROR DiscoverHandler(int argc, char ** argv)
     return sDiscoverShellSubCommands.ExecCommand(argc, argv);
 }
 
-CHIP_ERROR DiscoverDescribeHandler(int argc, char ** argv){
-     if (argc != 2)
+CHIP_ERROR DiscoverDescribeHandler(int argc, char ** argv)
+{
+    if (argc != 2)
     {
         return DiscoverHelpHandler(argc, argv);
     }
-    DiscoverCommandData* entry = Platform::New<DiscoverCommandData>();
-    entry->fabricId = atoi(argv[0]);
-    entry->nodeId = atoi(argv[1]);
+    DiscoverCommandData * entry = Platform::New<DiscoverCommandData>();
+    entry->fabricId             = atoi(argv[0]);
+    entry->nodeId               = atoi(argv[1]);
     ESP_LOGI("Discover", "DiscoverDescribeHandler called with:");
     ESP_LOGI("Discover", " - Fabric ID: '0x%02x'", atoi(argv[0]));
     ESP_LOGI("Discover", " - Node ID: '0x%02x'", atoi(argv[1]));
 
-
     DeviceLayer::PlatformMgr().ScheduleWork(DescribeWorkerFunction, reinterpret_cast<intptr_t>(entry));
     return CHIP_NO_ERROR;
 }
-        
+
 void RegisterDiscoverCommands()
 {
 
     static const shell_command_t sDiscoverSubCommands[] = {
         { &DiscoverHelpHandler, "help", "Usage: discover <subcommand>" },
-        { &DiscoverDescribeHandler, "describe",
-          "Usage: describe <fabric id> <node id>" },
+        { &DiscoverDescribeHandler, "describe", "Usage: describe <fabric id> <node id>" },
     };
 
-    sDiscoverShellSubCommands.RegisterCommands(sDiscoverSubCommands,ArraySize(sDiscoverSubCommands));
+    sDiscoverShellSubCommands.RegisterCommands(sDiscoverSubCommands, ArraySize(sDiscoverSubCommands));
 
     static const shell_command_t sDiscoverCommand = { &DiscoverHandler, "discover", " Usage: discover <subcommand>" };
 
@@ -223,12 +219,14 @@ void onPartListReadCallback(const chip::app::ConcreteDataAttributePath& path, ch
     data->OpenContainer(reader);
     partsList.SetReader(reader);
     size_t size = 0;
-    if(partsList.ComputeSize(&size)==CHIP_NO_ERROR){
+    if (partsList.ComputeSize(&size) == CHIP_NO_ERROR)
+    {
         ESP_LOGI("Discover", " - Endpoints: '%u'", size);
     }
     ESP_LOGI("Discover", " - Endpoint IDs:");
-    
-    for(auto it = partsList.begin();it.Next();){
+
+    for (auto it = partsList.begin(); it.Next();)
+    {
         auto endpointId = it.GetValue();
         manager->mEndpoints.emplace(endpointId,Endpoint(endpointId));
         ESP_LOGI("Discover", "   - Endpoint: '0x%02x'", endpointId);

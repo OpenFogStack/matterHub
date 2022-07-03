@@ -184,7 +184,7 @@ namespace {
 
 chip::PeerId PeerIdForNode(chip::FabricTable * fabricTable, chip::FabricIndex fabric, chip::NodeId node)
 {
-    chip::FabricInfo * fabricInfo = fabricTable->FindFabricWithIndex(fabric);
+    chip::FabricInfo const * const fabricInfo = fabricTable->FindFabricWithIndex(fabric);
     if (fabricInfo == nullptr)
     {
         return chip::PeerId();
