@@ -8,7 +8,7 @@
 #include <InteractionModel.h>
 #include "esp_log.h"
 
-typedef void(*SubscriptionCallback)(const chip::app::ConcreteDataAttributePath&, chip::TLV::TLVReader*);
+typedef void(*SubscriptionCallback)(const chip::app::ConcreteDataAttributePath&, chip::TLV::TLVReader*, chip::DeviceProxy*);
 
 class Subscription : public InteractionModelReports, public chip::app::ReadClient::Callback
 {
@@ -40,6 +40,7 @@ public:
                                   chip::Optional<bool>(true), chip::NullOptional, chip::NullOptional);
     }
 
+    //TODO: Cleanup after Read
     CHIP_ERROR Read(){
         return ReadAttribute(mDevice,mEndpointId,mClusterId,mAttributeId,chip::Optional<bool>(true));
     }
@@ -87,7 +88,7 @@ private:
         }
 
         if(mCallback != nullptr){
-            mCallback(path ,data);
+            mCallback(path ,data, mDevice);
         }
 
     }

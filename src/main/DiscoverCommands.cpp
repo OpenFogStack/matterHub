@@ -94,18 +94,86 @@ void DescribeWorkerFunction(intptr_t context)
     Platform::Delete(data);
 }
 
+void ReadAttribute(chip::DeviceProxy* device, chip::EndpointId endpointId, chip::ClusterId clusterId, chip::AttributeId attributeId, SubscriptionCallback callback)
+{
+    Subscription * sub = Platform::New<Subscription>(device, endpointId, clusterId, attributeId, callback);
+    CHIP_ERROR error = sub->Read();
+    if(error == CHIP_NO_ERROR){
+        ESP_LOGI("Discover", "Succesfull Attribute Read Request for:");
+        ESP_LOGI("Discover", "  Node: '0x%02llx' Endpoint: '0x%02x' Cluster: '0x%02x' Attribute: '0x%02x'", device->GetDeviceId(), endpointId, clusterId, attributeId);
+    }
+}
 
-void onAttributeReadCallback(const chip::app::ConcreteDataAttributePath& path, chip::TLV::TLVReader* data){
+void onDeviceListReadCallback(const chip::app::ConcreteDataAttributePath& path, chip::TLV::TLVReader* data, chip::DeviceProxy* device)
+{
+    ESP_LOGI("Discover", "Device list for node: '0x%02llx' endpoint: '0x%02x'", device->GetDeviceId(), path.mEndpointId);
+
+    auto list = chip::app::Clusters::Descriptor::Attributes::DeviceList::TypeInfo::DecodableType();
+    chip::TLV::TLVReader reader;
+    data->OpenContainer(reader);
+    list.SetReader(reader);
+    size_t size = 0;
+    if(list.ComputeSize(&size)==CHIP_NO_ERROR){
+        ESP_LOGI("Discover", " - Devices: '%u'", size);
+    }
+    ESP_LOGI("Discover", " - Device IDs:");
+    
+    for(auto it = list.begin();it.Next();){
+        auto device = it.GetValue();
+        // ESP_LOGI("Discover", "   - '0x%02x'", deviceId);
+    }
+    data->CloseContainer(reader);
+}
+
+void onServerListReadCallback(const chip::app::ConcreteDataAttributePath& path, chip::TLV::TLVReader* data, chip::DeviceProxy* device)
+{
+    ESP_LOGI("Discover", "Server cluster list for node: '0x%02llx' endpoint: '0x%02x'", device->GetDeviceId(), path.mEndpointId);
+
+    auto list = chip::app::Clusters::Descriptor::Attributes::ServerList::TypeInfo::DecodableType();
+    chip::TLV::TLVReader reader;
+    data->OpenContainer(reader);
+    list.SetReader(reader);
+    size_t size = 0;
+    if(list.ComputeSize(&size)==CHIP_NO_ERROR){
+        ESP_LOGI("Discover", " - Clusters: '%u'", size);
+    }
+    ESP_LOGI("Discover", " - Cluster IDs:");
+    
+    for(auto it = list.begin();it.Next();){
+        auto clusterId = it.GetValue();
+        ESP_LOGI("Discover", "   - Cluster: '0x%02x'", clusterId);
+    }
+    data->CloseContainer(reader);
+}
+
+void onClientListReadCallback(const chip::app::ConcreteDataAttributePath& path, chip::TLV::TLVReader* data, chip::DeviceProxy* device){
+    ESP_LOGI("Discover", "Client cluster list for node: '0x%02llx' endpoint: '0x%02x'", device->GetDeviceId(), path.mEndpointId);
+
+    auto list = chip::app::Clusters::Descriptor::Attributes::ClientList::TypeInfo::DecodableType();
+    chip::TLV::TLVReader reader;
+    data->OpenContainer(reader);
+    list.SetReader(reader);
+    size_t size = 0;
+    if(list.ComputeSize(&size)==CHIP_NO_ERROR){
+        ESP_LOGI("Discover", " - Clusters: '%u'", size);
+    }
+    ESP_LOGI("Discover", " - Cluster IDs:");
+    
+    for(auto it = list.begin();it.Next();){
+        auto clusterId = it.GetValue();
+        ESP_LOGI("Discover", "   - Cluster: '0x%02x'", clusterId);
+    }
+    data->CloseContainer(reader);
+}
+
+
+void onPartListReadCallback(const chip::app::ConcreteDataAttributePath& path, chip::TLV::TLVReader* data, chip::DeviceProxy* device){
     chip::TLV::TLVType type = data->GetType();
-    ESP_LOGI("Discover", "Attribute read successfully:");
+    ESP_LOGI("Discover", "Partlist read successfully for:");
+    ESP_LOGI("Discover", " - NodeId: '0x%02llx'", device->GetDeviceId());
     ESP_LOGI("Discover", " - Attribute TLV type: '0x%02x'", type);
 
-    if(type == chip::TLV::TLVType::kTLVType_UTF8String || type == chip::TLV::TLVType::kTLVType_ByteString){
-        uint32_t length = data->GetLength();
-        ESP_LOGI("Discover", " - Attribute data length: '%u'", length);
-    }
-
-    chip::app::Clusters::Descriptor::Attributes::PartsList::TypeInfo::DecodableType partsList = chip::app::Clusters::Descriptor::Attributes::PartsList::TypeInfo::DecodableType();
+    auto partsList = chip::app::Clusters::Descriptor::Attributes::PartsList::TypeInfo::DecodableType();
     chip::TLV::TLVReader reader;
     data->OpenContainer(reader);
     partsList.SetReader(reader);
@@ -118,6 +186,10 @@ void onAttributeReadCallback(const chip::app::ConcreteDataAttributePath& path, c
     for(auto it = partsList.begin();it.Next();){
         auto endpointId = it.GetValue();
         ESP_LOGI("Discover", "   - Endpoint: '0x%02x'", endpointId);
+
+        ReadAttribute(device, endpointId, chip::app::Clusters::Descriptor::Id, chip::app::Clusters::Descriptor::Attributes::ClientList::Id,onClientListReadCallback);
+        ReadAttribute(device, endpointId, chip::app::Clusters::Descriptor::Id, chip::app::Clusters::Descriptor::Attributes::ServerList::Id,onServerListReadCallback);
+        ReadAttribute(device, endpointId, chip::app::Clusters::Descriptor::Id, chip::app::Clusters::Descriptor::Attributes::DeviceList::Id,onDeviceListReadCallback);
     }
     data->CloseContainer(reader);
 }
@@ -129,7 +201,7 @@ void onConnectionRequestCompleted(void * context, chip::OperationalDeviceProxy *
     ESP_LOGI("Discover", " - Endpoint ID: '0x0000'");
     ESP_LOGI("Discover", " - Cluster ID: '0x%02x'", chip::app::Clusters::Descriptor::Id);
     ESP_LOGI("Discover", " - Attribute ID: '0x%02x'", chip::app::Clusters::Descriptor::Attributes::PartsList::Id);
-    Subscription * sub = Platform::New<Subscription>(peer_device, 0, chip::app::Clusters::Descriptor::Id, chip::app::Clusters::Descriptor::Attributes::PartsList::Id,onAttributeReadCallback);
+    Subscription * sub = Platform::New<Subscription>(peer_device, 0, chip::app::Clusters::Descriptor::Id, chip::app::Clusters::Descriptor::Attributes::PartsList::Id,onPartListReadCallback);
 
     CHIP_ERROR error = sub->Read();
 
