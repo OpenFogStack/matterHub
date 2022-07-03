@@ -86,7 +86,6 @@ void onFailureCallbackClusterCommandOnOff(void * context, PeerId peerId, CHIP_ER
 
 void onConnectedCallbackClusterCommandOnOff(void * context, OperationalDeviceProxy * peer_device)
 {
-    ChipLogError(NotSpecified, "Got here!!");
     ClusterCommandData * data = reinterpret_cast<ClusterCommandData *>(context);
 
     auto onSuccess = [data](const ConcreteCommandPath & commandPath, const StatusIB & status, const auto & dataResponse) {
@@ -184,7 +183,7 @@ namespace {
 
 chip::PeerId PeerIdForNode(chip::FabricTable * fabricTable, chip::FabricIndex fabric, chip::NodeId node)
 {
-    chip::FabricInfo * fabricInfo = fabricTable->FindFabricWithIndex(fabric);
+    chip::FabricInfo const * const fabricInfo = fabricTable->FindFabricWithIndex(fabric);
     if (fabricInfo == nullptr)
     {
         return chip::PeerId();
