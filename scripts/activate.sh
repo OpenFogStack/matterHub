@@ -1,6 +1,6 @@
 #!/bin/bash
 IDF_VERSION="v4.4.1"
-git submodule update --recursive
+git submodule update --init --recursive
 
 pushd thirdparty/esp-idf/repo || exit 1
 git checkout ${IDF_VERSION}
