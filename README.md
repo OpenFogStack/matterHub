@@ -9,7 +9,7 @@ Run `source ./scripts/activate.sh`
 ## Build
 
 for esp32/m5-Stack:\
-`cd src; rm sdkconfig; idf.py build`
+`cd src; idf.py build`
 
 
 ## Interaction Example
