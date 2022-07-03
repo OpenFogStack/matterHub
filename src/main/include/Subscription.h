@@ -7,17 +7,19 @@
 #include "BindingHandler.h"
 #include <InteractionModel.h>
 #include "esp_log.h"
+#include "platform/CHIPDeviceLayer.h"
 
-typedef void(*SubscriptionCallback)(const chip::app::ConcreteDataAttributePath&, chip::TLV::TLVReader*, chip::DeviceProxy*);
+
+typedef void(*SubscriptionCallback)(const chip::app::ConcreteDataAttributePath&, chip::TLV::TLVReader*, void* context);
 
 class Subscription : public InteractionModelReports, public chip::app::ReadClient::Callback
 {
 
 public:
     Subscription(chip::DeviceProxy * device, chip::EndpointId endpointId, chip::ClusterId clusterId, chip::AttributeId attributeId,
-                 uint16_t minInterval, uint16_t maxInterval, SubscriptionCallback callback = nullptr) :
+                 uint16_t minInterval, uint16_t maxInterval, SubscriptionCallback callback = nullptr, void* context = nullptr) :
         InteractionModelReports(this),
-        mDevice(device), mMinInterval(minInterval), mMaxInterval(maxInterval),mCallback(callback)
+        mDevice(device), mMinInterval(minInterval), mMaxInterval(maxInterval),mCallback(callback), mContext(context)
     {
         mEndpointId  = { endpointId };
         mClusterId   = { clusterId };
@@ -25,9 +27,9 @@ public:
     }
 
     Subscription(chip::DeviceProxy * device, chip::EndpointId endpointId, chip::ClusterId clusterId, chip::AttributeId attributeId,
-                 SubscriptionCallback callback = nullptr) :
+                 SubscriptionCallback callback = nullptr, void* context = nullptr) :
         InteractionModelReports(this),
-        mDevice(device), mMinInterval(1), mMaxInterval(10),mCallback(callback)
+        mDevice(device), mMinInterval(1), mMaxInterval(10),mCallback(callback), mContext(context)
     {
         mEndpointId  = { endpointId };
         mClusterId   = { clusterId };
@@ -88,9 +90,8 @@ private:
         }
 
         if(mCallback != nullptr){
-            mCallback(path ,data, mDevice);
+            mCallback(path ,data, mContext);
         }
-
     }
 
     void OnEventData(const chip::app::EventHeader & eventHeader, chip::TLV::TLVReader * data,
@@ -123,4 +124,5 @@ private:
     void OnDone(chip::app::ReadClient * apReadClient) override{};
     CHIP_ERROR mError = CHIP_NO_ERROR;
     SubscriptionCallback mCallback;
+    void* mContext;
 };
