@@ -121,8 +121,8 @@ protected:
             auto commandSender = std::make_unique<chip::app::CommandSender>(mCallback, device->GetExchangeManager(),
                                                                             timedInteractionTimeoutMs.HasValue());
             VerifyOrReturnError(commandSender != nullptr, CHIP_ERROR_NO_MEMORY);
-            ReturnErrorOnFailure(commandSender->AddRequestData(commandPath, value, timedInteractionTimeoutMs,
-                                                                           suppressResponse.ValueOr(false)));
+            ReturnErrorOnFailure(
+                commandSender->AddRequestData(commandPath, value, timedInteractionTimeoutMs, suppressResponse.ValueOr(false)));
             ReturnErrorOnFailure(commandSender->SendCommandRequest(device->GetSecureSession().Value()));
             mCommandSender.push_back(std::move(commandSender));
 

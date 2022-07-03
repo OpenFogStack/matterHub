@@ -10,7 +10,7 @@ namespace shell {
 
 struct BaseCommandData
 {
-    BaseCommandData(chip::OnDeviceConnected callback, void* context):onConnectedCallback(callback, context){};
+    BaseCommandData(chip::OnDeviceConnected callback, void * context) : onConnectedCallback(callback, context){};
     chip::FabricId fabricId;
     chip::NodeId nodeId;
     chip::Callback::Callback<chip::OnDeviceConnected> onConnectedCallback;
