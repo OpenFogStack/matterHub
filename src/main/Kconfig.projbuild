@@ -73,3 +73,19 @@ menu "Demo"
        default 8 if RENDEZVOUS_MODE_ETHERNET
 
 endmenu
+menu "MQTT Configuration"
+    config MQTT_CLIENT_URI
+       string "MQTT URI"
+    config MQTT_CLIENT_USERNAME
+       string "MQTT Username"
+    config MQTT_CLIENT_PASSWORD
+	string "MQTT Password"
+endmenu
+menu "MatterHUB ID Configuration"
+    config MATTERHUBID
+	prompt "MatterHub ID"
+    default 0
+    int
+    help
+	There is no help
+endmenu

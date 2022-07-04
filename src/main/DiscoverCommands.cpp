@@ -17,6 +17,7 @@
 #include "lib/shell/commands/Help.h"
 #include <sstream>
 
+
 using namespace chip;
 using namespace chip::app;
 
@@ -215,6 +216,7 @@ void onPartListReadCallback(const chip::app::ConcreteDataAttributePath& path, ch
     ESP_LOGI("Discover", " - Attribute TLV type: '0x%02x'", type);
 
     auto partsList = chip::app::Clusters::Descriptor::Attributes::PartsList::TypeInfo::DecodableType();
+
     chip::TLV::TLVReader reader;
     data->OpenContainer(reader);
     partsList.SetReader(reader);
@@ -228,6 +230,7 @@ void onPartListReadCallback(const chip::app::ConcreteDataAttributePath& path, ch
     for (auto it = partsList.begin(); it.Next();)
     {
         auto endpointId = it.GetValue();
+
         manager->mEndpoints.emplace(endpointId,Endpoint(endpointId));
         ESP_LOGI("Discover", "   - Endpoint: '0x%02x'", endpointId);
     }
@@ -235,10 +238,12 @@ void onPartListReadCallback(const chip::app::ConcreteDataAttributePath& path, ch
 
     manager->currentEndpoint = manager->mEndpoints.begin();
     manager->ReadAttribute(manager->currentEndpoint->first, chip::app::Clusters::Descriptor::Id, chip::app::Clusters::Descriptor::Attributes::ServerList::Id,onServerListReadCallback);
+
 }
 
 void onConnectionRequestCompleted(void * context, chip::OperationalDeviceProxy * peer_device)
 {
+
     Platform::New<DescriptionManager>(peer_device);
 }
 

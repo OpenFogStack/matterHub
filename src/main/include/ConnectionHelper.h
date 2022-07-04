@@ -1,6 +1,8 @@
 #pragma once
 #include "BaseCommand.h"
 
+#include "InteractionModelHelper.h"
+
 #include "core/CHIPError.h"
 #include "core/DataModelTypes.h"
 #include <app/OperationalDeviceProxy.h>
@@ -35,7 +37,6 @@ public:
     }
     CHIP_ERROR RequestConnection(shell::BaseCommandData * data);
 
-private:
     chip::Callback::Callback<chip::OnDeviceConnectionFailure> mOnConnectionFailureCallback;
     chip::FabricTable * mFabricTable               = nullptr;
     chip::CASESessionManager * mCASESessionManager = nullptr;

@@ -1,4 +1,5 @@
 #include "BaseCommand.h"
+
 #include "Subscription.h"
 #include "platform/CHIPDeviceLayer.h"
 #include <functional>

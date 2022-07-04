@@ -1,4 +1,3 @@
-
 /*
  *    Published under MIT License
  *    Copyright (c) 2022 OpenFogStack
@@ -24,7 +23,6 @@ using Shell::shell_command_t;
 using Shell::streamer_get;
 using Shell::streamer_printf;
 
-static const char * TAG = "Subscribe Commands";
 namespace shell {
 Engine sShellSubscribeSubCommands;
 

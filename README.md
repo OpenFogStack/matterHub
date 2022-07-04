@@ -8,11 +8,9 @@ Run `source ./scripts/activate.sh`
 
 ## Build
 
-for esp32:\
-`cd src; rm sdkconfig; idf.py build`
+for esp32/m5-Stack:\
+`cd src; idf.py build`
 
-or for m5-Stack:\
-`cd src; rm sdkconfig; idf.py -D 'SDKCONFIG_DEFAULTS=sdkconfig_m5stack.defaults' build`
 
 ## Interaction Example
 
@@ -74,7 +72,17 @@ or for m5-Stack:\
     matter switch onoff on 1
     matter switch onoff off 1
     ```
+## Optional 
+### Configure MQTT
 
+The MQTT options can be configured via:
+
+idf.py menuconfig -> MQTT Configuration 
+
+For example:
+MQTT URI: mqtts://prefix.hivemq.cloud:8883
+MQTT Username: user
+MQTT Password: password
 ## References
 
 [This tutorial on how to use idf.py](https://github.com/project-chip/connectedhomeip/tree/master/examples/all-clusters-app/esp32)
