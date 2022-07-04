@@ -6,8 +6,8 @@
 
 
 # How to launch the program on Mac?
-#### 1. Click on autostart.sh
-#### 2. If you want to clean up the esp32 and m5stack before flashing, type in yes or y else click enter.
+#### 1. Click on autostart.sh and start the script on the Terminal. Alternatively, you can also start it by using the Terminal command ``` sh autostart.sh ``` but don't forget to iterate to the folder using ``` cd path_of_the_demo_mac_folder ```.
+#### 2. If you want to clean up the esp32 and m5stack before flashing, type in yes or y to clean up else click enter to skip.
 #### 3. A new window will appear. If you can see the percentage of the Hub window is going up, it means the Hub is in the flashing process. Now you can continue by clicking enter in the autostart.sh window.
 #### 4. Now the same thing for the Enddevice. A window will appear. When you can see the percentage of the Enddevice window is going up, it's time to click enter in the autostart.sh window.
 #### 5. Wait until the autostart.sh terminal window says that the autostart process is completed.
