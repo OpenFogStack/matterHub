@@ -3,6 +3,7 @@
 #include "Subscription.h"
 
 // todo
+#include "BaseCommand.h"
 #include "app/CommandSender.h"
 #include "app/clusters/bindings/BindingManager.h"
 #include "app/server/Server.h"
@@ -15,12 +16,19 @@
 #include <lib/support/CodeUtils.h>
 
 namespace chip {
+void InteractionModelHelperWorkerFunction(intptr_t context)
+{
+    VerifyOrReturn(context != 0, ChipLogError(NotSpecified, "InteractionModelHelperWorkerFunction - Invalid work data"));
+
+    shell::BaseCommandData * data = reinterpret_cast<shell::BaseCommandData *>(context);
+    ConnectionHelper::GetInstance().RequestConnection(data);
+}
 CHIP_ERROR InteractionModelHelper::subscribe(NodeId nodeId, EndpointId endpointId, ClusterId clusterId, AttributeId attributeId,
                                              uint16_t minInterval, uint16_t maxInterval, SubscriptionCallback callback)
 {
     SubscribeCommandData * data = Platform::New<SubscribeCommandData>();
 
-    ConnectionHelper::GetInstance().RequestConnection(data);
+    DeviceLayer::PlatformMgr().ScheduleWork(InteractionModelHelperWorkerFunction, reinterpret_cast<intptr_t>(data));
     return CHIP_NO_ERROR;
 }
 CHIP_ERROR InteractionModelHelper::command(NodeId nodeId, EndpointId endpointId, ClusterId clusterId, CommandId commandId)
@@ -31,7 +39,7 @@ CHIP_ERROR InteractionModelHelper::command(NodeId nodeId, EndpointId endpointId,
     data->endpointId          = endpointId;
     data->clusterId           = clusterId;
     data->commandId           = commandId;
-    ConnectionHelper::GetInstance().RequestConnection(data);
+    DeviceLayer::PlatformMgr().ScheduleWork(InteractionModelHelperWorkerFunction, reinterpret_cast<intptr_t>(data));
     return CHIP_NO_ERROR;
 }
 CHIP_ERROR InteractionModelHelper::read(NodeId nodeId, EndpointId endpointId, ClusterId clusterId, AttributeId attributeId,
@@ -44,7 +52,7 @@ CHIP_ERROR InteractionModelHelper::read(NodeId nodeId, EndpointId endpointId, Cl
     data->clusterId        = clusterId;
     data->attributeId      = attributeId;
     data->callback         = callback;
-    ConnectionHelper::GetInstance().RequestConnection(data);
+    DeviceLayer::PlatformMgr().ScheduleWork(InteractionModelHelperWorkerFunction, reinterpret_cast<intptr_t>(data));
     return CHIP_NO_ERROR;
 }
 
