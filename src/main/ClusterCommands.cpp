@@ -75,6 +75,7 @@ CHIP_ERROR ClusterCommandOnOffHandler(int argc, char ** argv)
 
     return sShellClusterOnOffSubCommands.ExecCommand(argc, argv);
 }
+
 void onFailureCallbackClusterCommandOnOff(void * context, PeerId peerId, CHIP_ERROR error)
 {
     auto & server                           = chip::Server::GetInstance();

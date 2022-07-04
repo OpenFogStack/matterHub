@@ -72,7 +72,17 @@ for esp32/m5-Stack:\
     matter switch onoff on 1
     matter switch onoff off 1
     ```
+## Optional 
+### Configure MQTT
 
+The MQTT options can be configured via:
+
+idf.py menuconfig -> MQTT Configuration 
+
+For example:
+MQTT URI: mqtts://prefix.hivemq.cloud:8883
+MQTT Username: user
+MQTT Password: password
 ## References
 
 [This tutorial on how to use idf.py](https://github.com/project-chip/connectedhomeip/tree/master/examples/all-clusters-app/esp32)
