@@ -1,5 +1,5 @@
 #!/bin/bash
-BASEDIR=$(dirname "$0")
+BASEDIR=$(dirname -- "$( readlink -f -- "$0"; )")
 cd $BASEDIR;
 source $BASEDIR/settings.sh
 cd $MATTERPATH
