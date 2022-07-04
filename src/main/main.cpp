@@ -30,7 +30,7 @@
 using namespace ::chip;
 using namespace ::chip::DeviceManager;
 
-static const char * TAG = "light-switch-app";
+static const char * TAG = "matterhub";
 
 static AppDeviceCallbacks EchoCallbacks;
 
@@ -55,7 +55,7 @@ extern "C" void app_main()
     }
 
     ESP_LOGI(TAG, "==================================================");
-    ESP_LOGI(TAG, "chip-esp32-light-switch-example starting");
+    ESP_LOGI(TAG, "matterhub starting");
     ESP_LOGI(TAG, "==================================================");
 
 #if CONFIG_ENABLE_CHIP_SHELL
