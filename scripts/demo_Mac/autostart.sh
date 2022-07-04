@@ -1,8 +1,8 @@
 #!/bin/bash
-BASEDIR=$(dirname "$0")
+BASEDIR=$(dirname -- "$( readlink -f -- "$0"; )")
 cd $BASEDIR;
 source ./settings.sh
-read -p "Do you want to clean up the esp32 and m5stack before flashing? Type in yes or click enter: " prompt
+read -p "Do you want to clean up the esp32 and m5stack before flashing? Type in yes to clean up or click enter to skip: " prompt
 if [[ $prompt == "y" || $prompt == "Y" || $prompt == "yes" || $prompt == "Yes" ]]
 then
 	echo "Cleaning the esp32 and m5stack please wait..."
