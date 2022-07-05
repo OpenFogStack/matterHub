@@ -181,6 +181,11 @@ public:
                 CHIP_ERROR error =
                     chip::InteractionModelHelper::read(nodeId, endpointId, clusterId, action_specific_id, &onAttributeReadCallback);
             }
+            if (!action.compare("subscribe"))
+            {
+                CHIP_ERROR error = chip::InteractionModelHelper::subscribe(nodeId, endpointId, clusterId, action_specific_id, 1, 10,
+                                                                           &onAttributeReadCallback);
+            }
         }
 
         /*int cores = cJSON_GetObjectItem(root2, "cores")->valueint;
