@@ -45,13 +45,13 @@ public:
                 snprintf(name, sizeof(name), "%u/%u/%u", path.mEndpointId, path.mClusterId, path.mAttributeId);
                 cJSON * root;
                 root = cJSON_CreateObject();
-                cJSON_AddNumberToObject(root, "timestamp", 13371337);
+                cJSON_AddNumberToObject(root, "timestamp", esp_log_timestamp());
                 cJSON * metrics;
                 metrics = cJSON_AddArrayToObject(root, "metrics");
                 cJSON * element;
                 element = cJSON_CreateObject();
                 cJSON_AddStringToObject(element, "name", name);
-                cJSON_AddNumberToObject(element, "timestamp", 13371337);
+                cJSON_AddNumberToObject(element, "timestamp", esp_log_timestamp());
                 cJSON_AddStringToObject(element, "dataType", "Bool");
                 cJSON_AddBoolToObject(element, "value", value);
                 cJSON_AddItemToArray(metrics, element);
