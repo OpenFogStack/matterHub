@@ -81,6 +81,7 @@ void MQTTManager::Subscribe(shell::MQTTCommandData * data)
     int msg_id;
     msg_id = esp_mqtt_client_subscribe(mClient, data->topic, 0);
     ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+    Platform::Delete(data->topic);
     Platform::Delete(data);
 }
 void MQTTManager::Unsubscribe(shell::MQTTCommandData * data)

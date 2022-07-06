@@ -40,7 +40,7 @@ public:
                 shell::MQTTCommandData * mqttCommand = chip::Platform::New<shell::MQTTCommandData>();
 
                 char * topic = (char *) chip::Platform::MemoryAlloc(sizeof(char) * 256);
-                snprintf(topic, 256, "spBv1.0/matterhub/DDATA/0/%llu", subscription->mDevice->GetDeviceId());
+                snprintf(topic, 256, "spBv1.0/matterhub/DDATA/%d/%llu", CONFIG_MATTERHUBID, subscription->mDevice->GetDeviceId());
                 char name[256] = { 0 };
                 snprintf(name, sizeof(name), "%u/%u/%u", path.mEndpointId, path.mClusterId, path.mAttributeId);
                 cJSON * root;
@@ -181,6 +181,11 @@ public:
                 CHIP_ERROR error =
                     chip::InteractionModelHelper::read(nodeId, endpointId, clusterId, action_specific_id, &onAttributeReadCallback);
             }
+            if (!action.compare("subscribe"))
+            {
+                CHIP_ERROR error = chip::InteractionModelHelper::subscribe(nodeId, endpointId, clusterId, action_specific_id, 1, 10,
+                                                                           &onAttributeReadCallback);
+            }
         }
 
         /*int cores = cJSON_GetObjectItem(root2, "cores")->valueint;
@@ -198,8 +203,10 @@ public:
     static void InitDCMD()
     {
         shell::MQTTCommandData * data = chip::Platform::New<shell::MQTTCommandData>();
-        data->topic                   = "spBv1.0/matterhub/DCMD/0/+";
-        data->task                    = shell::MQTTCommandTask::subscribe;
+        char * topic                  = (char *) chip::Platform::MemoryAlloc(sizeof(char) * 256);
+        snprintf(topic, 256, "spBv1.0/matterhub/DCMD/%d/+", CONFIG_MATTERHUBID);
+        data->topic = topic;
+        data->task  = shell::MQTTCommandTask::subscribe;
         chip::MQTTManager::GetInstance().Subscribe(data, DCMD_callback);
     }
 
