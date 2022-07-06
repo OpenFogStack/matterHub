@@ -1,7 +1,7 @@
 ## Java Server
 
 ### First steps
-1. First of all, you need an active [subscription](https://accounts.bosch-iot-suite.com/subscriptions/) on the Bosch IoT Suite: 
+1. First of all, you need an active [Subscription](https://accounts.bosch-iot-suite.com/subscriptions/) to the Bosch IoT Suite: 
     - Click on new Subscription and select "Bosch IoT Device Management".
     - Choose the Plan you want and give your subscription an Instance Name.
 
@@ -18,25 +18,22 @@
 4. Insert the HiveMQ Password in application.properties in src -> main -> resources -> application.properties
     - Contact the HiveMQ Admin, if you need the password. 
 
-5. Get your Solution ID
-    - Go to [Subscriptions](https://accounts.bosch-iot-suite.com/subscriptions/) and choose "Go to Dashboard" and now choose "Things Dashboard".
-    - Now you can Copy your Solution ID.
-
-6. Create a Namespace.
+5. Create a Namespace.
     - Go to [Subscriptions](https://accounts.bosch-iot-suite.com/subscriptions/) and choose "Go to Dashboard" and now choose "Things Dashboard".
     - Click on Namespace and "Create new namespace"
     - Choose a namespace name and click on Comfort and Create it.
+    - Write the new created namespace in the "bosch-iot-suite.namespace"-field in application.properties in src -> main -> resources -> application.properties
 
-7. Copy the Test Access Token
+6. Copy the Test Access Token
     - Go to [OAuth2 Clients](https://accounts.bosch-iot-suite.com/oauth2-clients/)
     - Click on Use and copy the blue Test Access Token field.
 
-8. Go to the [Bosch IoT API](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)) and click on Authorize. Now you can insert the Test Access Token and click on Authorize.
+7. Go to the [Bosch IoT API](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)) and click on Authorize. Now you can insert the Test Access Token and click on Authorize.
 
-9. Create a Thing via the [Bosch IoT API](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2))
+8. Create a Thing via the [Bosch IoT API](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2))
     - Click on Things and then on PUT /thing/{thingId}
     - Click on Try it out.
-    - In the first field write your thingId that means: your Namespace (from Step 6), your hubId(0) and your nodeId(333). \
+    - In the first field write your thingId which means: your Namespace (from Step 6), your hubId(0) and your nodeId(333). \
      The thingId should follow this schema: ``` namespace:hubId_nodeId ```
     - On the request body you have to enter this JSON Code:
 
@@ -53,10 +50,11 @@
 ```
 
 
-( 7. Write your Solution ID here: https://things.eu-1.bosch-iot-suite.com/solution/ )
+#### Solution ID
+If you need a Solution ID, this is how you can find it:
+ - Go to [Subscriptions](https://accounts.bosch-iot-suite.com/subscriptions/) and choose "Go to Dashboard" and now choose "Things Dashboard".
+ - Now you can copy your Solution ID.
 
-The easiest way to start is to create a thing via the Bosch API (PUT /thing/thingID). The thingID should follow this schema: namespace:hubId_nodeId \
-Link to Bosch IoT API: https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)
 
 ### Requirements
 - Java
