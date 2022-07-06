@@ -170,13 +170,13 @@ public class MatterDittoClient {
                     String attributeValue = properties.getValue(attributeId).get().formatAsString();
                     Topic topic = new Topic(MessageType.DCMD, hubId, nodeId);
                     //TODO
-                    String name = "0/6/cmd/" + attributeValue;
+                    String name = "1/6/cmd/" + attributeValue;
                     Metric metric = new Metric(name, timestamp, attributeValue, MessageType.DCMD);
                     Payload payload = new Payload(MessageType.DCMD, timestamp, attributeValue,
                             metric);
                 
                     //this will be only false if the value has changed. 
-                    if (!Cache.checkIfMessageIsInCache(hubId, nodeId, "0", cluster, attributeId, attributeValue)) {
+                    if (!Cache.checkIfMessageIsInCache(hubId, nodeId, "1", cluster, attributeId, attributeValue)) {
                         System.out.println("Publishing message");
                         sendPublish(payload, topic);
                     }
