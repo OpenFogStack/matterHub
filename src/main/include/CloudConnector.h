@@ -34,7 +34,6 @@ public:
             ESP_LOGE(TAG, "control Byte not specified");
             return;
         }
-        shell::MQTTCommandData * mqttCommand = chip::Platform::New<shell::MQTTCommandData>();
 
         char * topic = (char *) chip::Platform::MemoryAlloc(sizeof(char) * 256);
         snprintf(topic, 256, "spBv1.0/matterhub/DDATA/0/%llu", subscription->mDevice->GetDeviceId());
@@ -132,7 +131,6 @@ public:
         }
         case chip::TLV::TLVElementType::FloatingPointNumber64: {
             double value;
-            data->Get(value);
             cJSON_AddStringToObject(element, "dataType", "double");
             cJSON_AddNumberToObject(element, "value", value);
             break;
@@ -178,9 +176,10 @@ public:
         char * my_json_string = cJSON_Print(root);
         cJSON_Delete(root);
 
-        mqttCommand->topic = topic;
-        mqttCommand->data  = my_json_string;
-        mqttCommand->task  = shell::MQTTCommandTask::publish;
+        shell::MQTTCommandData * mqttCommand = chip::Platform::New<shell::MQTTCommandData>();
+        mqttCommand->topic                   = topic;
+        mqttCommand->data                    = my_json_string;
+        mqttCommand->task                    = shell::MQTTCommandTask::publish;
         chip::MQTTManager::GetInstance().ProcessCommand(mqttCommand);
     }
     // TODO handle data_total length...
