@@ -12,7 +12,7 @@
 #### 4. Now the same thing for the Enddevice. A window will appear. When you can see the percentage of the Enddevice window is going up, it's time to click enter in the autostart.sh window.
 #### 5. Wait until the autostart.sh terminal window says that the autostart process is completed.
 
-#### Warning: Your devices must plugged in before starting the program!
+#### Warning: Your devices must be plugged in before starting the program!
 #### If you run matterHub for the first time or have deleted the build directory, the Enddevice and Hub build the dependencies. Be patient, this could take a bit!
 
 
