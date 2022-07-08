@@ -31,22 +31,32 @@ Subscriber: Server
     "timestamp": 1234,
     "metrics": [
     {
-        "name": "<endpointID>/<clusterID>/<attributeID>",
+        "name": "<endpointID>/<clusterID>/<type>/<attributeID>",
         "timestamp": 1234,
-        "dataType": "Boolean",
-        "value": true,
     },
     {
-        "name": "<endpointID>/<clusterID>/<attributeID>",
+        "name": "<endpointID>/<clusterID>/<type>/<commandID>",
         "timestamp": 1234,
-        "dataType": "String",
-        "value": "someText",
+    },
+    ],
+    "seq": 0
+}
+```
+type is:<br>
+command<br>
+attribute<br>
+
+```json
+{
+    "timestamp": 1234,
+    "metrics": [
+    {
+        "name": "1/6/attribute/0",
+        "timestamp": 1234,
     },
     {
-        "name": "<endpointID>/<clusterID>/side",
+        "name": "1/6/command/2>",
         "timestamp": 1234,
-        "dataType": "String",
-        "value": "server",
     }
     ],
     "seq": 0
