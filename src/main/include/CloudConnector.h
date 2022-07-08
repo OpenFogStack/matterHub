@@ -1,4 +1,5 @@
 #include "InteractionModelHelper.h"
+#include "InteractionModelHelperWriteTemplates.h"
 #include "MQTTCommands.h"
 #include "MQTTManager.h"
 #include "cJSON.h"
@@ -130,6 +131,7 @@ public:
         }
         case chip::TLV::TLVElementType::FloatingPointNumber64: {
             double value;
+            data->Get(value);
             cJSON_AddStringToObject(element, "dataType", "double");
             cJSON_AddNumberToObject(element, "value", value);
             break;
@@ -275,18 +277,24 @@ public:
             ESP_LOGE(TAG, "action_specific_id: %d", action_specific_id);
             if (!action.compare("cmd"))
             {
-                CHIP_ERROR error = chip::InteractionModelHelper::command(nodeId, endpointId, clusterId, action_specific_id);
+                chip::InteractionModelHelper::command(nodeId, endpointId, clusterId, action_specific_id);
             }
 
             if (!action.compare("read"))
             {
-                CHIP_ERROR error =
-                    chip::InteractionModelHelper::read(nodeId, endpointId, clusterId, action_specific_id, &onAttributeReadCallback);
+
+                chip::InteractionModelHelper::read(nodeId, endpointId, clusterId, action_specific_id, &onAttributeReadCallback);
             }
             if (!action.compare("subscribe"))
             {
-                CHIP_ERROR error = chip::InteractionModelHelper::subscribe(nodeId, endpointId, clusterId, action_specific_id, 1, 10,
-                                                                           &onAttributeReadCallback);
+                chip::InteractionModelHelper::subscribe(nodeId, endpointId, clusterId, action_specific_id, 1, 10,
+                                                        &onAttributeReadCallback);
+            }
+
+            if (!action.compare("write"))
+            {
+                u_int8_t value = 128;
+                chip::InteractionModelHelper::write<uint8_t>(nodeId, endpointId, clusterId, action_specific_id, value);
             }
         }
 
