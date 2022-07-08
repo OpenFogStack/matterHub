@@ -15,6 +15,7 @@
 
 #include "lib/shell/Engine.h"
 #include "lib/shell/commands/Help.h"
+#include "cJSON.h"
 #include <sstream>
 
 
@@ -92,29 +93,28 @@ void DescribeWorkerFunction(intptr_t context)
     Platform::Delete(data);
 }
 
-
 void PrintJson(intptr_t context){
     DescriptionManager * manager = reinterpret_cast<shell::DescriptionManager *>(context);
-    std::ostringstream innerJson;
-    for(auto endpoint = manager->mEndpoints.begin();endpoint != manager->mEndpoints.end();){
-        innerJson << "\n\t{\"id\": " << endpoint->first << ",\n\t\"clusters\": [\n";
-        for(auto cluster = endpoint->second.clusters.begin();cluster != endpoint->second.clusters.end();){
-            innerJson <<"\t\t{\"id\": " << cluster->first << ",\n\t\t\"attributes\": [ ";
-            for(auto attribute = cluster->second.attributes.begin(); attribute != cluster->second.attributes.end();){
-                innerJson << *attribute << (++attribute != cluster->second.attributes.end() ? ", ":"");
-                
-            }
-            innerJson << "],";
 
-            innerJson << "\n\t\t\"commands\": [ ";
-            for(auto command = cluster->second.commands.begin(); command != cluster->second.commands.end();){
-                innerJson << *command << (++command != cluster->second.commands.end() ? ", ":"");
-            }
-            innerJson << "]}" << (++cluster != endpoint->second.clusters.end() ? ",\n" : "\n");
+    cJSON *node = cJSON_CreateObject();
+    cJSON_AddNumberToObject(node,"id",manager->mDevice->GetDeviceId());
+    cJSON *endpoints = cJSON_AddArrayToObject(node,"endpoints");
+    for(auto& endpoint:manager->mEndpoints){
+        cJSON * jEndpoint = cJSON_CreateObject();
+        cJSON_AddNumberToObject(jEndpoint,"id",endpoint.first);
+        cJSON * clusters = cJSON_AddArrayToObject(jEndpoint,"clusters");
+        for(auto& cluster:endpoint.second.clusters){
+            cJSON * jCluster = cJSON_CreateObject();
+            cJSON * attributes = cJSON_CreateIntArray((int *)cluster.second.attributes.data(),cluster.second.attributes.size());
+            cJSON_AddItemToObject(jCluster,"attributes",attributes);
+            cJSON * commands = cJSON_CreateIntArray((int *)cluster.second.commands.data(),cluster.second.commands.size());
+            cJSON_AddItemToObject(jCluster,"commands",commands);
+            cJSON_AddItemToArray(clusters,jCluster);
         }
-        innerJson << "\t]}" << (++endpoint != manager->mEndpoints.end() ? ",\n" : "\n");
+        cJSON_AddItemToArray(endpoints, jEndpoint);
     }
-    ESP_LOGI("Discover", "Description JSON: \n{\"id\": %llu,\n\"endpoints\": [%s]}", manager->mDevice->GetDeviceId() ,innerJson.str().c_str());
+    ESP_LOGI("Discover", "Description JSON:\n%s", cJSON_Print(node));
+
     Platform::Delete(manager);
 }
 
