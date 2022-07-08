@@ -8,8 +8,8 @@ The easiest way to start is to create a thing via the Bosch API (PUT /thing/thin
 Link to Bosch IoT API: https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)
 
 ### Requirements
-- Java
-- Maven
+- Java (jdk-17)
+- Maven (3.8.x)
 
 ### Run the server
 Inside the server folder run 
