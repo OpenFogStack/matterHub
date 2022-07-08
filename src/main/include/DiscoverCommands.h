@@ -1,3 +1,9 @@
+/*
+ *    Published under MIT License
+ *    Copyright (c) 2022 OpenFogStack
+ *    Based on code written by Project CHIP Authors, which was published under Apache License, Version 2.0 (c) 2022
+ */
+
 #include "BaseCommand.h"
 
 #include "Subscription.h"
