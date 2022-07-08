@@ -1,7 +1,7 @@
-set MATTER_HUB_DIR "~/matterHub"
-set CHIP_TOOL_PATH "~/matter/examples/chip-tool/out/debug/chip-tool"
-set SSID "."
-set PASSWORD "***REMOVED***"
+set MATTER_HUB_DIR "YOUR MATTER HUB DIR"
+set CHIP_TOOL_PATH "YOUR CHIP-TOOL PATH"
+set SSID "YOUR SSID"
+set PASSWORD "YOUR PASSWORD"
 
 set M5_TTY "/dev/ttyACM0"
 set ESP32_TTY "/dev/ttyUSB0"
