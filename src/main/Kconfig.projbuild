@@ -81,3 +81,11 @@ menu "MQTT Configuration"
     config MQTT_CLIENT_PASSWORD
 	string "MQTT Password"
 endmenu
+menu "MatterHUB ID Configuration"
+    config MATTERHUBID
+	prompt "MatterHub ID"
+    default 0
+    int
+    help
+	There is no help
+endmenu
