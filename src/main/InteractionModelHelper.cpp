@@ -1,5 +1,6 @@
 #include "InteractionModelHelper.h"
 #include "BaseCommand.h"
+#include "InteractionModelHelperWriteTemplates.h"
 #include "Subscription.h"
 
 // todo
@@ -16,7 +17,7 @@
 #include <lib/support/CodeUtils.h>
 
 namespace chip {
-void InteractionModelHelperWorkerFunction(intptr_t context)
+void InteractionModelHelper::InteractionModelHelperWorkerFunction(intptr_t context)
 {
     VerifyOrReturn(context != 0, ChipLogError(NotSpecified, "InteractionModelHelperWorkerFunction - Invalid work data"));
 
@@ -120,6 +121,7 @@ void onConnectedCallbackCommand(void * context, chip::OperationalDeviceProxy * p
         break;
     }
 }
+
 CommandCommandData::CommandCommandData() : BaseCommandData(onConnectedCallbackCommand, (void *) this) {}
 ReadCommandData::ReadCommandData() : BaseCommandData(onConnectedCallbackRead, (void *) this) {}
 SubscribeCommandData::SubscribeCommandData() : BaseCommandData(onConnectedCallbackSubscribe, (void *) this) {}
