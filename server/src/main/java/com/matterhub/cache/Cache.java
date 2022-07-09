@@ -14,8 +14,9 @@ public class Cache {
     public static boolean checkIfMessageIsInCache(String hubId, String nodeId, String endpoint, String cluster,
             String attributeId, Object value) {
 
-        for (int i = list.size()-1; i>=0; i--){
+        for (int i = list.size() - 1; i >= 0; i--) {
             MqttMatterMessage message = list.get(i);
+
             String messageHubId = message.getTopic().getMatterHubId();
             String messageNodeId = message.getTopic().getMatterNodeId();
 
@@ -27,7 +28,11 @@ public class Cache {
                 String messageCluster = messageMetric.getCluster();
                 String messageAttributeID = "";
                 String messageValue = "";
-
+                if (message.getTopic().getMessageType() == MessageType.DBIRTH) {
+                    if(value.equals("0")){
+                        return true;
+                    }
+                }
                 if (message.getTopic().getMessageType().equals(MessageType.DDATA)) {
                     messageAttributeID = messageMetric.getAttribute();
                     messageValue = messageMetric.getValue().toString();

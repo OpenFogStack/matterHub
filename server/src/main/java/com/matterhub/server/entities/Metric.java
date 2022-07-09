@@ -10,6 +10,8 @@ public class Metric {
     private String attributeId = "";
     private String command = "";
     private String argument = "";
+    private String type = "";
+    private String commandId = "";
     private MessageType messageType;
 
     public Metric(JSONObject metric, MessageType messageType) {
@@ -36,6 +38,22 @@ public class Metric {
             this.clusterId = values[1];
             this.command = values[2];
             this.argument = values[3];
+        }
+        if (messageType.equals(MessageType.DBIRTH)) {
+            String[] values = metric.getString("name").split("/");
+            if (values.length < 4) {
+                return;
+            }
+            this.endpointId = values[0];
+            this.clusterId = values[1];
+            this.type = values[2];
+            if(this.type.equals("attribute")){
+                this.attributeId = values[3];
+            } else if (this.type.equals("command")){
+                this.commandId = values[3];
+            }
+
+            
         }
     }
 
@@ -120,6 +138,9 @@ public class Metric {
     // ---------------------------------------//
 
     public Object getValue() {
+        if(!this.metric.keySet().contains("value")) {
+            return "0";
+        }
         Object o = this.metric.get("value");
         if (o instanceof Boolean) {
             if ((boolean) o) {
