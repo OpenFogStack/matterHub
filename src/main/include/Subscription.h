@@ -128,6 +128,8 @@ private:
     }
 
     void OnDone(chip::app::ReadClient * apReadClient) override{
+        ESP_LOGI("Subscription", "Subscription done");
+        CleanupReadClient(apReadClient);
         chip::Platform::Delete(this);
     };
     CHIP_ERROR mError = CHIP_NO_ERROR;
