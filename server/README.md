@@ -13,16 +13,16 @@
 3. Update the application.properties. You will find the necessary credentials [here](https://accounts.bosch-iot-suite.com/oauth2-clients):
     - On the OAuth2 Page click on Use and then on Spring.
     - Copy the application.properties Part from "Define the configuration properties in application.properties:"
-    - Insert the copied application.properties in src -> main -> resources -> application.properties (you can edit the file with VSCode).
+    - Insert the copied application.properties in src/main/resources/application.properties (you can edit the file with VSCode).
 
-4. Insert the HiveMQ Password in application.properties in src -> main -> resources -> application.properties
+4. Insert the HiveMQ Password in application.properties in src/main/resources/application.properties
     - Contact the HiveMQ Admin, if you need the password. 
 
 5. Create a Namespace.
     - Go to [Subscriptions](https://accounts.bosch-iot-suite.com/subscriptions/) and choose "Go to Dashboard" and now choose "Things Dashboard".
     - Click on Namespace and "Create new namespace"
     - Choose a namespace name and click on Comfort and Create it.
-    - Write the new created namespace in the "bosch-iot-suite.namespace"-field in application.properties in src -> main -> resources -> application.properties
+    - Write the new created namespace in the "bosch-iot-suite.namespace"-field in application.properties in src/main/resources/application.properties
 
 6. Copy the Test Access Token
     - Go to [OAuth2 Clients](https://accounts.bosch-iot-suite.com/oauth2-clients/)
