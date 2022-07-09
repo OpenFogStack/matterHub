@@ -59,18 +59,10 @@ class DescriptionManager{
         init();
     }
 
-    ~DescriptionManager(){
-        // cleanup, doesn't work here. see comment below
-        // if(lastSub != nullptr)
-        //     chip::Platform::Delete(lastSub);
-    }
-
     void ReadAttribute(chip::EndpointId endpointId, chip::ClusterId clusterId,
                        chip::AttributeId attributeId, SubscriptionCallback callback)
     {
-        // cleanup, doesn't work here. unsure why tho. maybe there is more background work being done by the extended chip classes.
-        // if(lastSub != nullptr)
-        //     chip::Platform::Delete(lastSub);
+
         
         lastSub = chip::Platform::New<Subscription>(mDevice, endpointId, clusterId, attributeId, callback,this);
         CHIP_ERROR error   = lastSub->Read();
@@ -92,7 +84,6 @@ class DescriptionManager{
     private:
     void init()
     {
-        using namespace std::placeholders;
         ESP_LOGI("Discover", "DiscoverManagerInit:");
         ESP_LOGI("Discover", " - NodeId: '0x%02llx'", mDevice->GetDeviceId());
         ESP_LOGI("Discover", " - Endpoint ID: '0x0000'");
