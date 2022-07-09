@@ -117,6 +117,57 @@ void PrintJson(intptr_t context){
     }
     ESP_LOGI("Discover", "Description JSON:\n%s", cJSON_Print(node));
 
+    cJSON_free(node);
+    Platform::Delete(manager);
+}
+
+void publishToMqtt(intptr_t context){
+    DescriptionManager * manager = reinterpret_cast<shell::DescriptionManager *>(context);
+
+    char * topic = (char *) chip::Platform::MemoryAlloc(sizeof(char) * 256);
+    snprintf(topic, 256, "spBv1.0/matterhub/DBIRTH/%d/%llu", CONFIG_MATTERHUBID, manager->mDevice->GetDeviceId());
+
+    cJSON * dbirth = cJSON_CreateObject();
+    cJSON_AddNumberToObject(dbirth,"timestamp", esp_log_timestamp());
+    std::vector<char*> names = {};
+    cJSON * metrics = cJSON_AddArrayToObject(dbirth,"metrics");
+    for(auto& endpoint:manager->mEndpoints){
+        for(auto& cluster:endpoint.second.clusters){
+            for(auto& attribute: cluster.second.attributes){
+                cJSON * metric = cJSON_CreateObject();
+                size_t const size = 64;  
+                char* name = (char *)Platform::MemoryAlloc(size);
+                names.push_back(name);
+                snprintf(name, size, "%u/%u/attribute/%u", endpoint.first, cluster.first, attribute);
+                cJSON_AddStringToObject(metric,"name", name);
+                cJSON_AddNumberToObject(metric,"timestamp",esp_log_timestamp());
+                cJSON_AddItemToArray(metrics,metric);
+            }
+            for(auto& command: cluster.second.commands){
+                cJSON * metric = cJSON_CreateObject();
+                size_t const size = 64;  
+                char* name = (char *)Platform::MemoryAlloc(size);
+                names.push_back(name);
+                snprintf(name, size, "%u/%u/command/%u", endpoint.first, cluster.first, command);
+                cJSON_AddStringToObject(metric,"name", name);
+                cJSON_AddNumberToObject(metric,"timestamp",esp_log_timestamp());
+                cJSON_AddItemToArray(metrics,metric);
+            }
+        }
+    }
+    cJSON_AddNumberToObject(dbirth,"seq",0);
+
+    MQTTCommandData* data = Platform::New<MQTTCommandData>();
+    data->data = cJSON_Print(dbirth);
+    data->topic = topic;
+    data->task = MQTTCommandTask::publish; 
+
+    ESP_LOGI("Discover","%s\n%s",topic,data->data);
+    MQTTManager::GetInstance().Publish(data);
+
+    for(auto name: names){
+        Platform::MemoryFree(name);
+    }
     Platform::Delete(manager);
 }
 
@@ -155,7 +206,7 @@ void onCommandsReadCallback(const chip::app::ConcreteDataAttributePath& path, ch
         }else{
             //Schedule printing so we can release the callback asap
             //this is also a placeholder for a more meaningful callback
-            DeviceLayer::PlatformMgr().ScheduleWork(PrintJson, reinterpret_cast<intptr_t>(manager));
+            DeviceLayer::PlatformMgr().ScheduleWork(publishToMqtt, reinterpret_cast<intptr_t>(manager));
         }
     }
 }
