@@ -47,10 +47,10 @@ void MQTTManager::Publish(shell::MQTTCommandData * data)
         return;
     }
     int msg_id;
-    msg_id = esp_mqtt_client_publish(mClient, data->topic, data->data, 0, 0, 0);
+    msg_id = esp_mqtt_client_publish(mClient, data->topic, data->data, 0, 1, 0);
     ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
-    cJSON_free(data->data);
-    Platform::Delete(data->topic);
+    ESP_LOGI(TAG, "TOPIC=%s\r\n", data->topic);
+    ESP_LOGI(TAG, "DATA=%s\r\n", data->data);
     Platform::Delete(data);
 }
 void MQTTManager::Subscribe(shell::MQTTCommandData * data, std::function<void(char *, int, char *, int)> callback)
@@ -145,25 +145,27 @@ static void mqtt_event_handler(void * handler_args, esp_event_base_t base, int32
     esp_mqtt_client_handle_t client = event->client;
     switch ((esp_mqtt_event_id_t) event_id)
     {
-    case MQTT_EVENT_CONNECTED:
+    case MQTT_EVENT_CONNECTED: {
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-        mConnected = true;
-        for (auto & storedCommand : mStoredCommands)
-        {
-            // Ugly edge-case, but this could happen I guess
+        mConnected         = true;
+        auto storedCommand = mStoredCommands.begin();
+        while (storedCommand != mStoredCommands.end())
+        { // Ugly edge-case, but this could happen I guess
             if (!mConnected)
             {
                 break;
             }
             ESP_LOGI(TAG, "Processing delay command:");
-            ESP_LOGI(TAG, " - Topic: '%s'", storedCommand->topic);
-            if (storedCommand->data)
+            ESP_LOGI(TAG, " - Topic: '%s'", (*storedCommand)->topic);
+            if ((*storedCommand)->data)
             {
-                ESP_LOGI(TAG, " - Data: '%s'", storedCommand->data);
+                ESP_LOGI(TAG, " - Data: '%s'", (*storedCommand)->data);
             }
-            MQTTManager::GetInstance().ProcessCommand(storedCommand);
+            MQTTManager::GetInstance().ProcessCommand((*storedCommand));
+            storedCommand = mStoredCommands.erase(storedCommand);
         }
-        break;
+    }
+    break;
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
         mConnected = false;
@@ -177,6 +179,8 @@ static void mqtt_event_handler(void * handler_args, esp_event_base_t base, int32
         break;
     case MQTT_EVENT_PUBLISHED:
         ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
+        cJSON_free(event->data);
+        Platform::Delete(event->topic);
         break;
     case MQTT_EVENT_DATA: {
         ESP_LOGI(TAG, "MQTT_EVENT_DATA");
@@ -225,10 +229,13 @@ static void mqtt_event_handler(void * handler_args, esp_event_base_t base, int32
 void MQTTManager::initMQTTManager()
 {
     const esp_mqtt_client_config_t mqtt_cfg = {
-        .uri      = CONFIG_MQTT_CLIENT_URI,
-        .username = CONFIG_MQTT_CLIENT_USERNAME,
-        .password = CONFIG_MQTT_CLIENT_PASSWORD,
-        .cert_pem = (const char *) mqtt_hivemq_pem_start,
+
+        .uri = CONFIG_MQTT_CLIENT_URI,
+
+        .username    = CONFIG_MQTT_CLIENT_USERNAME,
+        .password    = CONFIG_MQTT_CLIENT_PASSWORD,
+        .buffer_size = 1024,
+        .cert_pem    = (const char *) mqtt_hivemq_pem_start,
 
     };
     ESP_LOGI(TAG, "This is my name: %s and this is my key %s", CONFIG_MQTT_CLIENT_USERNAME, CONFIG_MQTT_CLIENT_PASSWORD);
