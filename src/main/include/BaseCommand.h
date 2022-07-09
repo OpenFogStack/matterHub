@@ -12,6 +12,8 @@ struct BaseCommandData
 {
 
     BaseCommandData(chip::OnDeviceConnected callback, void * context) : onConnectedCallback(callback, context){};
+    virtual ~BaseCommandData() = default;
+
     chip::FabricId fabricId;
     chip::NodeId nodeId;
     chip::Callback::Callback<chip::OnDeviceConnected> onConnectedCallback;

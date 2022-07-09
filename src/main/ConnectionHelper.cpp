@@ -17,12 +17,13 @@
 namespace chip {
 void onConnectionRequestFailure(void * context, chip::PeerId peerId, CHIP_ERROR error)
 {
+    shell::BaseCommandData * data = reinterpret_cast<shell::BaseCommandData*>(context); 
     auto & server                                 = chip::Server::GetInstance();
     chip::CASESessionManager * CASESessionManager = server.GetCASESessionManager();
     // Simply release the entry, the connection will be re-established as needed.
     ChipLogError(NotSpecified, "Failed to establish connection to node 0x" ChipLogFormatX64, ChipLogValueX64(peerId.GetNodeId()));
     CASESessionManager->ReleaseSession(peerId);
-    Platform::Delete(context);
+    Platform::Delete(data);
 }
 
 namespace {

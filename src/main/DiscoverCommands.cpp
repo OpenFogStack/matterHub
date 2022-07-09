@@ -245,8 +245,9 @@ void onPartListReadCallback(const chip::app::ConcreteDataAttributePath& path, ch
 
 void onConnectionRequestCompleted(void * context, chip::OperationalDeviceProxy * peer_device)
 {
+    DiscoverCommandData * data = reinterpret_cast<DiscoverCommandData*>(context); 
     Platform::New<DescriptionManager>(peer_device);
-    Platform::Delete(context);
+    Platform::Delete(data);
 }
 
 DiscoverCommandData::DiscoverCommandData() :
