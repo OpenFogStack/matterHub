@@ -93,8 +93,6 @@ void DescribeWorkerFunction(intptr_t context)
     DiscoverCommandData * data = reinterpret_cast<DiscoverCommandData *>(context);
 
     ConnectionHelper::GetInstance().RequestConnection(data);
-
-    Platform::Delete(data);
 }
 
 void PrintJson(intptr_t context){
@@ -247,8 +245,8 @@ void onPartListReadCallback(const chip::app::ConcreteDataAttributePath& path, ch
 
 void onConnectionRequestCompleted(void * context, chip::OperationalDeviceProxy * peer_device)
 {
-
     Platform::New<DescriptionManager>(peer_device);
+    Platform::Delete(context);
 }
 
 DiscoverCommandData::DiscoverCommandData() :

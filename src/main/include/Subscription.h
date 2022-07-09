@@ -127,7 +127,9 @@ private:
         mError = error;
     }
 
-    void OnDone(chip::app::ReadClient * apReadClient) override{};
+    void OnDone(chip::app::ReadClient * apReadClient) override{
+        Platform::Delete(this);
+    };
     CHIP_ERROR mError = CHIP_NO_ERROR;
     SubscriptionCallback mCallback;
     void* mContext;
