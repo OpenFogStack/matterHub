@@ -138,7 +138,7 @@ public class Metric {
     // ---------------------------------------//
 
     public Object getValue() {
-        if(!this.metric.keySet().contains("value")) {
+        if(!this.metric.has("value")) {
             return "0";
         }
         Object o = this.metric.get("value");
