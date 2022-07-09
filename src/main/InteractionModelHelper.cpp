@@ -27,7 +27,14 @@ CHIP_ERROR InteractionModelHelper::subscribe(NodeId nodeId, EndpointId endpointI
                                              uint16_t minInterval, uint16_t maxInterval, SubscriptionCallback callback)
 {
     SubscribeCommandData * data = Platform::New<SubscribeCommandData>();
-
+    data->fabricId              = 1;
+    data->nodeId                = nodeId;
+    data->endpointId            = endpointId;
+    data->clusterId             = clusterId;
+    data->attributeId           = attributeId;
+    data->minInterval           = minInterval;
+    data->maxInterval           = maxInterval;
+    data->callback              = callback;
     DeviceLayer::PlatformMgr().ScheduleWork(InteractionModelHelperWorkerFunction, reinterpret_cast<intptr_t>(data));
     return CHIP_NO_ERROR;
 }
@@ -64,8 +71,19 @@ void onConnectedCallbackRead(void * context, chip::OperationalDeviceProxy * peer
         Platform::New<Subscription>(peer_device, data->endpointId, data->clusterId, data->attributeId, data->callback);
 
     CHIP_ERROR error = sub->Read();
+    Platform::Delete(data);
 }
 
+void onConnectedCallbackSubscribe(void * context, chip::OperationalDeviceProxy * peer_device)
+{
+    SubscribeCommandData * data = reinterpret_cast<chip::SubscribeCommandData *>(context);
+
+    Subscription * sub =
+        Platform::New<Subscription>(peer_device, data->endpointId, data->clusterId, data->attributeId, data->callback);
+
+    CHIP_ERROR error = sub->DoSubscribe();
+    Platform::Delete(data);
+}
 void onConnectedCallbackCommand(void * context, chip::OperationalDeviceProxy * peer_device)
 {
     CommandCommandData * data = reinterpret_cast<chip::CommandCommandData *>(context);
@@ -104,5 +122,6 @@ void onConnectedCallbackCommand(void * context, chip::OperationalDeviceProxy * p
 }
 CommandCommandData::CommandCommandData() : BaseCommandData(onConnectedCallbackCommand, (void *) this) {}
 ReadCommandData::ReadCommandData() : BaseCommandData(onConnectedCallbackRead, (void *) this) {}
+SubscribeCommandData::SubscribeCommandData() : BaseCommandData(onConnectedCallbackSubscribe, (void *) this) {}
 
 } // namespace chip

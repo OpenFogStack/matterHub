@@ -87,14 +87,16 @@ public class MqttBeans {
                 Cache.put(new MqttMatterMessage(topic, payload));
 
                 client.initializeDittoClient();
-                client.setProps(topic.getThingId(), payload.getMetrics()[0].getAttribute(),
-                        String.valueOf(payload.getMetrics()[0].getValue()), payload.getMetrics()[0].getCluster());
                 if (topic.getMessageType() == null) {
                     return;
                 }
                 if (topic.getMessageType().equals(MessageType.DDATA)) {
+                    client.setProps(topic.getThingId(), payload.getMetrics()[0].getAttribute(),
+                        String.valueOf(payload.getMetrics()[0].getValue()), payload.getMetrics()[0].getCluster());
                     client.updateThing();
                 } else if (topic.getMessageType().equals(MessageType.DBIRTH)) {
+                    client.setProps(topic.getThingId(), payload.getMetrics()[0].getAttribute(),
+                        String.valueOf(payload.getMetrics()[0].getValue()), payload.getMetrics()[0].getCluster());
                     //TODO check if this works
                     client.createThing();
                 }
