@@ -12,6 +12,7 @@
 #include "BindingHandler.h"
 #include "ClusterCommands.h"
 
+
 #include "CloudConnector.h"
 #include "DiscoverCommands.h"
 #include "MQTTCommands.h"
@@ -75,6 +76,7 @@ extern "C" void app_main()
     chip::LaunchShell();
     shell::RegisterClusterCommands();
     shell::RegisterSubscribeCommands();
+
     shell::RegisterMQTTCommands();
     shell::RegisterDiscoverCommands();
 #endif // CONFIG_ENABLE_CHIP_SHELL

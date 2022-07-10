@@ -23,6 +23,7 @@ import org.springframework.messaging.MessagingException;
 
 import com.matterhub.cache.Cache;
 import com.matterhub.server.entities.MessageType;
+import com.matterhub.server.entities.Metric;
 import com.matterhub.server.entities.MqttMatterMessage;
 import com.matterhub.server.entities.Payload;
 import com.matterhub.server.entities.Topic;
@@ -95,8 +96,14 @@ public class MqttBeans {
                         String.valueOf(payload.getMetrics()[0].getValue()), payload.getMetrics()[0].getCluster());
                     client.updateThing();
                 } else if (topic.getMessageType().equals(MessageType.DBIRTH)) {
-                    client.setProps(topic.getThingId(), payload.getMetrics()[0].getAttribute(),
-                        String.valueOf(payload.getMetrics()[0].getValue()), payload.getMetrics()[0].getCluster());
+                    Metric onoffMetric = null;
+                    for(var metric : payload.getMetrics()){
+                        if(metric.getCluster().equals("on-off"))
+                            onoffMetric = metric;
+                    }
+                    if(onoffMetric == null) return;
+                    client.setProps(topic.getThingId(), onoffMetric.getAttribute(),
+                        String.valueOf(onoffMetric.getValue()), onoffMetric.getCluster());
                     //TODO check if this works
                     client.createThing();
                 }

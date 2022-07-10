@@ -8,6 +8,7 @@
 #pragma once
 
 #include "BindingHandler.h"
+
 #include "MQTTCommands.h"
 #include "MQTTManager.h"
 #include "cJSON.h"
@@ -20,9 +21,10 @@ class Subscription : public InteractionModelReports, public chip::app::ReadClien
 
 public:
     Subscription(chip::DeviceProxy * device, chip::EndpointId endpointId, chip::ClusterId clusterId, chip::AttributeId attributeId,
-                 uint16_t minInterval, uint16_t maxInterval, SubscriptionCallback callback = nullptr) :
+
+                 uint16_t minInterval, uint16_t maxInterval, SubscriptionCallback callback = nullptr, void* context = nullptr) :
         InteractionModelReports(this),
-        mDevice(device), mMinInterval(minInterval), mMaxInterval(maxInterval), mCallback(callback)
+        mDevice(device), mMinInterval(minInterval), mMaxInterval(maxInterval),mCallback(callback), mContext(context)
     {
         mEndpointId  = { endpointId };
         mClusterId   = { clusterId };
@@ -30,21 +32,23 @@ public:
     }
 
     Subscription(chip::DeviceProxy * device, chip::EndpointId endpointId, chip::ClusterId clusterId, chip::AttributeId attributeId,
-                 SubscriptionCallback callback = nullptr) :
+                 SubscriptionCallback callback = nullptr, void* context = nullptr) :
         InteractionModelReports(this),
-        mDevice(device), mMinInterval(1), mMaxInterval(10), mCallback(callback)
+        mDevice(device), mMinInterval(1), mMaxInterval(10),mCallback(callback), mContext(context)
+
     {
         mEndpointId  = { endpointId };
         mClusterId   = { clusterId };
         mAttributeId = { attributeId };
     }
-
+    
     CHIP_ERROR DoSubscribe()
     {
         return SubscribeAttribute(mDevice, mEndpointId, mClusterId, mAttributeId, mMinInterval, mMaxInterval,
                                   chip::Optional<bool>(true), chip::NullOptional, chip::NullOptional);
     }
 
+    //TODO: Cleanup after Read
     CHIP_ERROR Read() { return ReadAttribute(mDevice, mEndpointId, mClusterId, mAttributeId, chip::Optional<bool>(true)); }
 
     chip::DeviceProxy * mDevice;
@@ -83,11 +87,16 @@ private:
             return;
         }
 
+
         ESP_LOGI("Subscription", "This: %p", this);
         ESP_LOGI("Subscription", "mdevice: %p", mDevice);
         if (mCallback != nullptr)
         {
+          if(mContext != nullptr){
+            mCallback(path, data, mContext);
+          }else{
             mCallback(path, data, this);
+          }
         }
     }
 
@@ -118,8 +127,13 @@ private:
         mError = error;
     }
 
-    void OnDone(chip::app::ReadClient * apReadClient) override{};
+    void OnDone(chip::app::ReadClient * apReadClient) override{
+        ESP_LOGI("Subscription", "Subscription done");
+        CleanupReadClient(apReadClient);
+        chip::Platform::Delete(this);
+    };
     CHIP_ERROR mError = CHIP_NO_ERROR;
-
     SubscriptionCallback mCallback;
+    void* mContext;
 };
+
