@@ -17,6 +17,9 @@
 #include "MQTTCommands.h"
 #include "MQTTManager.h"
 #include "SubscribeCommands.h"
+
+#include "sparkplug_b.pb.h"
+
 #include "esp_log.h"
 #include "esp_spi_flash.h"
 #include "esp_system.h"
@@ -28,6 +31,8 @@
 #include <app/server/OnboardingCodesUtil.h>
 #include <credentials/DeviceAttestationCredsProvider.h>
 #include <credentials/examples/DeviceAttestationCredsExample.h>
+
+
 
 #if CONFIG_ENABLE_ESP32_FACTORY_DATA_PROVIDER
 #include <platform/ESP32/ESP32FactoryDataProvider.h>
