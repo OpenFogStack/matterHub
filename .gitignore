@@ -2,3 +2,4 @@
 src/.cache/
 build/
 .vscode
+scripts/demo/config
