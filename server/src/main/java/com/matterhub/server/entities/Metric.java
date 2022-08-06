@@ -47,13 +47,12 @@ public class Metric {
             this.endpointId = values[0];
             this.clusterId = values[1];
             this.type = values[2];
-            if(this.type.equals("attribute")){
+            if (this.type.equals("attribute")) {
                 this.attributeId = values[3];
-            } else if (this.type.equals("command")){
+            } else if (this.type.equals("command")) {
                 this.commandId = values[3];
             }
 
-            
         }
     }
 
@@ -138,7 +137,7 @@ public class Metric {
     // ---------------------------------------//
 
     public Object getValue() {
-        if(!this.metric.has("value")) {
+        if (!this.metric.has("value")) {
             return "0";
         }
         Object o = this.metric.get("value");
