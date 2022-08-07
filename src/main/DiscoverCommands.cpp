@@ -95,9 +95,14 @@ void DescribeWorkerFunction(intptr_t context)
     ConnectionHelper::GetInstance().RequestConnection(data);
 }
 
+
+//this kind of format is much more efficient and removes redundancy
 void PrintJson(intptr_t context){
     ESP_LOGI("Discover", "Starting JSON");
     DescriptionManager * manager = reinterpret_cast<shell::DescriptionManager *>(context);
+
+    char * topic = (char *) chip::Platform::MemoryAlloc(sizeof(char) * 256);
+    snprintf(topic, 256, "spBv1.0/matterhub/DBIRTH/%d/%llu", CONFIG_MATTERHUBID, manager->mDevice->GetDeviceId());
 
     cJSON *node = cJSON_CreateObject();
     cJSON_AddNumberToObject(node,"id",manager->mDevice->GetDeviceId());
@@ -116,11 +121,16 @@ void PrintJson(intptr_t context){
         }
         cJSON_AddItemToArray(endpoints, jEndpoint);
     }
-    char* str = cJSON_PrintUnformatted(node);
-    ESP_LOGI("Discover", "Description JSON:\n%s", str);
 
-    cJSON_free(str);
+    MQTTCommandData* data = Platform::New<MQTTCommandData>();
+    data->data = cJSON_PrintUnformatted(node);
     cJSON_Delete(node);
+    data->topic = topic;
+    data->task = MQTTCommandTask::publish; 
+
+    ESP_LOGV("Discover","%s\n%s",topic,data->data);
+    MQTTManager::GetInstance().Publish(data);
+
     Platform::Delete(manager);
 }
 
@@ -210,8 +220,8 @@ void onCommandsReadCallback(const chip::app::ConcreteDataAttributePath& path, ch
             manager->ReadAttribute(manager->currentEndpoint->first, chip::app::Clusters::Descriptor::Id, chip::app::Clusters::Descriptor::Attributes::ServerList::Id,onServerListReadCallback);
         }else{
             //Schedule printing so we can release the callback asap
-            //this is also a placeholder for a more meaningful callback
-            DeviceLayer::PlatformMgr().ScheduleWork(publishToMqtt, reinterpret_cast<intptr_t>(manager));
+            // DeviceLayer::PlatformMgr().ScheduleWork(publishToMqtt, reinterpret_cast<intptr_t>(manager));
+            DeviceLayer::PlatformMgr().ScheduleWork(PrintJson, reinterpret_cast<intptr_t>(manager));
         }
     }
 }
