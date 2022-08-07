@@ -51,6 +51,8 @@ void MQTTManager::Publish(shell::MQTTCommandData * data)
     ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
     ESP_LOGI(TAG, "TOPIC=%s\r\n", data->topic);
     ESP_LOGI(TAG, "DATA=%s\r\n", data->data);
+    Platform::Delete(data->data);
+    Platform::Delete(data->topic);
     Platform::Delete(data);
 }
 void MQTTManager::Subscribe(shell::MQTTCommandData * data, std::function<void(char *, int, char *, int)> callback)
@@ -67,6 +69,7 @@ void MQTTManager::Subscribe(shell::MQTTCommandData * data, std::function<void(ch
     int msg_id;
     msg_id = esp_mqtt_client_subscribe(mClient, data->topic, 0);
     ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+    Platform::Delete(data->topic);
     Platform::Delete(data);
 }
 
@@ -95,6 +98,7 @@ void MQTTManager::Unsubscribe(shell::MQTTCommandData * data)
     int msg_id;
     msg_id = esp_mqtt_client_unsubscribe(mClient, data->topic);
     ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
+    Platform::Delete(data->topic);
     Platform::Delete(data);
 }
 
@@ -180,8 +184,6 @@ static void mqtt_event_handler(void * handler_args, esp_event_base_t base, int32
         break;
     case MQTT_EVENT_PUBLISHED:
         ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
-        cJSON_free(event->data);
-        Platform::Delete(event->topic);
         break;
     case MQTT_EVENT_DATA: {
         ESP_LOGI(TAG, "MQTT_EVENT_DATA");
@@ -225,6 +227,8 @@ static void mqtt_event_handler(void * handler_args, esp_event_base_t base, int32
         ESP_LOGI(TAG, "Other event id:%d", event->event_id);
         break;
     }
+    ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
+
 }
 
 void MQTTManager::initMQTTManager()

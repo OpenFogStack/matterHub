@@ -74,11 +74,11 @@ private:
             mError = error;
             return;
         }
-        ESP_LOGI("Subscription", "EndpointId: 0x%02x", path.mEndpointId);
-        ESP_LOGI("Subscription", "ClusterId: 0x%02x", path.mClusterId);
-        ESP_LOGI("Subscription", "AttributeId: %d", path.mAttributeId);
-        ESP_LOGI("Subscription", "NodeId: %llu", mDevice->GetDeviceId());
-        ESP_LOGI("Subscription", "Fabric: %llu", mfabricId);
+        ESP_LOGV("Subscription", "EndpointId: 0x%02x", path.mEndpointId);
+        ESP_LOGV("Subscription", "ClusterId: 0x%02x", path.mClusterId);
+        ESP_LOGV("Subscription", "AttributeId: %d", path.mAttributeId);
+        ESP_LOGV("Subscription", "NodeId: %llu", mDevice->GetDeviceId());
+        ESP_LOGV("Subscription", "Fabric: %llu", mfabricId);
 
         if (data == nullptr)
         {
@@ -87,9 +87,6 @@ private:
             return;
         }
 
-
-        ESP_LOGI("Subscription", "This: %p", this);
-        ESP_LOGI("Subscription", "mdevice: %p", mDevice);
         if (mCallback != nullptr)
         {
           if(mContext != nullptr){
@@ -130,6 +127,7 @@ private:
     void OnDone(chip::app::ReadClient * apReadClient) override{
         ESP_LOGI("Subscription", "Subscription done");
         CleanupReadClient(apReadClient);
+        Shutdown();
         chip::Platform::Delete(this);
     };
     CHIP_ERROR mError = CHIP_NO_ERROR;
