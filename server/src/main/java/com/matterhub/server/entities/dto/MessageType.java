@@ -1,4 +1,4 @@
-package com.matterhub.server.entities;
+package com.matterhub.server.entities.dto;
 
 public enum MessageType {
     DBIRTH("DBIRTH"),
@@ -36,7 +36,7 @@ public enum MessageType {
             case "NDEATH":
                 return MessageType.NDEATH;
             default:
-                return null;
+                throw new IllegalArgumentException("Unrecognized message type: " + name);
         }
     }
 

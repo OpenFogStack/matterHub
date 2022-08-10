@@ -23,15 +23,17 @@ import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
 import org.springframework.stereotype.Component;
 
 import com.matterhub.cache.Cache;
-import com.matterhub.server.entities.MessageType;
 import com.matterhub.server.entities.Metric;
-import com.matterhub.server.entities.Payload;
-import com.matterhub.server.entities.Topic;
+import com.matterhub.server.entities.dto.MessageType;
+import com.matterhub.server.entities.dto.Payload;
+import com.matterhub.server.entities.dto.Topic;
 
 @Component
 public class MatterDittoClient {
@@ -69,6 +71,8 @@ public class MatterDittoClient {
 
     private Feature feature;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MatterDittoClient.class);
+
     public void initializeDittoClient() {
         final ClientCredentialsAuthenticationConfiguration.ClientCredentialsAuthenticationConfigurationBuilder clientCredentialsAuthenticationConfigurationBuilder = ClientCredentialsAuthenticationConfiguration
                 .newBuilder()
@@ -90,9 +94,9 @@ public class MatterDittoClient {
         this.disconnectedDittoClient = DittoClients.newInstance(messagingProvider);
     }
 
-    public void setProps(String thingIdAsString, String path, String value, String cluster) {
+    public void setProps(ThingId thingId, String path, String value, String cluster) {
 
-        this.thingId = ThingId.of(namespace, thingIdAsString);
+        this.thingId = thingId;
         if (path.isEmpty()) {
             return;
         }
@@ -146,10 +150,10 @@ public class MatterDittoClient {
         consumer.start();
 
         // refactor
-        System.out.println("Subscribed for Twin events");
+        LOGGER.info("Subscribed for Twin events");
         client.twin().registerForThingChanges("my-changes", change -> {
             if (change.getAction() == ChangeAction.UPDATED) {
-                System.out.println(change.toString());
+                LOGGER.info(change.toString());
                 try {
                     if (!change.getThing().isPresent()) {
                         return;
@@ -177,7 +181,7 @@ public class MatterDittoClient {
                 
                     //this will be only false if the value has changed. 
                     if (!Cache.checkIfMessageIsInCache(hubId, nodeId, "1", cluster, attributeId, attributeValue)) {
-                        System.out.println("Publishing message");
+                        LOGGER.info("Publishing message");
                         sendPublish(payload, topic);
                     }
                 } catch (Exception e) {

@@ -1,36 +1,35 @@
-package com.matterhub.server.entities;
+package com.matterhub.server.entities.dto;
 
 import org.json.JSONObject;
 
-public class Metric {
+import com.matterhub.server.entities.matter.Cluster;
+
+public sealed class Metric permits CommandMetric, AttributeMetric{
 
     private JSONObject metric;
-    private String endpointId = "";
-    private String clusterId = "";
+    private Cluster cluster;
     private String attributeId = "";
     private String command = "";
     private String argument = "";
     private String type = "";
-    private String commandId = "";
     private MessageType messageType;
 
     public Metric(JSONObject metric, MessageType messageType) {
+        assert metric != null;
         this.metric = metric;
+        assert messageType != null;
         this.messageType = messageType;
-        if (messageType == null) {
+        String[] values = metric.getString("name").split("/");
+        if (values.length < 3) {
             return;
         }
+        this.endpointId = values[0];
+        this.clusterId = values[1];
+        this.attributeId = values[2];
         if (messageType.equals(MessageType.DDATA)) {
-            String[] values = metric.getString("name").split("/");
-            if (values.length < 3) {
-                return;
-            }
-            this.endpointId = values[0];
-            this.clusterId = values[1];
-            this.attributeId = values[2];
+            
         }
         if (messageType.equals(MessageType.DCMD)) {
-            String[] values = metric.getString("name").split("/");
             if (values.length < 4) {
                 return;
             }
@@ -40,7 +39,6 @@ public class Metric {
             this.argument = values[3];
         }
         if (messageType.equals(MessageType.DBIRTH)) {
-            String[] values = metric.getString("name").split("/");
             if (values.length < 4) {
                 return;
             }
@@ -140,9 +138,9 @@ public class Metric {
         if (!this.metric.has("value")) {
             return "0";
         }
-        Object o = this.metric.get("value");
-        if (o instanceof Boolean) {
-            if ((boolean) o) {
+        Object obj = this.metric.get("value");
+        if (obj instanceof Boolean o) {
+            if (o) {
                 return "1";
             } else {
                 return "0";
@@ -162,20 +160,6 @@ public class Metric {
         } else {
             this.metric.put("value", value);
         }
-    }
-
-    public String getCluster() {
-        if (clusterId.equals("6")) {
-            return "on-off";
-        }
-        return "";
-    }
-
-    public void setCluster(String cluster) {
-        if (cluster.equals("on-off")) {
-            this.clusterId = "6";
-        }
-
     }
 
     public String getAttribute() {

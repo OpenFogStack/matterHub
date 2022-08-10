@@ -1,26 +1,29 @@
 package com.matterhub.cache;
 
 import java.util.LinkedList;
+import java.util.OptionalLong;
 
-import com.matterhub.server.entities.MessageType;
-import com.matterhub.server.entities.Metric;
-import com.matterhub.server.entities.MqttMatterMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.matterhub.server.entities.dto.MessageType;
+import com.matterhub.server.entities.dto.Metric;
+import com.matterhub.server.entities.dto.MqttMatterMessage;
 
 public class Cache {
 
     private static final int CAPACITY = 20;
-    private static LinkedList<MqttMatterMessage> list = new LinkedList<>();
+    private static final LinkedList<MqttMatterMessage> list = new LinkedList<>();
+    private static final Logger logger = LoggerFactory.getLogger(Cache.class);
 
-    public static boolean checkIfMessageIsInCache(String hubId, String nodeId, String endpoint, String cluster,
+    public static boolean checkIfMessageIsInCache(int hubId, OptionalLong nodeId, String endpoint, String cluster,
             String attributeId, Object value) {
 
-        for (int i = list.size() - 1; i >= 0; i--) {
-            MqttMatterMessage message = list.get(i);
+        for (MqttMatterMessage message : list) {
+            int messageHubId = message.getTopic().getMatterHubId();
+            OptionalLong messageNodeId = message.getTopic().getMatterNodeId();
 
-            String messageHubId = message.getTopic().getMatterHubId();
-            String messageNodeId = message.getTopic().getMatterNodeId();
-
-            if (messageHubId.equals(hubId) && messageNodeId.equals(nodeId)
+            if (messageHubId == hubId && messageNodeId.equals(nodeId)
                     && message.getPayload().getMetrics() != null) {
 
                 Metric messageMetric = message.getPayload().getMetrics()[0];
@@ -67,7 +70,7 @@ public class Cache {
     }
 
     public static void put(MqttMatterMessage message) {
-        System.out.println("Message added to cache: " + message.toString());
+        logger.info("Message added to cache: " + message.toString());
         if (list.size() == CAPACITY) {
             list.removeFirst();
         }

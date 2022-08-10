@@ -1,4 +1,4 @@
-package com.matterhub.server.entities;
+package com.matterhub.server.entities.dto;
 
 public class MqttMatterMessage {
 
@@ -29,7 +29,4 @@ public class MqttMatterMessage {
     public String toString(){
         return topic.toString() + "\n" + payload.toString();
     }
-
-   
-    
 }

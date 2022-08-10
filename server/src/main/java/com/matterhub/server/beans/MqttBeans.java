@@ -16,16 +16,14 @@ import org.springframework.integration.mqtt.core.MqttPahoClientFactory;
 import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter;
 import org.springframework.integration.mqtt.support.DefaultPahoMessageConverter;
 import org.springframework.integration.mqtt.support.MqttHeaders;
-import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
-import org.springframework.messaging.MessagingException;
 
 import com.matterhub.cache.Cache;
-import com.matterhub.server.entities.MessageType;
-import com.matterhub.server.entities.MqttMatterMessage;
-import com.matterhub.server.entities.Payload;
-import com.matterhub.server.entities.Topic;
+import com.matterhub.server.entities.dto.MessageType;
+import com.matterhub.server.entities.dto.MqttMatterMessage;
+import com.matterhub.server.entities.dto.Payload;
+import com.matterhub.server.entities.dto.Topic;
 
 @Configuration
 public class MqttBeans {
@@ -74,34 +72,29 @@ public class MqttBeans {
     @Bean
     @ServiceActivator(inputChannel = "mqttChannel")
     public MessageHandler handler() {
-        return new MessageHandler() {
+        return message -> {
+            System.out.println("Getting message from HiveMQ: ");
+            System.out.println(message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString());
+            System.out.println(message.getPayload());
 
-            @Override
-            public void handleMessage(Message<?> message) throws MessagingException {
-                System.out.println("Getting message from HiveMQ: ");
-                System.out.println(message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString());
-                System.out.println(message.getPayload());
+            Topic topic = new Topic(message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString());
+            Payload payload = new Payload(new JSONObject(message.getPayload().toString()), topic.getMessageType());
+            Cache.put(new MqttMatterMessage(topic, payload));
 
-                Topic topic = new Topic(message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString());
-                Payload payload = new Payload(new JSONObject(message.getPayload().toString()), topic.getMessageType());
-                Cache.put(new MqttMatterMessage(topic, payload));
-
-                client.initializeDittoClient();
-                if (topic.getMessageType() == null) {
-                    return;
-                }
-                if (topic.getMessageType().equals(MessageType.DDATA)) {
-                    client.setProps(topic.getThingId(), payload.getMetrics()[0].getAttribute(),
-                        String.valueOf(payload.getMetrics()[0].getValue()), payload.getMetrics()[0].getCluster());
-                    client.updateThing();
-                } else if (topic.getMessageType().equals(MessageType.DBIRTH)) {
-                    client.setProps(topic.getThingId(), payload.getMetrics()[0].getAttribute(),
-                        String.valueOf(payload.getMetrics()[0].getValue()), payload.getMetrics()[0].getCluster());
-                    //TODO check if this works
-                    client.createThing();
-                }
+            client.initializeDittoClient();
+            if (topic.getMessageType() == null) {
+                return;
             }
-
+            if (topic.getMessageType().equals(MessageType.DDATA)) {
+                client.setProps(topic.getThingId(), payload.getMetrics()[0].getAttribute(),
+                    String.valueOf(payload.getMetrics()[0].getValue()), payload.getMetrics()[0].getCluster());
+                client.updateThing();
+            } else if (topic.getMessageType().equals(MessageType.DBIRTH)) {
+                client.setProps(topic.getThingId(), payload.getMetrics()[0].getAttribute(),
+                    String.valueOf(payload.getMetrics()[0].getValue()), payload.getMetrics()[0].getCluster());
+                //TODO check if this works
+                client.createThing();
+            }
         };
     }
 

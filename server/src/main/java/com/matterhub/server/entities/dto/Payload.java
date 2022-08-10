@@ -1,4 +1,4 @@
-package com.matterhub.server.entities;
+package com.matterhub.server.entities.dto;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
