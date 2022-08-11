@@ -75,9 +75,9 @@ This hacky compact form is not ideal and only somewhat sparkplug conform but ena
   "metrics":[
   	{ "name": "<endpointID>",
   	  "timestamp": 1356129168,
-  	  "type" : "String",
-  	  "value": "[{\"id\":<clusterID>,\"attributes\":[<attributeIDs>...],\"commands\":[<commandIDs>...]}...]"
-    }, ...
+  	  "dataType" : "String",
+  	  "value": "[{\"id\":<clusterID>,\"attributes\":[<attributeIDs>],\"commands\":[<commandIDs>]}]"
+    }
   ],
   "seq": 0
 }
@@ -90,12 +90,12 @@ This hacky compact form is not ideal and only somewhat sparkplug conform but ena
   "metrics":[
   	{ "name": "1",
   	  "timestamp": 1356129168,
-  	  "type" : "String",
+  	  "dataType" : "String",
   	  "value": "[{\"id\":6,\"attributes\":[0],\"commands\":[0,1,2]},{\"id\": ,\"attributes\":[0,1,2,3,4,5,6,15,16,17,18,19,20],\"commands\":[0,1,2,3,4,5,6,7]}]"
   	},
   	{ "name": "2",
   	  "timestamp": 1356129168,
-  	  "type" : "String",
+  	  "dataType" : "String",
   	  "value": "[{\"id\":6,\"attributes\":[0],\"commands\":[0,1,2]}]"
   	}
   ],
