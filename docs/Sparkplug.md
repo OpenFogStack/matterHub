@@ -23,6 +23,8 @@ Examples:
 
 ### DBIRTH (Inform about a new Device)
 
+#### Expanded obsolete form:
+
 Publisher: MatterHub  
 Subscriber: Server
 
@@ -60,6 +62,44 @@ attribute<br>
     }
     ],
     "seq": 0
+}
+```
+
+#### Compact form:
+In this form we have a metric for each endpoint of the new node. the value of this metric 
+This hacky compact form is not ideal and only somewhat sparkplug conform but enables to save a lot of memory on the esp32 and is simple enough to avoid a sparkplug deep dive. The former method could have json string sizes of several kilobytes for even the simplest device examples.
+
+```json
+{
+  "timestamp": 1356129168,
+  "metrics":[
+  	{ "name": "<endpointID>",
+  	  "timestamp": 1356129168,
+  	  "type" : "String",
+  	  "value": "[{\"id\":<clusterID>,\"attributes\":[<attributeIDs>...],\"commands\":[<commandIDs>...]}...]"
+    }, ...
+  ],
+  "seq": 0
+}
+```
+
+##### Example
+```json
+{
+  "timestamp":1356129168,
+  "metrics":[
+  	{ "name": "1",
+  	  "timestamp": 1356129168,
+  	  "type" : "String",
+  	  "value": "[{\"id\":6,\"attributes\":[0],\"commands\":[0,1,2]},{\"id\": ,\"attributes\":[0,1,2,3,4,5,6,15,16,17,18,19,20],\"commands\":[0,1,2,3,4,5,6,7]}]"
+  	},
+  	{ "name": "2",
+  	  "timestamp": 1356129168,
+  	  "type" : "String",
+  	  "value": "[{\"id\":6,\"attributes\":[0],\"commands\":[0,1,2]}]"
+  	}
+  ],
+  "seq": 0
 }
 ```
 
@@ -241,3 +281,5 @@ Example
     "seq": 0
 }
 ```
+
+
