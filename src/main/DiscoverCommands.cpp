@@ -37,6 +37,7 @@ namespace shell {
  *********************************************************/
 
 Engine sDiscoverShellSubCommands;
+uint sSeq = 0;
 
 CHIP_ERROR DiscoverHelpHandler(int argc, char ** argv)
 {
@@ -96,35 +97,52 @@ void DescribeWorkerFunction(intptr_t context)
 }
 
 
+
 //this kind of format is much more efficient and removes redundancy
-void PrintJson(intptr_t context){
+void PublishToMqttCompact(intptr_t context){
     ESP_LOGI("Discover", "Starting JSON");
     DescriptionManager * manager = reinterpret_cast<shell::DescriptionManager *>(context);
 
     char * topic = (char *) chip::Platform::MemoryAlloc(sizeof(char) * 256);
     snprintf(topic, 256, "spBv1.0/matterhub/DBIRTH/%d/%llu", CONFIG_MATTERHUBID, manager->mDevice->GetDeviceId());
 
-    cJSON *node = cJSON_CreateObject();
-    cJSON_AddNumberToObject(node,"id",manager->mDevice->GetDeviceId());
-    cJSON *endpoints = cJSON_AddArrayToObject(node,"endpoints");
+    cJSON * dbirth = cJSON_CreateObject();
+    cJSON_AddNumberToObject(dbirth,"timestamp", esp_log_timestamp());
+    cJSON * metrics = cJSON_AddArrayToObject(dbirth,"metrics");
+    char name[64];
     for(auto& endpoint:manager->mEndpoints){
-        cJSON * jEndpoint = cJSON_CreateObject();
-        cJSON_AddNumberToObject(jEndpoint,"id",endpoint.first);
-        cJSON * clusters = cJSON_AddArrayToObject(jEndpoint,"clusters");
+        cJSON * metric = cJSON_CreateObject();
+        snprintf(name,64,"%u",endpoint.first);
+        cJSON_AddStringToObject(metric,"name",name);
+        cJSON_AddNumberToObject(metric,"timestamp", esp_log_timestamp());
+        cJSON_AddStringToObject(metric,"dataType", "String");
+
+
+        cJSON * clusters = cJSON_CreateArray(); 
         for(auto& cluster:endpoint.second.clusters){
             cJSON * jCluster = cJSON_CreateObject();
+            cJSON_AddNumberToObject(jCluster,"id", cluster.first);
             cJSON * attributes = cJSON_CreateIntArray((int *)cluster.second.attributes.data(),cluster.second.attributes.size());
             cJSON_AddItemToObject(jCluster,"attributes",attributes);
             cJSON * commands = cJSON_CreateIntArray((int *)cluster.second.commands.data(),cluster.second.commands.size());
             cJSON_AddItemToObject(jCluster,"commands",commands);
             cJSON_AddItemToArray(clusters,jCluster);
         }
-        cJSON_AddItemToArray(endpoints, jEndpoint);
+
+        char * subJson = cJSON_PrintUnformatted(clusters);
+        cJSON_AddStringToObject(metric,"value",subJson);
+
+        cJSON_free(subJson);
+        cJSON_Delete(clusters);
+
+        cJSON_AddItemToArray(metrics,metric);
     }
+    //this could potentially overflow some day, but then it is your own fault for describing so many nodes in a prototype ¯\_(ツ)_/¯
+    cJSON_AddNumberToObject(dbirth, "seq", sSeq++);
 
     MQTTCommandData* data = Platform::New<MQTTCommandData>();
-    data->data = cJSON_PrintUnformatted(node);
-    cJSON_Delete(node);
+    data->data = cJSON_PrintUnformatted(dbirth);
+    cJSON_Delete(dbirth);
     data->topic = topic;
     data->task = MQTTCommandTask::publish; 
 
@@ -134,7 +152,7 @@ void PrintJson(intptr_t context){
     Platform::Delete(manager);
 }
 
-void publishToMqtt(intptr_t context){
+void PublishToMqttExpandedForm(intptr_t context){
     ESP_LOGI("Discover", "Starting JSON");
     DescriptionManager * manager = reinterpret_cast<shell::DescriptionManager *>(context);
     char * topic = (char *) chip::Platform::MemoryAlloc(sizeof(char) * 256);
@@ -168,7 +186,7 @@ void publishToMqtt(intptr_t context){
             }
         }
     }
-    cJSON_AddNumberToObject(dbirth,"seq",0);
+    cJSON_AddNumberToObject(dbirth, "seq", sSeq++);
     Platform::Delete(manager);
 
     MQTTCommandData* data = Platform::New<MQTTCommandData>();
@@ -221,7 +239,7 @@ void onCommandsReadCallback(const chip::app::ConcreteDataAttributePath& path, ch
         }else{
             //Schedule printing so we can release the callback asap
             // DeviceLayer::PlatformMgr().ScheduleWork(publishToMqtt, reinterpret_cast<intptr_t>(manager));
-            DeviceLayer::PlatformMgr().ScheduleWork(PrintJson, reinterpret_cast<intptr_t>(manager));
+            DeviceLayer::PlatformMgr().ScheduleWork(PublishToMqttCompact, reinterpret_cast<intptr_t>(manager));
         }
     }
 }
