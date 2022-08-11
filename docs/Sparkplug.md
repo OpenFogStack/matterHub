@@ -66,7 +66,7 @@ attribute<br>
 ```
 
 #### Compact form:
-In this form we have a metric for each endpoint of the new node. the value of this metric 
+In this form we have a metric for each endpoint of the new node. Its clusters with their corresponding attributes and commands are passed as a stringified JSON in the value field.
 This hacky compact form is not ideal and only somewhat sparkplug conform but enables to save a lot of memory on the esp32 and is simple enough to avoid a sparkplug deep dive. The former method could have json string sizes of several kilobytes for even the simplest device examples.
 
 ```json
