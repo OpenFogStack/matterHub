@@ -21,7 +21,7 @@
 #include "lib/shell/commands/Help.h"
 #include "cJSON.h"
 #include <sstream>
-
+#include <platform/ESP32/DnssdImpl.h>
 
 using namespace chip;
 using namespace chip::app;
@@ -72,12 +72,25 @@ CHIP_ERROR DiscoverDescribeHandler(int argc, char ** argv)
     return CHIP_NO_ERROR;
 }
 
+CHIP_ERROR DiscoverNodesHandler(int argc, char ** argv)
+{
+    if (argc != 0)
+    {
+        return DiscoverHelpHandler(argc, argv);
+    }
+    ESP_LOGI("Discover", "DiscoverNodesHandler called");
+
+    DeviceLayer::PlatformMgr().ScheduleWork(DiscoverNodesWorkerFunction, reinterpret_cast<intptr_t>(nullptr));
+    return CHIP_NO_ERROR;
+}
+
 void RegisterDiscoverCommands()
 {
 
     static const shell_command_t sDiscoverSubCommands[] = {
         { &DiscoverHelpHandler, "help", "Usage: discover <subcommand>" },
         { &DiscoverDescribeHandler, "describe", "Usage: describe <fabric id> <node id>" },
+        { &DiscoverNodesHandler, "nodes", "Usage: nodes"}
     };
 
     sDiscoverShellSubCommands.RegisterCommands(sDiscoverSubCommands, ArraySize(sDiscoverSubCommands));
@@ -94,6 +107,25 @@ void DescribeWorkerFunction(intptr_t context)
     DiscoverCommandData * data = reinterpret_cast<DiscoverCommandData *>(context);
 
     ConnectionHelper::GetInstance().RequestConnection(data);
+}
+
+void DiscoverNodesCallback(void * context, Dnssd::DnssdService * services, size_t servicesSize, CHIP_ERROR error){
+    if(error == CHIP_NO_ERROR){
+        ESP_LOGI("Discover","Services: %u", servicesSize);
+        if(servicesSize > 0){
+            ESP_LOGI("Discover","Service_0_Name: %s, text_entries: %u",services->mName, services->mTextEntrySize);
+        }
+    }else {
+        ESP_LOGI("Discover","Error while discovering nodes");
+    }
+    return;
+}
+
+void DiscoverNodesWorkerFunction(intptr_t context)
+{
+    Dnssd::ChipDnssdBrowse("_matter",
+        Dnssd::DnssdServiceProtocol::kDnssdProtocolUdp,
+        Inet::IPAddressType::kAny,Inet::InterfaceId::Null(), DiscoverNodesCallback, (void *) nullptr);
 }
 
 
