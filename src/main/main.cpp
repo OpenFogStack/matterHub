@@ -21,6 +21,7 @@
 #include "esp_log.h"
 #include "esp_spi_flash.h"
 #include "esp_system.h"
+#include "mdns.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "nvs_flash.h"
@@ -50,6 +51,13 @@ static AppDeviceCallbacks EchoCallbacks;
 
 static void InitServer(intptr_t context)
 {
+    esp_err_t errInit = mdns_init();
+    if(errInit == ESP_OK ){
+        ESP_LOGI("Discover", "Initialized MDNS");
+    } else {
+        ESP_LOGE("Discover", "Failed to initialize MDNS, error: 0x%02x",errInit);
+    }
+
     // Print QR Code URL
     PrintOnboardingCodes(chip::RendezvousInformationFlags(CONFIG_RENDEZVOUS_MODE));
 
@@ -71,6 +79,7 @@ extern "C" void app_main()
     ESP_LOGI(TAG, "==================================================");
     ESP_LOGI(TAG, "chip-esp32-light-switch-example starting");
     ESP_LOGI(TAG, "==================================================");
+        
 
 #if CONFIG_ENABLE_CHIP_SHELL
     chip::LaunchShell();

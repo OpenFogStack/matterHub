@@ -25,6 +25,7 @@
 #include <lib/dnssd/minimal_mdns/QueryBuilder.h>
 #include <lib/dnssd/MinimalMdnsServer.h>
 #include <lib/dnssd/minimal_mdns/core/FlatAllocatedQName.h>
+#include <mdns.h>
 // #include <system/SystemPacketBuffer.h>
 
 
@@ -115,28 +116,28 @@ void DescribeWorkerFunction(intptr_t context)
     ConnectionHelper::GetInstance().RequestConnection(data);
 }
 
-void DiscoverNodesCallback(void * context, Dnssd::DnssdService * services, size_t servicesSize, CHIP_ERROR error){
-    if(error == CHIP_NO_ERROR){
-        ESP_LOGI("Discover","Services: %u", servicesSize);
-        if(servicesSize > 0){
-            ESP_LOGI("Discover","Service_0_Name: %s, text_entries: %u",services->mName, services->mTextEntrySize);
-        }
-    }else {
-        ESP_LOGI("Discover","Error while discovering nodes");
-    }
-    return;
-}
-
 void DiscoverNodesWorkerFunction(intptr_t context)
 {
-    auto mdnsServer = Dnssd::GlobalMinimalMdnsServer::Instance().Server();
-    System::PacketBufferHandle packetHandle = System::PacketBufferHandle::New(512);
-    mdns::Minimal::QueryBuilder queryBuilder(packetHandle);
-    void * data = Platform::MemoryAlloc(mdns::Minimal::FlatAllocatedQName::RequiredStorageSize("matter", "local"));
-    mdns::Minimal::FullQName value = mdns::Minimal::FlatAllocatedQName::Build(data, "matter", "local");
-    mdns::Minimal::Query query(value);
-    queryBuilder.AddQuery(query);
-    mdnsServer.BroadcastImpl()
+    ESP_LOGI("Discover", "MDNS Discovery running");
+    mdns_result_t * results = nullptr;
+    esp_err_t err = mdns_query_ptr("_matter","_tcp",5000,20,&results);
+    ESP_LOGI("Discover", "MDNS Query Done");
+
+    if(err == ESP_OK){
+        mdns_result_t * current = results;
+        ESP_LOGI("Discover", "Printing MDNS results");
+        ESP_LOGI("Discover", "Results Addr: %p", results);
+
+        while(current != nullptr){
+            ESP_LOGI("Discover", "service name: %s, host name: %s, instance name: %s",current->service_type, current->hostname, current->instance_name);
+            current = current->next;
+        }
+        mdns_query_results_free(results);
+    }else {
+        ESP_LOGE("Discover", "MDNS Error: 0x%02x", err);
+    }
+    
+    ESP_LOGI("Discover", "MDNS Discovering nodes done!");
 }
 
 
