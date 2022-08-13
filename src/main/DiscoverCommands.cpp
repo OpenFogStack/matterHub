@@ -21,7 +21,13 @@
 #include "lib/shell/commands/Help.h"
 #include "cJSON.h"
 #include <sstream>
-#include <platform/ESP32/DnssdImpl.h>
+#include <lib/dnssd/minimal_mdns/Server.h>
+#include <lib/dnssd/minimal_mdns/QueryBuilder.h>
+#include <lib/dnssd/MinimalMdnsServer.h>
+#include <lib/dnssd/minimal_mdns/core/FlatAllocatedQName.h>
+// #include <system/SystemPacketBuffer.h>
+
+
 
 using namespace chip;
 using namespace chip::app;
@@ -123,9 +129,14 @@ void DiscoverNodesCallback(void * context, Dnssd::DnssdService * services, size_
 
 void DiscoverNodesWorkerFunction(intptr_t context)
 {
-    Dnssd::ChipDnssdBrowse("_matter",
-        Dnssd::DnssdServiceProtocol::kDnssdProtocolTcp,
-        Inet::IPAddressType::kAny,Inet::InterfaceId::Null(), DiscoverNodesCallback, (void *) nullptr);
+    auto mdnsServer = Dnssd::GlobalMinimalMdnsServer::Instance().Server();
+    System::PacketBufferHandle packetHandle = System::PacketBufferHandle::New(512);
+    mdns::Minimal::QueryBuilder queryBuilder(packetHandle);
+    void * data = Platform::MemoryAlloc(mdns::Minimal::FlatAllocatedQName::RequiredStorageSize("matter", "local"));
+    mdns::Minimal::FullQName value = mdns::Minimal::FlatAllocatedQName::Build(data, "matter", "local");
+    mdns::Minimal::Query query(value);
+    queryBuilder.AddQuery(query);
+    mdnsServer.BroadcastImpl()
 }
 
 
