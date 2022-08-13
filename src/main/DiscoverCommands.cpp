@@ -124,7 +124,7 @@ void DiscoverNodesCallback(void * context, Dnssd::DnssdService * services, size_
 void DiscoverNodesWorkerFunction(intptr_t context)
 {
     Dnssd::ChipDnssdBrowse("_matter",
-        Dnssd::DnssdServiceProtocol::kDnssdProtocolUdp,
+        Dnssd::DnssdServiceProtocol::kDnssdProtocolTcp,
         Inet::IPAddressType::kAny,Inet::InterfaceId::Null(), DiscoverNodesCallback, (void *) nullptr);
 }
 
