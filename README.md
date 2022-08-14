@@ -11,7 +11,6 @@ Run `source ./scripts/activate.sh`
 for esp32/m5-Stack:\
 `cd src; idf.py build`
 
-
 ## Interaction Example
 
 1. Cleanup:
@@ -72,7 +71,9 @@ for esp32/m5-Stack:\
     matter switch onoff on 1
     matter switch onoff off 1
     ```
+
 ## Optional 
+
 ### Configure MQTT
 
 The MQTT options can be configured via:
@@ -83,6 +84,9 @@ For example:
 MQTT URI: mqtts://prefix.hivemq.cloud:8883
 MQTT Username: user
 MQTT Password: password
+
+Also consider setting you MatterHub ID Configuration, so you don't collide with other matterHubs.
+
 ## References
 
 [This tutorial on how to use idf.py](https://github.com/project-chip/connectedhomeip/tree/master/examples/all-clusters-app/esp32)
