@@ -4,6 +4,8 @@ import javax.net.ssl.SSLSocketFactory;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -21,12 +23,15 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.MessagingException;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.matterhub.cache.Cache;
-import com.matterhub.server.entities.MessageType;
-import com.matterhub.server.entities.Metric;
 import com.matterhub.server.entities.MqttMatterMessage;
-import com.matterhub.server.entities.Payload;
 import com.matterhub.server.entities.Topic;
+import com.matterhub.server.entities.matter.Cluster;
+import com.matterhub.server.entities.matter.Endpoint;
+import com.matterhub.server.entities.payloads.BasePayload;
+import com.matterhub.server.entities.payloads.DBirthPayload;
+import com.matterhub.server.entities.payloads.Payload;
 
 @Configuration
 public class MqttBeans {
@@ -42,6 +47,8 @@ public class MqttBeans {
 
     @Autowired
     private MatterDittoClient client;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MqttBeans.class);
 
     @Bean
     public MqttPahoClientFactory mqttClientFactory() {
@@ -65,7 +72,8 @@ public class MqttBeans {
 
     @Bean
     public MessageProducer inbound() {
-        MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter("PublisherId", mqttClientFactory(),
+        MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter("PublisherId",
+                mqttClientFactory(),
                 "#");
         adapter.setConverter(new DefaultPahoMessageConverter());
         adapter.setOutputChannel(mqttChannel());
@@ -79,34 +87,48 @@ public class MqttBeans {
 
             @Override
             public void handleMessage(Message<?> message) throws MessagingException {
-                System.out.println("Getting message from HiveMQ: ");
-                System.out.println(message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString());
-                System.out.println(message.getPayload());
+                LOGGER.info("Getting message from HiveMQ\n Topic: {} \n Body: {}",
+                        message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString(), message.getPayload());
 
                 Topic topic = new Topic(message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString());
-                Payload payload = new Payload(new JSONObject(message.getPayload().toString()), topic.getMessageType());
+                Payload payload = Payload.parseMessage(topic.getMessageType(),
+                        JsonNode(message.getPayload().toString()));
                 Cache.put(new MqttMatterMessage(topic, payload));
 
                 client.initializeDittoClient();
                 if (topic.getMessageType() == null) {
                     return;
                 }
-                if (topic.getMessageType().equals(MessageType.DDATA)) {
-                    client.setProps(topic.getThingId(), payload.getMetrics()[0].getAttribute(),
-                        String.valueOf(payload.getMetrics()[0].getValue()), payload.getMetrics()[0].getCluster());
-                    client.updateThing();
-                } else if (topic.getMessageType().equals(MessageType.DBIRTH)) {
-                    Metric onoffMetric = null;
-                    for(var metric : payload.getMetrics()){
-                        if(metric.getCluster().equals("on-off"))
-                            onoffMetric = metric;
-                    }
-                    if(onoffMetric == null) return;
-                    client.setProps(topic.getThingId(), onoffMetric.getAttribute(),
-                        String.valueOf(onoffMetric.getValue()), onoffMetric.getCluster());
-                    //TODO check if this works
-                    client.createThing();
+                if (payload instanceof DBirthPayload) {
+                    handleDBirthMessage(topic, (DBirthPayload) payload);
+                } else {
+                    handleBasePayload(topic, (BasePayload) payload);
                 }
+
+            }
+
+            private void handleDBirthMessage(Topic topic, DBirthPayload payload) {
+                Endpoint ep = payload.getClusters()
+                client.createThing();
+                Cluster onOffCluster = null;
+                for (var cluster : payload.getClusters()) {
+                    if (cluster.Name().equals("on-off"))
+                        onOffCluster = cluster;
+                }
+                if (onOffCluster == null) {
+                    return;
+                }
+
+                client.setProps(topic.getThingId(), onOffCluster.Name(),
+                        String.valueOf(onOffCluster.getValue()), onOffCluster.Id());
+                // TODO check if this works
+                client.createThing();
+            }
+
+            private void handleBasePayload(Topic topic, BasePayload payload) {
+                client.setProps(topic.getThingId(), payload.getMetrics()[0].getAttribute(),
+                        String.valueOf(payload.getMetrics()[0].getValue()), payload.getMetrics()[0].getCluster());
+                client.updateThing();
             }
 
         };

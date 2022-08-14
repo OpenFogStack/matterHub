@@ -1,15 +1,19 @@
-package com.matterhub.server.entities;
+package com.matterhub.server.entities.payloads;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class Payload {
+import com.fasterxml.jackson.databind.JsonNode;
+import com.matterhub.server.entities.MessageType;
+import com.matterhub.server.entities.Metric;
 
+public final class BasePayload extends Payload {
     private JSONObject payload;
     private MessageType messageType;
     private Metric[] metrics;
 
-    public Payload(JSONObject payload, MessageType messageType) {
+    public BasePayload(MessageType messageType, JsonNode payload) {
+        super(payload);
         this.payload = payload;
         this.messageType = messageType;
         JSONArray metrics = this.payload.getJSONArray("metrics");
@@ -19,12 +23,8 @@ public class Payload {
         }
     }
 
-    public Payload(MessageType messageType) {
-        this.payload = new JSONObject();
-        this.messageType = messageType;
-    }
-
-    public Payload(MessageType messageType, long timestamp, Object value, Metric... metrics) {
+    public BasePayload(MessageType messageType, long timestamp, Object value, Metric... metrics) {
+        super(0, timestamp);
         this.payload = new JSONObject();
         this.messageType = messageType;
         setTimestamp(timestamp);
@@ -52,10 +52,6 @@ public class Payload {
         this.payload.put("metrics", jsonArray);
     }
 
-    public int getSeq() {
-        return this.payload.getInt("seq");
-    }
-
     public void setSeq(int seq) {
         this.payload.put("seq", seq);
     }
@@ -67,11 +63,18 @@ public class Payload {
     public MessageType getMessageType() {
         return messageType;
     }
-
-    public boolean equals(Payload payload) {
-        if (messageType.equals(payload.getMessageType())) {
+    @Override
+    public boolean equals(Object other) {
+        if (other == null) {
+            return false;
+        }
+        if (other instanceof BasePayload) {
+            return false;
+        }
+        BasePayload otherBP = (BasePayload) other;
+        if (messageType.equals(otherBP.getMessageType())) {
             Metric[] ownMetrics = this.getMetrics();
-            Metric[] otherMetrics = payload.getMetrics();
+            Metric[] otherMetrics = otherBP.getMetrics();
             if (ownMetrics.length != otherMetrics.length) {
                 return false;
             }
@@ -88,14 +91,5 @@ public class Payload {
             }
         }
         return false;
-    }
-
-
-    public String toString() {
-        return payload.toString();
-    }
-
-    public byte[] getPayload() {
-        return this.payload.toString().getBytes();
     }
 }

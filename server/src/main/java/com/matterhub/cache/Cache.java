@@ -1,6 +1,10 @@
 package com.matterhub.cache;
 
 import java.util.LinkedList;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.matterhub.server.entities.MessageType;
 import com.matterhub.server.entities.Metric;
@@ -9,17 +13,18 @@ import com.matterhub.server.entities.MqttMatterMessage;
 public class Cache {
 
     private static final int CAPACITY = 20;
-    private static LinkedList<MqttMatterMessage> list = new LinkedList<>();
+    private static final LinkedList<MqttMatterMessage> list = new LinkedList<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger(Cache.class);
 
-    public static boolean checkIfMessageIsInCache(String hubId, String nodeId, String endpoint, String cluster,
+    public static boolean checkIfMessageIsInCache(String hubId, Optional<String> nodeId, String endpoint, String cluster,
             String attributeId, Object value) {
 
         for (int i = list.size() - 1; i >= 0; i--) {
             MqttMatterMessage message = list.get(i);
 
             String messageHubId = message.getTopic().getMatterHubId();
-            String messageNodeId = message.getTopic().getMatterNodeId();
-
+            Optional<String> messageNodeId = message.getTopic().getMatterNodeId();
+            
             if (messageHubId.equals(hubId) && messageNodeId.equals(nodeId)
                     && message.getPayload().getMetrics() != null) {
 
@@ -67,8 +72,9 @@ public class Cache {
     }
 
     public static void put(MqttMatterMessage message) {
-        System.out.println("Message added to cache: " + message.toString());
+        LOGGER.debug("Message added to cache: {} ", message.toString());
         if (list.size() == CAPACITY) {
+            LOGGER.info("Cache full. Removing first entry");
             list.removeFirst();
         }
         list.add(message);

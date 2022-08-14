@@ -1,5 +1,7 @@
 package com.matterhub.server.entities;
 
+import com.matterhub.server.entities.payloads.Payload;
+
 public class MqttMatterMessage {
 
     private Topic topic;
@@ -29,7 +31,4 @@ public class MqttMatterMessage {
     public String toString(){
         return topic.toString() + "\n" + payload.toString();
     }
-
-   
-    
 }

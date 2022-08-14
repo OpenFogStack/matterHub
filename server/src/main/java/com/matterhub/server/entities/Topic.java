@@ -1,92 +1,104 @@
 package com.matterhub.server.entities;
 
+import java.util.Optional;
+
+/**
+ * Topic captures the information contained in the MQTT topic
+ * It can be used both to build a topic from the required
+ * components and to parse and extract the information from a topic string.
+ * 
+ * There are two types of topics:
+ * <ul>
+ * <li>matterHub Topics - They represent a single matterHub. You most likely
+ * only have one of those.
+ * These don't have a Node or Endpoint ID</li>
+ * <li>endpoint Topics - These represent a single endpoint, which we want to
+ * represent as a thing on the Bosch side</li>
+ * </ul>
+ */
 public class Topic {
 
-    private String namespace = null;
-    private String groupId = null;
-    private MessageType messageType;
-    private String matterHubId;
-    private String matterNodeId = null;
-    private String thingId;
+    private static final String NAMESPACE = "spBv1.0";
+    private static final String GROUP_ID = "matterhub";
+    private final MessageType messageType;
+    private final String matterHubId;
+    private final Optional<String> matterNodeId;
+    private final Optional<String> matterEndpointId;
 
-    public Topic(String namespace, String groupId, MessageType messageType, String matterHubId, String matterNodeId) {
-        this.namespace = namespace;
-        this.groupId = groupId;
+    /**
+     * The endpoint constructor
+     */
+    public Topic(
+            MessageType messageType,
+            String matterHubId,
+            String matterNodeId,
+            String matterEndpointId) {
         this.messageType = messageType;
         this.matterHubId = matterHubId;
-        this.matterNodeId = matterNodeId;
-        this.thingId = matterHubId + "_" + matterNodeId;
+        this.matterNodeId = Optional.of(matterNodeId);
+        this.matterEndpointId = Optional.of(matterEndpointId);
     }
 
-    public Topic(MessageType messageType, String matterHubId, String matterNodeId) {
+    /**
+     * The matterHub constructor
+     */
+    public Topic(String GROUP_ID, MessageType messageType, String matterHubId) {
         this.messageType = messageType;
         this.matterHubId = matterHubId;
-        this.matterNodeId = matterNodeId;
-        this.thingId = matterHubId + "_" + matterNodeId;
-    }
-    
-    
-    public Topic(String namespace, String groupId, MessageType messageType, String matterHubId) {
-        this.namespace = namespace;
-        this.groupId = groupId;
-        this.messageType = messageType;
-        this.matterHubId = matterHubId;
+        this.matterNodeId = Optional.empty();
+        this.matterEndpointId = Optional.empty();
     }
 
     public Topic(String topic) {
         String[] elements = topic.split("/");
-        this.namespace = elements[0];
-        this.groupId = elements[1];
-        this.messageType =  MessageType.getMessageType(elements[2]);
+        assert NAMESPACE.equals(elements[0]);
+        assert GROUP_ID.equals(elements[1]);
+        this.messageType = MessageType.getMessageType(elements[2]);
         this.matterHubId = elements[3];
-        if (elements.length == 5) {
-            this.matterNodeId = elements[4];
-        } 
-        this.thingId = matterHubId + "_" + matterNodeId;
+        if (elements.length == 6) {
+            // Endpoint
+            this.matterNodeId = Optional.of(elements[4]);
+            this.matterEndpointId = Optional.of(elements[5]);
+        } else {
+            // Matterhub
+            this.matterNodeId = Optional.empty();
+            this.matterEndpointId = Optional.empty();
+        }
     }
 
-    public String getMatterNodeId(){
+    public Optional<String> getMatterNodeId() {
         return this.matterNodeId;
     }
 
-    public String getMatterHubId(){
+    public String getMatterHubId() {
         return this.matterHubId;
     }
 
-    public String getThingId(){
-        return this.thingId;
+    public String getThingId() {
+        return matterHubId + "_" + matterNodeId + "_" + matterEndpointId;
     }
 
-    public MessageType getMessageType(){
+    public MessageType getMessageType() {
         return this.messageType;
     }
 
-    public String toString(){
-        String topic = "";
-        if (namespace == null && groupId == null) {
-            topic += "spBv1.0/matterhub";
-        } else {
-            topic += namespace + "/" + groupId;
-        }
+    public String toString() {
+        String topic = NAMESPACE + "/" + GROUP_ID;
         topic += "/" + messageType + "/" + matterHubId;
-        if (matterNodeId!=null) {
+        if (matterNodeId != null) {
             topic += "/" + matterNodeId;
         }
         return topic;
     }
 
-    public boolean equals(Topic topic){
-        if(thingId != null) {
-            if (this.thingId.equals(topic.getMatterNodeId()) && this.matterHubId.equals(topic.getMatterHubId())) {
-                return true;
-            }
+    public boolean equals(Topic topic) {
+        if(topic == null) {
+            return false;
+        }
+        if (getThingId().equals(topic.getThingId())) {
+            return true;
         }
         return false;
     }
 
-
-
-
-    
-    
 }

@@ -1,7 +1,8 @@
-## Java Server
+# Java Server
 
-### First steps
-1. First of all, you need an active [Subscription](https://accounts.bosch-iot-suite.com/subscriptions/) to the Bosch IoT Suite: 
+## First steps
+
+1. First of all, you need an active [Subscription](https://accounts.bosch-iot-suite.com/subscriptions/) to the Bosch IoT Suite:
     - Click on new Subscription and select "Bosch IoT Device Management".
     - Choose the Plan you want and give your subscription an Instance Name.
 
@@ -16,7 +17,7 @@
     - Insert the copied application.properties in src/main/resources/application.properties (you can edit the file with VSCode).
 
 4. Insert the HiveMQ Password in application.properties in src/main/resources/application.properties
-    - Contact the HiveMQ Admin, if you need the password. 
+    - Contact the HiveMQ Admin, if you need the password.
 
 5. Create a Namespace.
     - Go to [Subscriptions](https://accounts.bosch-iot-suite.com/subscriptions/) and choose "Go to Dashboard" and now choose "Things Dashboard".
@@ -34,10 +35,10 @@
     - Click on Things and then on PUT /thing/{thingId}
     - Click on Try it out.
     - In the first field write your thingId which means: your Namespace (from Step 6), your hubId(0) and your nodeId(333). \
-     The thingId should follow this schema: ``` namespace:hubId_nodeId ```
+      The thingId should follow this schema: ``` namespace:hubId_nodeId ```
     - On the request body you have to enter this JSON Code:
 
-``` 
+``` json
 {
   "features": {
     "on-off": {
@@ -49,21 +50,24 @@
 }
 ```
 
+### Solution ID
 
-#### Solution ID
 If you need a Solution ID, this is how you can find it:
- - Go to [Subscriptions](https://accounts.bosch-iot-suite.com/subscriptions/) and choose "Go to Dashboard" and now choose "Things Dashboard".
- - Now you can copy your Solution ID.
 
+- Go to [Subscriptions](https://accounts.bosch-iot-suite.com/subscriptions/) and choose "Go to Dashboard" and now choose "Things Dashboard".
+- Now you can copy your Solution ID.
 
-### Requirements
+## Requirements
+
 - Java (jdk-17)
 - Maven (3.8.x)
 
-### Run the server
-Inside the server folder run 
+## Run the server
+
+Inside the server folder run
 `mvn clean package`
 and `java -jar target/server-0.0.1-SNAPSHOT.jar`
 
-### Known bugs
-There is a bug which throws an Exception every time a topic is published (org.eclipse.paho.client.mqttv3.internal.ExceptionHelper.createMqttException(ExceptionHelper.java:31)). It seems like this Exception has no impact on the correct server functionality. (https://github.com/eclipse/paho.mqtt.android/issues/209)
+## Known bugs
+
+There is a bug which throws an Exception every time a topic is published (org.eclipse.paho.client.mqttv3.internal.ExceptionHelper.createMqttException(ExceptionHelper.java:31)). It seems like this Exception has no impact on the correct server functionality. See <https://github.com/eclipse/paho.mqtt.android/issues/209>

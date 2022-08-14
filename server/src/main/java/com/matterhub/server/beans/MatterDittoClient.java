@@ -1,6 +1,7 @@
 package com.matterhub.server.beans;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.nio.ByteBuffer;
 
 import org.eclipse.ditto.base.model.json.JsonSchemaVersion;
@@ -23,15 +24,21 @@ import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matterhub.cache.Cache;
 import com.matterhub.server.entities.MessageType;
 import com.matterhub.server.entities.Metric;
-import com.matterhub.server.entities.Payload;
 import com.matterhub.server.entities.Topic;
+import com.matterhub.server.entities.matter.Endpoint;
+import com.matterhub.server.entities.payloads.BasePayload;
+import com.matterhub.server.entities.payloads.Payload;
 
 @Component
 public class MatterDittoClient {
@@ -62,12 +69,12 @@ public class MatterDittoClient {
 
     @Value("${hivemq.password}")
     private String password;
+    
+    protected static final ObjectMapper OBJECT_MAPPER= new ObjectMapper();
 
     private DisconnectedDittoClient disconnectedDittoClient;
 
-    private ThingId thingId;
-
-    private Feature feature;
+    private static final Logger LOGGER = LoggerFactory.getLogger(MatterDittoClient.class);
 
     public void initializeDittoClient() {
         final ClientCredentialsAuthenticationConfiguration.ClientCredentialsAuthenticationConfigurationBuilder clientCredentialsAuthenticationConfigurationBuilder = ClientCredentialsAuthenticationConfiguration
@@ -90,18 +97,18 @@ public class MatterDittoClient {
         this.disconnectedDittoClient = DittoClients.newInstance(messagingProvider);
     }
 
-    public void setProps(String thingIdAsString, String path, String value, String cluster) {
+    public void setProps(String thingIdAsString, String path, String value, Integer clusterId) {
 
-        this.thingId = ThingId.of(namespace, thingIdAsString);
+        this.thingId = thingIdAsString;
         if (path.isEmpty()) {
             return;
         }
         FeatureProperties featureProperties = FeatureProperties.newBuilder().set(path, value).build();
-        feature = Feature.newBuilder().desiredProperties(featureProperties).withId(cluster).build();
+        feature = Feature.newBuilder().desiredProperties(featureProperties).withId(clusterId.toString()).build();
     }
 
     private void update(DittoClient client) {
-        if(thingId == null || feature == null) {
+        if (thingId == null || feature == null) {
             return;
         }
         try {
@@ -112,8 +119,10 @@ public class MatterDittoClient {
 
     }
 
-    private void create(DittoClient client) {
+    private void create(DittoClient client, Endpoint endpoint) {
 
+        ThingId thingId = ThingId.of(namespace, endpoint.thingIdAString());
+        
         final Thing thing = Thing.newBuilder()
                 .setId(thingId)
                 .build();
@@ -132,9 +141,9 @@ public class MatterDittoClient {
                 .thenAccept(this::update);
     }
 
-    public void createThing() {
+    public void createThing(Endpoint endpoint) {
         disconnectedDittoClient.connect()
-                .thenAccept(this::create);
+                .thenAccept(client -> this.create(client, endpoint));
     }
 
     public void destroy() {
@@ -146,10 +155,10 @@ public class MatterDittoClient {
         consumer.start();
 
         // refactor
-        System.out.println("Subscribed for Twin events");
+        LOGGER.info("Subscribed for Twin events");
         client.twin().registerForThingChanges("my-changes", change -> {
             if (change.getAction() == ChangeAction.UPDATED) {
-                System.out.println(change.toString());
+                LOGGER.info(change.toString());
                 try {
                     if (!change.getThing().isPresent()) {
                         return;
@@ -159,29 +168,35 @@ public class MatterDittoClient {
                     String[] thingId = entityId[1].split("_");
                     String hubId = thingId[0];
                     String nodeId = thingId[1];
-                    
+                    String endpointId = thingId[2];
+
                     JsonObject features = (JsonObject) change.getValue().get();
                     String cluster = "on-off";
-                    JsonObject attribute = JsonObject.of(JsonObject.of(features.getValue("features").get().formatAsString()).getValue(cluster).get().formatAsString());
+                    JsonObject attribute = JsonObject
+                            .of(JsonObject.of(features.getValue("features").get().formatAsString()).getValue(cluster)
+                                    .get().formatAsString());
                     JsonObject properties = (JsonObject) attribute
                             .getValue(attribute.getKeys().get(0))
                             .get();
                     String attributeId = properties.getKeys().get(0).toString();
                     String attributeValue = properties.getValue(attributeId).get().formatAsString();
-                    Topic topic = new Topic(MessageType.DCMD, hubId, nodeId);
-                    //TODO
-                    String name = "1/6/cmd/" + attributeValue;
+                    Topic topic = new Topic(MessageType.DCMD, hubId, nodeId, endpointId);
+                    // TODO
+                    String name = endpointId + "/6/cmd/" + attributeValue;
                     Metric metric = new Metric(name, timestamp, attributeValue, MessageType.DCMD);
-                    Payload payload = new Payload(MessageType.DCMD, timestamp, attributeValue,
+                    BasePayload payload = new BasePayload(MessageType.DCMD, timestamp, attributeValue,
                             metric);
-                
-                    //this will be only false if the value has changed. 
-                    if (!Cache.checkIfMessageIsInCache(hubId, nodeId, "1", cluster, attributeId, attributeValue)) {
-                        System.out.println("Publishing message");
-                        sendPublish(payload, topic);
+
+                    // this will be only false if the value has changed.
+                    if (!Cache.checkIfMessageIsInCache(hubId, Optional.of(nodeId), endpointId, cluster, attributeId,
+                            attributeValue)) {
+                        LOGGER.info("Message found in cache. Not resending");
+                        return;
                     }
+                    LOGGER.info("Publishing message");
+                    sendPublish(topic, payload);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error("Exception happened while handling change", e);
                 }
 
             }
@@ -193,7 +208,7 @@ public class MatterDittoClient {
                 .thenAccept(this::subscribe);
     }
 
-    public void sendPublish(Payload payload, Topic topic) {
+    public void sendPublish(Topic topic, Payload payload) throws JsonProcessingException {
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
         try (IMqttClient mqttClient = factory.getClientInstance(uri, "ID")) {
             MqttMessage mqttMessage = new MqttMessage(payload.getPayload());
@@ -204,9 +219,9 @@ public class MatterDittoClient {
             mqttClient.connect(connOpts);
             mqttClient.publish(topic.toString(), mqttMessage);
         } catch (MqttException e) {
-            e.printStackTrace();
+            LOGGER.error("Error while sending message", e);
         }
-        
+
     }
 
 }
