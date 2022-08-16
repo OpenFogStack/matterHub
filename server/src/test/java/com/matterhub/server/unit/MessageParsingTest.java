@@ -22,7 +22,7 @@ public class MessageParsingTest {
     @Test
     public void TestDbirthMessage () throws JSONException, IOException {
         var om = new ObjectMapper();
-        var is =this.getClass().getResourceAsStream("dbirth.json");
+        var is =this.getClass().getClassLoader().getResourceAsStream("dbirth.json");
         JsonNode value = om.readTree(new String(is.readAllBytes()));
         Topic topic = new Topic(value.get("topic").asText());
         assertEquals(MessageType.DBIRTH, topic.getMessageType());

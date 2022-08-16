@@ -16,57 +16,54 @@ public class Cache {
     private static final LinkedList<MqttMatterMessage> list = new LinkedList<>();
     private static final Logger LOGGER = LoggerFactory.getLogger(Cache.class);
 
-    public static boolean checkIfMessageIsInCache(String hubId, Optional<String> nodeId, String endpoint, String cluster,
-            String attributeId, Object value) {
+    public static boolean checkIfMessageIsInCache(MqttMatterMessage mqttMessage) {
 
-        for (int i = list.size() - 1; i >= 0; i--) {
-            MqttMatterMessage message = list.get(i);
-
-            String messageHubId = message.getTopic().getMatterHubId();
-            Optional<String> messageNodeId = message.getTopic().getMatterNodeId();
+        // for (MqttMatterMessage message : list) {
+        //     String messageHubId = message.getTopic().getMatterHubId();
+        //     Optional<String> messageNodeId = message.getTopic().getMatterNodeId();
             
-            if (messageHubId.equals(hubId) && messageNodeId.equals(nodeId)
-                    && message.getPayload().getMetrics() != null) {
+        //     if (messageHubId.equals(hubId) && messageNodeId.equals(nodeId)
+        //             && message.getPayload().getMetrics() != null) {
 
-                Metric messageMetric = message.getPayload().getMetrics()[0];
-                String messageEndpoint = messageMetric.getEndpointId();
-                String messageCluster = messageMetric.getCluster();
-                String messageAttributeID = "";
-                String messageValue = "";
-                if (message.getTopic().getMessageType() == MessageType.DBIRTH) {
-                    if(value.equals("0")){
-                        return true;
-                    }
-                }
-                if (message.getTopic().getMessageType().equals(MessageType.DDATA)) {
-                    messageAttributeID = messageMetric.getAttribute();
-                    messageValue = messageMetric.getValue().toString();
-                }
-                if (message.getTopic().getMessageType().equals(MessageType.DCMD)) {
-                    if (messageMetric.getCommand().equals("cmd")) {
-                        String messageArgument = messageMetric.getArgument();
-                        if (messageArgument.equals("1") || messageArgument.equals("on")) {
-                            messageAttributeID = "on";
-                            messageValue = "1";
-                        }
-                        if (messageArgument.equals("0") || messageArgument.equals("off")) {
-                            messageAttributeID = "on";
-                            messageValue = "0";
-                        }
-                    }
-                }
-                if (!messageEndpoint.isEmpty()) {
-                    if ((messageEndpoint.equals(endpoint) && messageCluster.equals(cluster)
-                            && messageAttributeID.equals(attributeId))) {
-                        if (messageValue.equals(value)) {
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    }
-                }
-            }
-        }
+        //         Metric messageMetric = message.getPayload().getMetrics()[0];
+        //         String messageEndpoint = messageMetric.getEndpointId();
+        //         String messageCluster = messageMetric.getCluster();
+        //         String messageAttributeID = "";
+        //         String messageValue = "";
+        //         if (message.getTopic().getMessageType() == MessageType.DBIRTH) {
+        //             if(value.equals("0")){
+        //                 return true;
+        //             }
+        //         }
+        //         if (message.getTopic().getMessageType().equals(MessageType.DDATA)) {
+        //             messageAttributeID = messageMetric.getAttribute();
+        //             messageValue = messageMetric.getValue().toString();
+        //         }
+        //         if (message.getTopic().getMessageType().equals(MessageType.DCMD)) {
+        //             if (messageMetric.getCommand().equals("cmd")) {
+        //                 String messageArgument = messageMetric.getArgument();
+        //                 if (messageArgument.equals("1") || messageArgument.equals("on")) {
+        //                     messageAttributeID = "on";
+        //                     messageValue = "1";
+        //                 }
+        //                 if (messageArgument.equals("0") || messageArgument.equals("off")) {
+        //                     messageAttributeID = "on";
+        //                     messageValue = "0";
+        //                 }
+        //             }
+        //         }
+        //         if (!messageEndpoint.isEmpty()) {
+        //             if ((messageEndpoint.equals(endpoint) && messageCluster.equals(cluster)
+        //                     && messageAttributeID.equals(attributeId))) {
+        //                 if (messageValue.equals(value)) {
+        //                     return true;
+        //                 } else {
+        //                     return false;
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         return false;
     }

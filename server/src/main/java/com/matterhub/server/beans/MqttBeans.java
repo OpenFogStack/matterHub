@@ -23,8 +23,11 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.MessagingException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matterhub.cache.Cache;
+import com.matterhub.server.entities.Metric;
 import com.matterhub.server.entities.MqttMatterMessage;
 import com.matterhub.server.entities.Topic;
 import com.matterhub.server.entities.matter.Cluster;
@@ -49,6 +52,7 @@ public class MqttBeans {
     private MatterDittoClient client;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MqttBeans.class);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Bean
     public MqttPahoClientFactory mqttClientFactory() {
@@ -91,8 +95,14 @@ public class MqttBeans {
                         message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString(), message.getPayload());
 
                 Topic topic = new Topic(message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString());
-                Payload payload = Payload.parseMessage(topic.getMessageType(),
-                        JsonNode(message.getPayload().toString()));
+                Payload payload;
+                try {
+                    payload = Payload.parseMessage(topic.getMessageType(),
+                    OBJECT_MAPPER.readTree(message.getPayload().toString()));
+                } catch (JsonProcessingException | IllegalArgumentException e) {
+                    LOGGER.error("Unable to parse message", e);
+                    throw new MessagingException(message, e);
+                }
                 Cache.put(new MqttMatterMessage(topic, payload));
 
                 client.initializeDittoClient();
@@ -108,27 +118,15 @@ public class MqttBeans {
             }
 
             private void handleDBirthMessage(Topic topic, DBirthPayload payload) {
-                Endpoint ep = payload.getClusters()
-                client.createThing();
-                Cluster onOffCluster = null;
-                for (var cluster : payload.getClusters()) {
-                    if (cluster.Name().equals("on-off"))
-                        onOffCluster = cluster;
-                }
-                if (onOffCluster == null) {
-                    return;
-                }
-
-                client.setProps(topic.getThingId(), onOffCluster.Name(),
-                        String.valueOf(onOffCluster.getValue()), onOffCluster.Id());
-                // TODO check if this works
-                client.createThing();
+                Endpoint ep = payload.getEndpoint();
+                client.createThing(ep);
             }
 
             private void handleBasePayload(Topic topic, BasePayload payload) {
-                client.setProps(topic.getThingId(), payload.getMetrics()[0].getAttribute(),
-                        String.valueOf(payload.getMetrics()[0].getValue()), payload.getMetrics()[0].getCluster());
-                client.updateThing();
+                for(Metric m : payload.getMetrics()) {
+                    client.updateThing(topic.getThingId(), m.getAttribute(), String.valueOf(m.getValue()), m.getCluster());
+                }
+                
             }
 
         };

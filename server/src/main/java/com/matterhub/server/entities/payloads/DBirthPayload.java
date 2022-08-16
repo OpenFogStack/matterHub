@@ -1,17 +1,19 @@
 package com.matterhub.server.entities.payloads;
 
-import org.json.JSONObject;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.matterhub.server.entities.MessageType;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.matterhub.server.entities.matter.Cluster;
 import com.matterhub.server.entities.matter.Endpoint;
 import com.matterhub.server.entities.matter.generated.ClusterMapping;
+
+import lombok.Builder;
+import lombok.Value;
 
 record ClusterDTO(List<Integer> attributeIds, List<Integer> commandIds) {
 };
@@ -34,16 +36,19 @@ record NodeDTO(Map<Short, EndpointDTO> endpoints) {
     }
 };
 
+@JsonDeserialize(builder = DBirthPayload.DBirthPayloadBuilder.class)
 public final class DBirthPayload extends Payload {
 
-    private final Endpoint endpoint;
-
-    public DBirthPayload(JsonNode payload) throws JsonProcessingException, IllegalArgumentException {
-        super(payload);
-        EndpointDTO dto = OBJECT_MAPPER.treeToValue(payload, EndpointDTO.class);
-        List<Cluster> clusters = dto.transformIntoClusters();
-        this.endpoint = new Endpoint(dto.id(), clusters);
+    @Builder
+    public DBirthPayload(int sequenceNumber, long timestamp, EndpointDTO clusters) {
+        super(sequenceNumber, timestamp);
+        this.clusters = clusters;
     }
+
+    private final EndpointDTO clusters;
+
+    @JsonIgnore
+    private Optional<Endpoint> endpoint = Optional.empty();
 
     @Override
     public MessageType getMessageType() {
@@ -51,6 +56,12 @@ public final class DBirthPayload extends Payload {
     }
 
     public Endpoint getEndpoint() {
-        return this.endpoint;
+        if (this.endpoint.isPresent()) {
+            return this.endpoint.get();
+        }
+        List<Cluster> cl = clusters.transformIntoClusters();
+        Endpoint endpoint = new Endpoint(clusters.id(), cl);
+        this.endpoint = Optional.of(endpoint);
+        return endpoint;
     }
 }

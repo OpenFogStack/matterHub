@@ -1,43 +1,21 @@
 package com.matterhub.server.entities.payloads;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.matterhub.server.entities.MessageType;
 import com.matterhub.server.entities.Metric;
 
 public final class BasePayload extends Payload {
-    private JSONObject payload;
     private MessageType messageType;
     private Metric[] metrics;
 
-    public BasePayload(MessageType messageType, JsonNode payload) {
-        super(payload);
-        this.payload = payload;
-        this.messageType = messageType;
-        JSONArray metrics = this.payload.getJSONArray("metrics");
-        this.metrics = new Metric[metrics.length()];
-        for (int i = 0; i < metrics.length(); i++) {
-            this.metrics[i] = new Metric(metrics.getJSONObject(i), messageType);
-        }
-    }
-
-    public BasePayload(MessageType messageType, long timestamp, Object value, Metric... metrics) {
+    public BasePayload(MessageType messageType, long timestamp, Metric... metrics) {
         super(0, timestamp);
-        this.payload = new JSONObject();
         this.messageType = messageType;
         setTimestamp(timestamp);
         setMetrics(metrics);
         setSeq(0);
-    }
-
-    public long getTimestamp() {
-        return this.payload.getLong("timestamp");
-    }
-
-    public void setTimestamp(long timestamp) {
-        this.payload.put("timestamp", timestamp);
     }
 
     public Metric[] getMetrics() {
@@ -49,19 +27,14 @@ public final class BasePayload extends Payload {
         for (int i = 0; i < metrics.length; i++) {
             jsonArray.put(metrics[i].getMetric());
         }
-        this.payload.put("metrics", jsonArray);
-    }
-
-    public void setSeq(int seq) {
-        this.payload.put("seq", seq);
-    }
-
-    public void setValue(Object value) {
-        this.payload.put("value", value);
     }
 
     public MessageType getMessageType() {
         return messageType;
+    }
+    
+    protected void setMessageType(MessageType messageType) {
+        this.messageType = messageType;
     }
     @Override
     public boolean equals(Object other) {
@@ -91,5 +64,9 @@ public final class BasePayload extends Payload {
             }
         }
         return false;
+    }
+
+    public byte[] getPayload() throws JsonProcessingException {
+        return OBJECT_MAPPER.writeValueAsString(this).getBytes();
     }
 }

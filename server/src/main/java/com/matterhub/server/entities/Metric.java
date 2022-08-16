@@ -136,6 +136,11 @@ public class Metric {
     // TODO all methods below are not generic!//
     // ---------------------------------------//
 
+    /**
+     * @deprecated Convert the metric into an attribute instead
+     * @return
+     */
+    @Deprecated
     public Object getValue() {
         if (!this.metric.has("value")) {
             return "0";
@@ -151,6 +156,11 @@ public class Metric {
         return this.metric.get("value");
     }
 
+    /**
+     * @deprecated Convert the metric into an attribute instead
+     * @return
+     */
+    @Deprecated
     public void setValue(Object value) {
         // TODO What if 0 or 1 is just a number?
         if (value.toString().equals("0")) {
@@ -164,6 +174,11 @@ public class Metric {
         }
     }
 
+    /**
+     * @deprecated Convert the metric into an attribute instead
+     * @return
+     */
+    @Deprecated
     public String getCluster() {
         if (clusterId.equals("6")) {
             return "on-off";
@@ -171,6 +186,11 @@ public class Metric {
         return "";
     }
 
+    /**
+     * @deprecated Convert the metric into an attribute instead
+     * @return
+     */
+    @Deprecated
     public void setCluster(String cluster) {
         if (cluster.equals("on-off")) {
             this.clusterId = "6";
@@ -178,6 +198,11 @@ public class Metric {
 
     }
 
+    /**
+     * @deprecated Convert the metric into an attribute instead
+     * @return
+     */
+    @Deprecated
     public String getAttribute() {
         if (attributeId.equals("0")) {
             return "on";
@@ -185,6 +210,11 @@ public class Metric {
         return "";
     }
 
+    /**
+     * @deprecated Convert the metric into an attribute instead
+     * @return
+     */
+    @Deprecated
     public void setAttribute(String attribute) {
         if (attribute.equals("on")) {
             this.attributeId = "0";

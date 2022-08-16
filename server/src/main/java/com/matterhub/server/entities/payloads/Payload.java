@@ -1,7 +1,5 @@
 package com.matterhub.server.entities.payloads;
 
-import org.json.JSONObject;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,33 +11,35 @@ public sealed abstract class Payload permits BasePayload, DBirthPayload{
     public static Payload parseMessage(MessageType messageType, JsonNode payload) throws JsonProcessingException, IllegalArgumentException {
         switch (messageType) {
             case DBIRTH:
-                return new DBirthPayload(payload);
+                return OBJECT_MAPPER.treeToValue(payload, DBirthPayload.class);
             default:
-                return new BasePayload(messageType, payload);
+                BasePayload bp = OBJECT_MAPPER.treeToValue(payload, BasePayload.class);
+                bp.setMessageType(messageType);
+                return bp;
         }
     }
-    private final int sequenceNumber;
-    private final long timestamp;
 
-    public Payload(JsonNode payload) {
-        this.sequenceNumber = payload.get("seq").asInt(0);
-        this.timestamp = payload.get("timestamp").asLong();
-    }
+    private int seq = 0;
+    private long timestamp;
+
     public Payload(int sequenceNumber, long timestamp) {
-        this.sequenceNumber = sequenceNumber;
+        this.seq = sequenceNumber;
         this.timestamp = timestamp;
-    }
-    public long getTimestamp() {
-        return this.timestamp;
-    }
-
-    public int getSeq() {
-        return this.sequenceNumber;
     }
 
     public abstract MessageType getMessageType();
 
-    public byte[] getPayload() throws JsonProcessingException {
-        return OBJECT_MAPPER.writeValueAsString(this).getBytes();
+    public long getTimestamp() {
+        return this.timestamp;
+    }
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public int getSeq() {
+        return this.seq;
+    }
+    public void setSeq(int seq) {
+        this.seq = seq;
     }
 }

@@ -11,6 +11,13 @@ public abstract class Cluster {
     public abstract List<Attribute> Attributes();
     public abstract List<Command> Commands();
 
+    public abstract Attribute getAttribute(int id);
+    public abstract Attribute getAttribute(String name);
+
+    public abstract Command getCommand(int id);
+    public abstract Command getCommand(String name);
+
+    
     public Endpoint Parent() {
         return parent;
     }

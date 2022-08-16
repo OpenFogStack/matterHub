@@ -15,11 +15,11 @@ public class Endpoint {
         }
     }
 
-    List<Cluster> Clusters() {
+    public List<Cluster> Clusters() {
         return this.clusters;
     };
 
-    short Id() {
+    public short Id() {
         return this.id;
     }
 
