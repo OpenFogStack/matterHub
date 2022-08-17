@@ -1,9 +1,18 @@
 package com.matterhub.server.beans;
 
-import javax.net.ssl.SSLSocketFactory;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.matterhub.cache.Cache;
+import com.matterhub.server.entities.Matterhub;
+import com.matterhub.server.entities.Metric;
+import com.matterhub.server.entities.MqttMatterMessage;
+import com.matterhub.server.entities.Topic;
+import com.matterhub.server.entities.matter.Endpoint;
+import com.matterhub.server.entities.matter.Node;
+import com.matterhub.server.entities.payloads.BasePayload;
+import com.matterhub.server.entities.payloads.DBirthPayload;
+import com.matterhub.server.entities.payloads.Payload;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,42 +32,28 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.MessagingException;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.matterhub.cache.Cache;
-import com.matterhub.server.entities.Metric;
-import com.matterhub.server.entities.MqttMatterMessage;
-import com.matterhub.server.entities.Topic;
-import com.matterhub.server.entities.matter.Cluster;
-import com.matterhub.server.entities.matter.Endpoint;
-import com.matterhub.server.entities.payloads.BasePayload;
-import com.matterhub.server.entities.payloads.DBirthPayload;
-import com.matterhub.server.entities.payloads.Payload;
+import javax.net.ssl.SSLSocketFactory;
+import java.util.List;
 
 @Configuration
 public class MqttBeans {
 
-    @Value("${hivemq.uri}")
-    private String uri;
-
-    @Value("${hivemq.user}")
-    private String user;
-
-    @Value("${hivemq.password}")
-    private String password;
-
-    @Autowired
-    private MatterDittoClient client;
-
     private static final Logger LOGGER = LoggerFactory.getLogger(MqttBeans.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    @Value("${hivemq.uri}")
+    private String uri;
+    @Value("${hivemq.user}")
+    private String user;
+    @Value("${hivemq.password}")
+    private String password;
+    @Autowired
+    private MatterDittoClient client;
 
     @Bean
     public MqttPahoClientFactory mqttClientFactory() {
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
         MqttConnectOptions options = new MqttConnectOptions();
-        options.setServerURIs(new String[] { uri });
+        options.setServerURIs(new String[]{uri});
         options.setUserName(user);
         options.setPassword(password.toCharArray());
         options.setSocketFactory(SSLSocketFactory.getDefault());
@@ -98,7 +93,7 @@ public class MqttBeans {
                 Payload payload;
                 try {
                     payload = Payload.parseMessage(topic.getMessageType(),
-                    OBJECT_MAPPER.readTree(message.getPayload().toString()));
+                            OBJECT_MAPPER.readTree(message.getPayload().toString()));
                 } catch (JsonProcessingException | IllegalArgumentException e) {
                     LOGGER.error("Unable to parse message", e);
                     throw new MessagingException(message, e);
@@ -118,17 +113,20 @@ public class MqttBeans {
             }
 
             private void handleDBirthMessage(Topic topic, DBirthPayload payload) {
-                Endpoint ep = payload.getEndpoint();
-                client.createThing(ep);
+                List<Endpoint> eps = payload.getEndpoints();
+                LOGGER.info("Topic {} contained endpoints {}", topic.getThingId(), eps);
+                Matterhub hub = new Matterhub(topic.getMatterHubId());
+                // This sets this node as the parent of the endpoints. DO NOT DELETE
+                Node node = new Node(hub, topic.getMatterNodeId().orElseThrow(), eps);
+                eps.forEach(ep -> client.createThing(ep));
+
             }
 
             private void handleBasePayload(Topic topic, BasePayload payload) {
-                for(Metric m : payload.getMetrics()) {
+                for (Metric m : payload.getMetrics()) {
                     client.updateThing(topic.getThingId(), m.getAttribute(), String.valueOf(m.getValue()), m.getCluster());
                 }
-                
             }
-
         };
     }
 

@@ -69,7 +69,7 @@ extern "C" void app_main()
     }
 
     ESP_LOGI(TAG, "==================================================");
-    ESP_LOGI(TAG, "chip-esp32-light-switch-example starting");
+    ESP_LOGI(TAG, "matterHub starting");
     ESP_LOGI(TAG, "==================================================");
 
 #if CONFIG_ENABLE_CHIP_SHELL

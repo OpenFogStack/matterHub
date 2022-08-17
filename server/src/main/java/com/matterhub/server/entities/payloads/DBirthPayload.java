@@ -1,67 +1,60 @@
 package com.matterhub.server.entities.payloads;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.matterhub.server.entities.MessageType;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import com.matterhub.server.entities.matter.Cluster;
 import com.matterhub.server.entities.matter.Endpoint;
 import com.matterhub.server.entities.matter.generated.ClusterMapping;
-
 import lombok.Builder;
-import lombok.Value;
+import lombok.extern.jackson.Jacksonized;
 
-record ClusterDTO(List<Integer> attributeIds, List<Integer> commandIds) {
-};
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
-record EndpointDTO(Short id, Map<Integer, ClusterDTO> clusters) {
-    public List<Cluster> transformIntoClusters() {
-        return clusters.entrySet().stream().map(entry -> ClusterMapping.getClusterFromId(entry.getKey(),
-                entry.getValue().attributeIds(), entry.getValue().commandIds())).toList();
+record ClusterDTO(Integer id, List<Integer> attributes, List<Integer> commands) {
+    public Cluster toCluster() {
+        return ClusterMapping.getClusterFromId(this.id,
+                this.attributes, this.commands);
     }
-};
+}
 
-record NodeDTO(Map<Short, EndpointDTO> endpoints) {
-    public List<Endpoint> transformIntoEndpoints() {
-        return endpoints.entrySet().stream().map(entry -> {
-            short endpointID = entry.getKey();
-            List<Cluster> clusters = entry.getValue().transformIntoClusters();
-            Endpoint endpoint = new Endpoint(endpointID, clusters);
-            return endpoint;
-        }).toList();
+record EndpointDTO(short id, List<ClusterDTO> clusters) {
+    public Endpoint toEndpoint() {
+        return new Endpoint(this.id, this.clusters.stream().map(clusterDTO -> {try {
+            return clusterDTO.toCluster();
+        } catch (IllegalArgumentException e) {
+            //FIXME: This is an absolutly terrible hotfix for not generating code
+            return null;
+        }}).filter(Objects::nonNull).toList());
     }
-};
+}
 
-@JsonDeserialize(builder = DBirthPayload.DBirthPayloadBuilder.class)
+
 public final class DBirthPayload extends Payload {
 
-    @Builder
-    public DBirthPayload(int sequenceNumber, long timestamp, EndpointDTO clusters) {
-        super(sequenceNumber, timestamp);
-        this.clusters = clusters;
-    }
-
-    private final EndpointDTO clusters;
-
+    private final List<EndpointDTO> endpointDTOS;
     @JsonIgnore
-    private Optional<Endpoint> endpoint = Optional.empty();
+    private Optional<List<Endpoint>> endpoints = Optional.empty();
+
+    @Builder
+    @Jacksonized
+    public DBirthPayload(long timestamp, int seq, List<EndpointDTO> endpoints) {
+        super(seq, timestamp);
+        this.endpointDTOS = endpoints;
+    }
 
     @Override
     public MessageType getMessageType() {
         return MessageType.DBIRTH;
     }
 
-    public Endpoint getEndpoint() {
-        if (this.endpoint.isPresent()) {
-            return this.endpoint.get();
+    public List<Endpoint> getEndpoints() {
+        if (this.endpoints.isPresent()) {
+            return this.endpoints.get();
         }
-        List<Cluster> cl = clusters.transformIntoClusters();
-        Endpoint endpoint = new Endpoint(clusters.id(), cl);
-        this.endpoint = Optional.of(endpoint);
-        return endpoint;
+        List<Endpoint> endpoints = endpointDTOS.stream().map(EndpointDTO::toEndpoint).toList();
+        this.endpoints = Optional.of(endpoints);
+        return endpoints;
     }
 }

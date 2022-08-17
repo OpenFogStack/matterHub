@@ -1,5 +1,3 @@
 package com.matterhub.server.entities;
 
-public class Matterhub {
-    
-}
+public record Matterhub (int id){};

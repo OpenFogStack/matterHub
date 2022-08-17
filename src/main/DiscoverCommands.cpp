@@ -108,16 +108,10 @@ void PublishToMqttCompact(intptr_t context){
 
     cJSON * dbirth = cJSON_CreateObject();
     cJSON_AddNumberToObject(dbirth,"timestamp", esp_log_timestamp());
-    cJSON * metrics = cJSON_AddArrayToObject(dbirth,"metrics");
-    char name[64];
+    cJSON * jEndpoints = cJSON_AddArrayToObject(dbirth,"endpoints");
     for(auto& endpoint:manager->mEndpoints){
-        cJSON * metric = cJSON_CreateObject();
-        snprintf(name,64,"%u",endpoint.first);
-        cJSON_AddStringToObject(metric,"name",name);
-        cJSON_AddNumberToObject(metric,"timestamp", esp_log_timestamp());
-        cJSON_AddStringToObject(metric,"dataType", "String");
-
-
+        cJSON * jEndpoint = cJSON_CreateObject();
+        cJSON_AddNumberToObject(jEndpoint,"id",endpoint.first);
         cJSON * clusters = cJSON_CreateArray(); 
         for(auto& cluster:endpoint.second.clusters){
             cJSON * jCluster = cJSON_CreateObject();
@@ -129,13 +123,9 @@ void PublishToMqttCompact(intptr_t context){
             cJSON_AddItemToArray(clusters,jCluster);
         }
 
-        char * subJson = cJSON_PrintUnformatted(clusters);
-        cJSON_AddStringToObject(metric,"value",subJson);
+        cJSON_AddItemToObject(jEndpoint,"clusters",clusters);
 
-        cJSON_free(subJson);
-        cJSON_Delete(clusters);
-
-        cJSON_AddItemToArray(metrics,metric);
+        cJSON_AddItemToArray(jEndpoints,jEndpoint);
     }
     //this could potentially overflow some day, but then it is your own fault for describing so many nodes in a prototype ¯\_(ツ)_/¯
     cJSON_AddNumberToObject(dbirth, "seq", sSeq++);

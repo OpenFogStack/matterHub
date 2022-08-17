@@ -36,7 +36,7 @@ public class Endpoint {
     }
 
     public String thingIdAString() {
-        return parent.matterhubId() + "_" + parent.nodeId() + "_" + this.id;
+        return parent.hub().id() + "_" + parent.nodeId() + "_" + this.id;
     }
 
 }

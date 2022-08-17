@@ -1,12 +1,13 @@
 package com.matterhub.server.entities;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
  * Topic captures the information contained in the MQTT topic
  * It can be used both to build a topic from the required
  * components and to parse and extract the information from a topic string.
- * 
+ * <p>
  * There are two types of topics:
  * <ul>
  * <li>matterHub Topics - They represent a single matterHub. You most likely
@@ -42,7 +43,7 @@ public class Topic {
     /**
      * The matterHub constructor
      */
-    public Topic(String GROUP_ID, MessageType messageType, String matterHubId) {
+    public Topic(MessageType messageType, String matterHubId) {
         this.messageType = messageType;
         this.matterHubId = matterHubId;
         this.matterNodeId = Optional.empty();
@@ -55,27 +56,35 @@ public class Topic {
         assert GROUP_ID.equals(elements[1]);
         this.messageType = MessageType.getMessageType(elements[2]);
         this.matterHubId = elements[3];
-        if (elements.length == 6) {
+
+        if (elements.length == 4) {
+            // Matterhub
+            this.matterNodeId = Optional.empty();
+            this.matterEndpointId = Optional.empty();
+        } else if (elements.length == 5) {
+            // Node
+            this.matterNodeId = Optional.of(elements[4]);
+            this.matterEndpointId = Optional.empty();
+        } else if (elements.length == 6) {
             // Endpoint
             this.matterNodeId = Optional.of(elements[4]);
             this.matterEndpointId = Optional.of(elements[5]);
         } else {
-            // Matterhub
-            this.matterNodeId = Optional.empty();
-            this.matterEndpointId = Optional.empty();
+            throw new IllegalArgumentException("Topic is malformed:" + topic);
         }
+
     }
 
-    public Optional<String> getMatterNodeId() {
-        return this.matterNodeId;
+    public Optional<Long> getMatterNodeId() {
+        return this.matterNodeId.map(Long::valueOf);
     }
 
-    public String getMatterHubId() {
-        return this.matterHubId;
+    public Integer getMatterHubId() {
+        return Integer.valueOf(this.matterHubId);
     }
 
     public String getThingId() {
-        return matterHubId + "_" + matterNodeId + "_" + matterEndpointId;
+        return this.toString();
     }
 
     public MessageType getMessageType() {
@@ -85,20 +94,25 @@ public class Topic {
     public String toString() {
         String topic = NAMESPACE + "/" + GROUP_ID;
         topic += "/" + messageType + "/" + matterHubId;
-        if (matterNodeId != null) {
-            topic += "/" + matterNodeId;
+        if (matterNodeId.isPresent()) {
+            topic += "/" + matterNodeId.get();
+        }
+        if (matterEndpointId.isPresent()) {
+            topic += "/" + matterEndpointId.get();
         }
         return topic;
     }
 
-    public boolean equals(Topic topic) {
-        if(topic == null) {
-            return false;
-        }
-        if (getThingId().equals(topic.getThingId())) {
-            return true;
-        }
-        return false;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Topic topic = (Topic) o;
+        return getThingId().equals(topic.getThingId());
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(messageType, matterHubId, matterNodeId, matterEndpointId);
+    }
 }

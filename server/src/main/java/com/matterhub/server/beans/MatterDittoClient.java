@@ -1,10 +1,14 @@
 package com.matterhub.server.beans;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Stream;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.matterhub.server.entities.MessageType;
+import com.matterhub.server.entities.Metric;
+import com.matterhub.server.entities.Topic;
+import com.matterhub.server.entities.matter.Attribute;
+import com.matterhub.server.entities.matter.Cluster;
+import com.matterhub.server.entities.matter.Endpoint;
+import com.matterhub.server.entities.matter.generated.ClusterMapping;
+import com.matterhub.server.entities.payloads.BasePayload;
 import org.eclipse.ditto.base.model.json.JsonSchemaVersion;
 import org.eclipse.ditto.client.DisconnectedDittoClient;
 import org.eclipse.ditto.client.DittoClient;
@@ -18,11 +22,7 @@ import org.eclipse.ditto.client.messaging.AuthenticationProviders;
 import org.eclipse.ditto.client.messaging.MessagingProvider;
 import org.eclipse.ditto.client.messaging.MessagingProviders;
 import org.eclipse.ditto.json.JsonObject;
-import org.eclipse.ditto.things.model.Feature;
-import org.eclipse.ditto.things.model.FeatureProperties;
-import org.eclipse.ditto.things.model.FeaturePropertiesBuilder;
-import org.eclipse.ditto.things.model.Thing;
-import org.eclipse.ditto.things.model.ThingId;
+import org.eclipse.ditto.things.model.*;
 import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -33,49 +33,33 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.matterhub.server.entities.MessageType;
-import com.matterhub.server.entities.Metric;
-import com.matterhub.server.entities.Topic;
-import com.matterhub.server.entities.matter.Attribute;
-import com.matterhub.server.entities.matter.Cluster;
-import com.matterhub.server.entities.matter.Endpoint;
-import com.matterhub.server.entities.matter.generated.ClusterMapping;
-import com.matterhub.server.entities.payloads.BasePayload;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Stream;
 
 @Component
 public class MatterDittoClient {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MatterDittoClient.class);
     @Value("${bosch-iot-suite-auth.oauth2.client.clientId}")
     private String clientId;
-
     @Value("${bosch-iot-suite-auth.oauth2.client.clientSecret}")
     private String clientSecret;
-
     @Value("${bosch-iot-suite-auth.oauth2.client.scope}")
     private String scope;
-
     @Value("${bosch-iot-suite-auth.oauth2.client.accessTokenUri}")
     private String accessTokenUri;
-
     @Value("${bosch-iot-suite.namespace}")
     private String namespace;
-
     @Value("${bosch-iot-suite.wss}")
     private String wss;
-
     @Value("${hivemq.uri}")
     private String uri;
-
     @Value("${hivemq.user}")
     private String user;
-
     @Value("${hivemq.password}")
     private String password;
-
     private DisconnectedDittoClient disconnectedDittoClient;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(MatterDittoClient.class);
 
     public void initializeDittoClient() {
         final ClientCredentialsAuthenticationConfiguration.ClientCredentialsAuthenticationConfigurationBuilder clientCredentialsAuthenticationConfigurationBuilder = ClientCredentialsAuthenticationConfiguration
@@ -119,7 +103,7 @@ public class MatterDittoClient {
     }
 
     private void create(DittoClient client, Endpoint endpoint) {
-
+        LOGGER.info("Starting to create {}", endpoint.thingIdAString());
         ThingId thingId = ThingId.of(namespace, endpoint.thingIdAString());
 
         final Thing thing = Thing.newBuilder()
@@ -127,24 +111,29 @@ public class MatterDittoClient {
                 .build();
         final List<Feature> features = endpoint.Clusters().stream().map(cluster -> {
             FeatureProperties featureProperties = attributesToFeatureProperties(cluster.Attributes().stream());
-            Feature feature = Feature
+            return Feature
                     .newBuilder()
                     .desiredProperties(featureProperties)
                     .withId(cluster.Name())
                     .build();
-            return feature;
         }).toList();
-        ((ByteBuffer) client.twin().create(thing)
+
+        LOGGER.info("Thing has been built {}", thing);
+
+        client.twin().create(thing)
                 .thenCompose(createdThing -> {
                     final Thing updatedThing = createdThing.toBuilder()
                             .setFeatures(features)
                             .build();
                     return client.twin().update(updatedThing);
-                })).get();
+                }).thenRun(() -> LOGGER.info("Finished creating {}", endpoint.thingIdAString()))
+                .exceptionally(e -> {
+                    LOGGER.error("Couldn't create thing", e);
+                    return null;
+                });
     }
 
     /**
-     * 
      * @param thingIdAsString
      * @param attributeName   - The human readable name of a given attribute
      * @param value           - The stringified value
@@ -187,11 +176,10 @@ public class MatterDittoClient {
     private void handleChange(ThingChange change) {
         LOGGER.info(change.toString());
         try {
-            if (!change.getThing().isPresent()) {
+            if (change.getThing().isEmpty()) {
                 LOGGER.warn("Changed thing no longer present");
                 return;
             }
-            long timestamp = change.getTimestamp().get().toEpochMilli();
             String[] entityId = change.getEntityId().toString().split(":");
             String[] thingId = entityId[1].split("_");
             String hubId = thingId[0];
@@ -211,10 +199,10 @@ public class MatterDittoClient {
             List<Metric> metrics = changedClusters
                     .stream()
                     .flatMap(cluster -> cluster.Attributes().stream())
-                    .map(attr -> new Metric(attr.Parent().Id() + "/write/" + attr.Id(), timestamp, attr.toMatterValue(),
-                            MessageType.DCMD))
+                    .map(Attribute::toMetric)
                     .toList();
 
+            long timestamp = change.getTimestamp().orElseThrow().toEpochMilli();
             BasePayload payload = new BasePayload(MessageType.DCMD, timestamp, metrics.toArray(new Metric[0]));
 
             sendPublish(topic, payload);
@@ -225,12 +213,12 @@ public class MatterDittoClient {
 
     private List<Cluster> parseChangeToCluster(JsonObject features) {
         return features
-        .stream()
-        .map(field -> {
-            List<String> attributeNames = field.getValue().asObject().getKeys().stream().map(k-> k.toString()).toList();
-            return ClusterMapping
-            .getClusterFromName(field.getKeyName(), attributeNames, List.of());
-        }).toList();
+                .stream()
+                .map(field -> {
+                    List<String> attributeNames = field.getValue().asObject().getKeys().stream().map(Object::toString).toList();
+                    return ClusterMapping
+                            .getClusterFromName(field.getKeyName(), attributeNames, List.of());
+                }).toList();
 
     }
 

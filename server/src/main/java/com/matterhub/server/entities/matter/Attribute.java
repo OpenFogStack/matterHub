@@ -1,5 +1,6 @@
 package com.matterhub.server.entities.matter;
 
+import com.matterhub.server.entities.Metric;
 import org.eclipse.ditto.json.JsonField;
 
 public interface Attribute {
@@ -16,10 +17,9 @@ public interface Attribute {
     Cluster Parent();
 
     /**
-     * Serializes the attributes internal representation
-     * to a byte array that can be handled by the matterHub
+     * Encodes the state as a command that will then be executed by the matterHub
      */
-    byte[] toMatterValue();
+    Metric toMetric();
 
     /**
      * Parses the attributes internal representation
