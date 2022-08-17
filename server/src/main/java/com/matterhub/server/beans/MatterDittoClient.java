@@ -22,6 +22,7 @@ import org.eclipse.ditto.client.messaging.AuthenticationProviders;
 import org.eclipse.ditto.client.messaging.MessagingProvider;
 import org.eclipse.ditto.client.messaging.MessagingProviders;
 import org.eclipse.ditto.json.JsonObject;
+import org.eclipse.ditto.json.JsonPointer;
 import org.eclipse.ditto.things.model.*;
 import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -103,20 +104,27 @@ public class MatterDittoClient {
     }
 
     private void create(DittoClient client, Endpoint endpoint) {
-        LOGGER.info("Starting to create {}", endpoint.thingIdAString());
         ThingId thingId = ThingId.of(namespace, endpoint.thingIdAString());
-
-        final Thing thing = Thing.newBuilder()
-                .setId(thingId)
-                .build();
-        final List<Feature> features = endpoint.Clusters().stream().map(cluster -> {
-            FeatureProperties featureProperties = attributesToFeatureProperties(cluster.Attributes().stream());
-            return Feature
-                    .newBuilder()
-                    .desiredProperties(featureProperties)
-                    .withId(cluster.Name())
+        LOGGER.info("Starting to create {}", thingId);
+        final Thing thing;
+        final List<Feature> features;
+        try {
+            thing = Thing.newBuilder()
+                    .setId(thingId)
                     .build();
-        }).toList();
+            features = endpoint.Clusters().stream().map(cluster -> {
+                FeatureProperties featureProperties = attributesToFeatureProperties(cluster.Attributes().stream());
+                return Feature
+                        .newBuilder()
+                        .desiredProperties(featureProperties)
+                        .withId(cluster.Name())
+                        .build();
+            }).toList();
+        } catch (Exception e) {
+            LOGGER.error("Something went wrong ", e);
+            throw e;
+        }
+
 
         LOGGER.info("Thing has been built {}", thing);
 
@@ -191,8 +199,8 @@ public class MatterDittoClient {
             // endpoints,
             // Clusters etc
 
-            JsonObject features = (JsonObject) change.getValue().get();
-            List<Cluster> changedClusters = parseChangeToCluster(features);
+            JsonObject jChange = (JsonObject) change.getValue().get();
+            List<Cluster> changedClusters = parseChangeToCluster(jChange.get(JsonPointer.of("features")).asObject());
             Topic topic = new Topic(MessageType.DCMD, hubId, nodeId, endpointId);
             // TODO
 
@@ -212,6 +220,7 @@ public class MatterDittoClient {
     }
 
     private List<Cluster> parseChangeToCluster(JsonObject features) {
+        // Features
         return features
                 .stream()
                 .map(field -> {

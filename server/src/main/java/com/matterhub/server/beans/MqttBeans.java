@@ -3,7 +3,7 @@ package com.matterhub.server.beans;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matterhub.cache.Cache;
-import com.matterhub.server.entities.Matterhub;
+import com.matterhub.server.entities.matter.Matterhub;
 import com.matterhub.server.entities.Metric;
 import com.matterhub.server.entities.MqttMatterMessage;
 import com.matterhub.server.entities.Topic;

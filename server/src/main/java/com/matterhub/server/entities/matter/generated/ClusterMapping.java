@@ -17,7 +17,7 @@ public class ClusterMapping {
 
     public static Cluster getClusterFromName(String name, List<String> attributeNames, List<String> commandNames) {
         switch (name) {
-            case "on-off":
+            case "onoff":
                 return new OnOffCluster(attributeNames, commandNames, "");
             default:
                 throw new IllegalArgumentException("Unkown cluster name: " + name);

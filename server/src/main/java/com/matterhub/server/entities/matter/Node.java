@@ -1,7 +1,5 @@
 package com.matterhub.server.entities.matter;
 
-import com.matterhub.server.entities.Matterhub;
-
 import java.util.List;
 
 public record Node(Matterhub hub,

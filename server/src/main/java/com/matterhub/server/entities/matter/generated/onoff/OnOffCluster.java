@@ -90,7 +90,7 @@ public class OnOffCluster extends Cluster {
 
     @Override
     public String Name() {
-        return "On/Off";
+        return "onoff";
     }
 
     @Override
@@ -255,8 +255,11 @@ class OnOffAttribute implements Attribute {
 
     @Override
     public Metric toMetric() {
-        // TODO Auto-generated method stub
-        return null;
+        if (state) {
+            return new OnCommand(this.parentCluster).toMetric();
+        } else {
+            return new OffCommand(this.parentCluster).toMetric();
+        }
     }
 
     @Override
