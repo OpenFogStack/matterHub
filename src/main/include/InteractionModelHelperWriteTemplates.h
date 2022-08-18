@@ -10,7 +10,6 @@ static void onConnectedCallbackWrite(void * context, chip::OperationalDeviceProx
     WriteCommandData<T> * data = reinterpret_cast<chip::WriteCommandData<T> *>(context);
     ESP_LOGI("Interaction Model Helper", "Requested Write!");
 
-    ESP_LOGE("WRITE HELPER", "Value: %d", data->value);
     WriteAttribute<T> * attr =
         chip::Platform::New<WriteAttribute<T>>(peer_device, data->endpointId, data->clusterId, data->attributeId, data->value);
     attr->DoWrite();

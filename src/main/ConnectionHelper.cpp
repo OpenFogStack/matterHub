@@ -17,7 +17,8 @@
 namespace chip {
 void onConnectionRequestFailure(void * context, chip::PeerId peerId, CHIP_ERROR error)
 {
-    shell::BaseCommandData * data = reinterpret_cast<shell::BaseCommandData*>(context); 
+
+    shell::BaseCommandData * data                 = reinterpret_cast<shell::BaseCommandData *>(context);
     auto & server                                 = chip::Server::GetInstance();
     chip::CASESessionManager * CASESessionManager = server.GetCASESessionManager();
     // Simply release the entry, the connection will be re-established as needed.

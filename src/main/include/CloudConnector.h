@@ -4,6 +4,7 @@
 #include "MQTTManager.h"
 #include "cJSON.h"
 #include "esp_log.h"
+#include <string>
 
 #include <vector>
 namespace matterHub {
@@ -36,7 +37,9 @@ public:
         }
 
         char * topic = (char *) chip::Platform::MemoryAlloc(sizeof(char) * 256);
-        snprintf(topic, 256, "spBv1.0/matterhub/DDATA/0/%llu", subscription->mDevice->GetDeviceId());
+
+        snprintf(topic, 256, "spBv1.0/matterhub/DDATA/%d/%llu", CONFIG_MATTERHUBID, subscription->mDevice->GetDeviceId());
+
         char name[256] = { 0 };
         snprintf(name, sizeof(name), "%u/%u/%u", path.mEndpointId, path.mClusterId, path.mAttributeId);
         cJSON * root;
@@ -285,16 +288,16 @@ public:
 
                 chip::InteractionModelHelper::read(nodeId, endpointId, clusterId, action_specific_id, &onAttributeReadCallback);
             }
-            if (!action.compare("subscribe"))
+
+            else if (!action.compare("subscribe"))
             {
                 chip::InteractionModelHelper::subscribe(nodeId, endpointId, clusterId, action_specific_id, 1, 10,
                                                         &onAttributeReadCallback);
             }
 
-            if (!action.compare("write"))
+            else if (!action.compare("write"))
             {
-                u_int8_t value = 128;
-                chip::InteractionModelHelper::write<uint8_t>(nodeId, endpointId, clusterId, action_specific_id, value);
+                handleWrite(nodeId, endpointId, clusterId, action_specific_id, element2);
             }
         }
 
@@ -309,6 +312,103 @@ public:
             JSON_Print(element2);
         }*/
         cJSON_Delete(root2);
+    }
+    static void handleWrite(chip::NodeId nodeId, chip::EndpointId endpointId, chip::ClusterId clusterId,
+                            chip::AttributeId attributeId, cJSON * element)
+    {
+        std::string dataType;
+        if (cJSON_GetObjectItem(element, "dataType"))
+        {
+            dataType = cJSON_GetObjectItem(element, "dataType")->valuestring;
+        }
+        else
+        {
+            ESP_LOGE(TAG, "dataType is missing");
+            return;
+        }
+
+        if (dataType == "Int8")
+        {
+            int value = element->valueint;
+            ESP_LOGE(TAG, "dataType is Int8");
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        else if (!dataType.compare("Int16"))
+        {
+            int16_t value = element->valueint;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        else if (!dataType.compare("Int32"))
+        {
+            int32_t value = element->valueint;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        else if (!dataType.compare("Int64"))
+        {
+            int64_t value = element->valueint;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        if (!dataType.compare("UInt8"))
+        {
+            uint8_t value = element->valueint;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        else if (!dataType.compare("UInt16"))
+        {
+            uint16_t value = element->valueint;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        else if (!dataType.compare("UInt32"))
+        {
+            uint32_t value = element->valueint;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        else if (!dataType.compare("UInt64"))
+        {
+            uint64_t value = element->valueint;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+
+        else if (!dataType.compare("Boolean"))
+        {
+            bool value;
+            if (element->type == cJSON_True)
+            {
+                value = true;
+            }
+            else if (element->type == cJSON_False)
+            {
+                value = false;
+            }
+            else
+            {
+                ESP_LOGE(TAG, "Invalid value for dataType Boolean");
+                return;
+            }
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+
+        else if (!dataType.compare("float"))
+        {
+            float value = element->valuedouble;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        else if (!dataType.compare("double"))
+        {
+            double value = element->valuedouble;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        } /*
+         else if (!dataType.compare("String"))
+         {
+             char * value = element->valuestring;
+             chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+         }*/
+
+        else
+        {
+            ESP_LOGE(TAG, "Invalid: dataType \"%s\"", dataType.c_str());
+            return;
+        }
     }
     static void InitDCMD()
     {
