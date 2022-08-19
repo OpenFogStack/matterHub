@@ -3,12 +3,55 @@
 ## Requirements
 
 - Java (jdk-17)
-- Maven (3.8.x)
-
 ```
 sudo apt install openjdk-17-jdk
-sudo apt install maven
 ```
+
+- Maven (3.8.x)
+
+Download the latest maven version from https://maven.apache.org/download.cgi
+
+Extract the maven files:
+```
+sudo tar xf apache-maven-*.tar.gz -C /opt
+```
+
+Create a link:
+```
+sudo ln -s /opt/apache-maven-3.8.6 /opt/maven
+```
+
+Setup the Environment Variables:
+in 
+
+```
+/etc/profile.d/maven.sh
+```
+add the following
+
+```
+
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export M2_HOME=/opt/maven
+export MAVEN_HOME=/opt/maven
+export PATH=${M2_HOME}/bin:${PATH} 
+```
+
+Make the script executable:
+```
+sudo chmod +x /etc/profile.d/maven.sh
+```
+
+Load the environment Variables:
+```
+source /etc/profile.d/maven.sh
+```
+
+Verify the setup:
+```
+mvn -version
+```
+
 
 ## First steps
 
@@ -81,3 +124,6 @@ and `java -jar target/server-0.0.1-SNAPSHOT.jar`
 ## Known bugs
 
 There is a bug which throws an Exception every time a topic is published (org.eclipse.paho.client.mqttv3.internal.ExceptionHelper.createMqttException(ExceptionHelper.java:31)). It seems like this Exception has no impact on the correct server functionality. See <https://github.com/eclipse/paho.mqtt.android/issues/209>
+
+## Resources:
+https://phoenixnap.com/kb/install-maven-on-ubuntu
