@@ -1,10 +1,12 @@
 package com.matterhub.server.entities.matter.generated.onoff;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.IntNode;
 import com.matterhub.server.entities.matter.Attribute;
 import com.matterhub.server.entities.matter.Cluster;
 import com.matterhub.server.entities.matter.Command;
 import com.matterhub.server.entities.metrics.DCMDCommandMetric;
+import com.matterhub.server.entities.metrics.DCMDWriteMetric;
 import com.matterhub.server.entities.metrics.DataType;
 import com.matterhub.server.entities.metrics.Metric;
 import lombok.ToString;
@@ -341,7 +343,7 @@ class OnTimeAttribute
 
     @Override
     public void fromMatterValue(JsonNode matterValue) {
-        // TODO Auto-generated method stub
+        this.state = (short) matterValue.asInt();
     }
 
     @Override
@@ -352,10 +354,12 @@ class OnTimeAttribute
     @Override
     public Optional<Metric> fromThingsRepresentation(JsonField featureValue) {
         assert this.Name().contentEquals(featureValue.getKey());
-        this.state = (short) featureValue.getValue().asInt();
-
+        short newState = (short) featureValue.getValue().asInt();
+        if (newState == this.state) {
+            return Optional.empty();
+        }
         //Writable true
-        return Optional.empty();
+        return Optional.of(new DCMDWriteMetric(parentCluster.Parent().Id(), parentCluster.Id(), this.Id(), System.currentTimeMillis() / 1000L, DataType.UInt16, new IntNode(this.state)));
     }
 
 }
