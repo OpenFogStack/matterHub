@@ -124,7 +124,14 @@ In our experience the WiFi module in the ESP32 is quite bad. So you should test 
 
 
 
-## Build
+### Build ESP32 
+
+Gain access to the serial ports:
+```
+sudo adduser $USER dialout
+```
+you probably need to reboot after this. 
+
 
 for esp32/m5-Stack:\
 `cd src; idf.py build`
