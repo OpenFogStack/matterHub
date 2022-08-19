@@ -49,3 +49,9 @@ CONFIG_ESP_SYSTEM_PANIC_PRINT_HALT=y
 
 #enable debug shell
 CONFIG_ENABLE_CHIP_SHELL=y
+
+# set tls buffer sizes lower, because it roughly takes 35k of memory with default values and causes oom errors. 
+# in content length can't be lower or the SSL handshake with hivemq fails
+CONFIG_MBEDTLS_ASYMMETRIC_CONTENT_LEN=y
+CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN=4096
+CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN=2048

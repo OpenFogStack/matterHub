@@ -1,6 +1,14 @@
+/*
+ *    Published under MIT License
+ *    Copyright (c) 2022 OpenFogStack
+ *    Based on code written by Project CHIP Authors, which was published under Apache License, Version 2.0 (c) 2022
+ */
+
 #pragma once
 #include "BaseCommand.h"
+
 #include "InteractionModelHelper.h"
+
 #include "core/CHIPError.h"
 #include "core/DataModelTypes.h"
 #include <app/OperationalDeviceProxy.h>
@@ -34,7 +42,6 @@ public:
         return sConnectionHelper;
     }
     CHIP_ERROR RequestConnection(shell::BaseCommandData * data);
-    // CHIP_ERROR RequestConnection(chip::CommandData * data);
 
     chip::Callback::Callback<chip::OnDeviceConnectionFailure> mOnConnectionFailureCallback;
     chip::FabricTable * mFabricTable               = nullptr;

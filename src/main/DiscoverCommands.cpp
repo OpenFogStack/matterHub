@@ -1,4 +1,8 @@
-
+/*
+ *    Published under MIT License
+ *    Copyright (c) 2022 OpenFogStack
+ *    Based on code written by Project CHIP Authors, which was published under Apache License, Version 2.0 (c) 2022
+ */
 
 #include "DiscoverCommands.h"
 #include "ConnectionHelper.h"
@@ -15,6 +19,9 @@
 
 #include "lib/shell/Engine.h"
 #include "lib/shell/commands/Help.h"
+#include "cJSON.h"
+#include <sstream>
+
 
 using namespace chip;
 using namespace chip::app;
@@ -30,6 +37,7 @@ namespace shell {
  *********************************************************/
 
 Engine sDiscoverShellSubCommands;
+uint sSeq = 0;
 
 CHIP_ERROR DiscoverHelpHandler(int argc, char ** argv)
 {
@@ -86,24 +94,153 @@ void DescribeWorkerFunction(intptr_t context)
     DiscoverCommandData * data = reinterpret_cast<DiscoverCommandData *>(context);
 
     ConnectionHelper::GetInstance().RequestConnection(data);
-
-    Platform::Delete(data);
 }
 
-void onAttributeReadCallback(const chip::app::ConcreteDataAttributePath & path, chip::TLV::TLVReader * data, void * context)
-{
-    chip::TLV::TLVType type = data->GetType();
-    ESP_LOGI("Discover", "Attribute read successfully:");
-    ESP_LOGI("Discover", " - Attribute TLV type: '0x%02x'", type);
 
-    if (type == chip::TLV::TLVType::kTLVType_UTF8String || type == chip::TLV::TLVType::kTLVType_ByteString)
-    {
-        uint32_t length = data->GetLength();
-        ESP_LOGI("Discover", " - Attribute data length: '%u'", length);
+
+//this kind of format is much more efficient and removes redundancy
+void PublishToMqttCompact(intptr_t context){
+    ESP_LOGI("Discover", "Starting JSON");
+    DescriptionManager * manager = reinterpret_cast<shell::DescriptionManager *>(context);
+
+    char * topic = (char *) chip::Platform::MemoryAlloc(sizeof(char) * 256);
+    snprintf(topic, 256, "spBv1.0/matterhub/DBIRTH/%d/%llu", CONFIG_MATTERHUBID, manager->mDevice->GetDeviceId());
+
+    cJSON * dbirth = cJSON_CreateObject();
+    cJSON_AddNumberToObject(dbirth,"timestamp", esp_log_timestamp());
+    cJSON * jEndpoints = cJSON_AddArrayToObject(dbirth,"endpoints");
+    for(auto& endpoint:manager->mEndpoints){
+        cJSON * jEndpoint = cJSON_CreateObject();
+        cJSON_AddNumberToObject(jEndpoint,"id",endpoint.first);
+        cJSON * clusters = cJSON_CreateArray(); 
+        for(auto& cluster:endpoint.second.clusters){
+            cJSON * jCluster = cJSON_CreateObject();
+            cJSON_AddNumberToObject(jCluster,"id", cluster.first);
+            cJSON * attributes = cJSON_CreateIntArray((int *)cluster.second.attributes.data(),cluster.second.attributes.size());
+            cJSON_AddItemToObject(jCluster,"attributes",attributes);
+            cJSON * commands = cJSON_CreateIntArray((int *)cluster.second.commands.data(),cluster.second.commands.size());
+            cJSON_AddItemToObject(jCluster,"commands",commands);
+            cJSON_AddItemToArray(clusters,jCluster);
+        }
+
+        cJSON_AddItemToObject(jEndpoint,"clusters",clusters);
+
+        cJSON_AddItemToArray(jEndpoints,jEndpoint);
+    }
+    //this could potentially overflow some day, but then it is your own fault for describing so many nodes in a prototype ¯\_(ツ)_/¯
+    cJSON_AddNumberToObject(dbirth, "seq", sSeq++);
+
+    MQTTCommandData* data = Platform::New<MQTTCommandData>();
+    data->data = cJSON_PrintUnformatted(dbirth);
+    cJSON_Delete(dbirth);
+    data->topic = topic;
+    data->task = MQTTCommandTask::publish; 
+
+    ESP_LOGV("Discover","%s\n%s",topic,data->data);
+    MQTTManager::GetInstance().Publish(data);
+
+    Platform::Delete(manager);
+}
+
+void onCommandsReadCallback(const chip::app::ConcreteDataAttributePath& path, chip::TLV::TLVReader* data, void* context){
+    DescriptionManager * manager = reinterpret_cast<shell::DescriptionManager *>(context);
+    ESP_LOGI("Discover", "Command list for node: '0x%02llx' endpoint: '0x%02x' cluster '0x%02x'", manager->mDevice->GetDeviceId(), path.mEndpointId, path.mClusterId);
+
+    auto list = chip::app::Clusters::Basic::Attributes::AcceptedCommandList::TypeInfo::DecodableType();
+    
+    chip::TLV::TLVReader reader;
+    data->OpenContainer(reader);
+    list.SetReader(reader);
+
+    size_t size = 0;
+    if(list.ComputeSize(&size)==CHIP_NO_ERROR){
+        ESP_LOGI("Discover", " - Commands: '%u'", size);
     }
 
-    chip::app::Clusters::Descriptor::Attributes::PartsList::TypeInfo::DecodableType partsList =
-        chip::app::Clusters::Descriptor::Attributes::PartsList::TypeInfo::DecodableType();
+    ESP_LOGV("Discover", " - Command IDs:");
+    auto cluster = &manager->currentCluster->second;
+    for(auto it = list.begin();it.Next();){
+        auto commandId = it.GetValue();
+        cluster->commands.push_back(commandId);
+        ESP_LOGV("Discover", "   - Command: '0x%02x'", commandId);
+    }
+
+    data->CloseContainer(reader);
+
+    manager->currentCluster++;
+    if(manager->currentCluster != manager->currentEndpoint->second.clusters.end()){
+        manager->ReadAttribute(manager->currentEndpoint->first, manager->currentCluster->first, chip::app::Clusters::Basic::Attributes::AttributeList::Id,onAttributesReadCallback);
+    }else{
+        manager->currentEndpoint++;
+        if(manager->currentEndpoint != manager->mEndpoints.end()){
+            manager->ReadAttribute(manager->currentEndpoint->first, chip::app::Clusters::Descriptor::Id, chip::app::Clusters::Descriptor::Attributes::ServerList::Id,onServerListReadCallback);
+        }else{
+            //Schedule printing so we can release the callback asap
+            // DeviceLayer::PlatformMgr().ScheduleWork(publishToMqtt, reinterpret_cast<intptr_t>(manager));
+            DeviceLayer::PlatformMgr().ScheduleWork(PublishToMqttCompact, reinterpret_cast<intptr_t>(manager));
+        }
+    }
+}
+
+void onAttributesReadCallback(const chip::app::ConcreteDataAttributePath& path, chip::TLV::TLVReader* data, void* context){
+    DescriptionManager * manager = reinterpret_cast<shell::DescriptionManager *>(context);
+    ESP_LOGI("Discover", "Attribute list for node: '0x%02llx' endpoint: '0x%02x' cluster '0x%02x'", manager->mDevice->GetDeviceId(), path.mEndpointId, path.mClusterId);
+
+    auto list = chip::app::Clusters::Basic::Attributes::AttributeList::TypeInfo::DecodableType();
+    chip::TLV::TLVReader reader;
+    data->OpenContainer(reader);
+    list.SetReader(reader);
+    size_t size = 0;
+    if(list.ComputeSize(&size)==CHIP_NO_ERROR){
+        ESP_LOGI("Discover", " - Attributes: '%u'", size);
+    }
+    ESP_LOGV("Discover", " - Attribute IDs:");
+    auto cluster = &manager->currentCluster->second;
+    for(auto it = list.begin();it.Next();){
+        auto attributeId = it.GetValue();
+        cluster->attributes.push_back(attributeId);
+        ESP_LOGV("Discover", "   - Attribute: '0x%02x'", attributeId);
+    }
+    data->CloseContainer(reader);
+    manager->ReadAttribute(manager->currentEndpoint->first, manager->currentCluster->first, chip::app::Clusters::Basic::Attributes::AcceptedCommandList::Id,onCommandsReadCallback);
+}
+
+void onServerListReadCallback(const chip::app::ConcreteDataAttributePath& path, chip::TLV::TLVReader* data, void* context)
+{
+    DescriptionManager * manager = reinterpret_cast<shell::DescriptionManager *>(context);
+    ESP_LOGI("Discover", "Server cluster list for node: '0x%02llx' endpoint: '0x%02x'", manager->mDevice->GetDeviceId(), path.mEndpointId);
+
+    auto list = chip::app::Clusters::Descriptor::Attributes::ServerList::TypeInfo::DecodableType();
+    chip::TLV::TLVReader reader;
+    data->OpenContainer(reader);
+    list.SetReader(reader);
+    size_t size = 0;
+    if(list.ComputeSize(&size)==CHIP_NO_ERROR){
+        ESP_LOGI("Discover", " - Clusters: '%u'", size);
+    }
+    ESP_LOGV("Discover", " - Cluster IDs:");
+    auto endpoint = &manager->currentEndpoint->second;
+    for(auto it = list.begin();it.Next();){
+        auto clusterId = it.GetValue();
+        endpoint->clusters.emplace(clusterId,Cluster(clusterId));
+        ESP_LOGV("Discover", "   - Cluster: '0x%02x'", clusterId);
+    }
+    data->CloseContainer(reader);
+
+    manager->currentCluster = endpoint->clusters.begin();
+    manager->ReadAttribute(endpoint->id, manager->currentCluster->first, chip::app::Clusters::Basic::Attributes::AttributeList::Id,onAttributesReadCallback);
+}
+
+void onPartListReadCallback(const chip::app::ConcreteDataAttributePath& path, chip::TLV::TLVReader* data, void* context){
+    DescriptionManager * manager = reinterpret_cast<shell::DescriptionManager *>(context);
+    
+    chip::TLV::TLVType type = data->GetType();
+    ESP_LOGI("Discover", "Partlist read successfully for:");
+    ESP_LOGI("Discover", " - NodeId: '0x%02llx'", manager->mDevice->GetDeviceId());
+    ESP_LOGV("Discover", " - Attribute TLV type: '0x%02x'", type);
+
+    auto partsList = chip::app::Clusters::Descriptor::Attributes::PartsList::TypeInfo::DecodableType();
+
     chip::TLV::TLVReader reader;
     data->OpenContainer(reader);
     partsList.SetReader(reader);
@@ -112,34 +249,30 @@ void onAttributeReadCallback(const chip::app::ConcreteDataAttributePath & path, 
     {
         ESP_LOGI("Discover", " - Endpoints: '%u'", size);
     }
-    ESP_LOGI("Discover", " - Endpoint IDs:");
+    ESP_LOGV("Discover", " - Endpoint IDs:");
 
     for (auto it = partsList.begin(); it.Next();)
     {
         auto endpointId = it.GetValue();
-        ESP_LOGI("Discover", "   - Endpoint: '0x%02x'", endpointId);
+
+        manager->mEndpoints.emplace(endpointId,Endpoint(endpointId));
+        ESP_LOGV("Discover", "   - Endpoint: '0x%02x'", endpointId);
     }
     data->CloseContainer(reader);
+
+    manager->currentEndpoint = manager->mEndpoints.begin();
+    manager->ReadAttribute(manager->currentEndpoint->first, chip::app::Clusters::Descriptor::Id, chip::app::Clusters::Descriptor::Attributes::ServerList::Id,onServerListReadCallback);
+
 }
 
 void onConnectionRequestCompleted(void * context, chip::OperationalDeviceProxy * peer_device)
 {
-    DiscoverCommandData * data = reinterpret_cast<shell::DiscoverCommandData *>(context);
-    ESP_LOGI("Discover", "onConnectionRequestCompleted:");
-    ESP_LOGI("Discover", " - Endpoint ID: '0x0000'");
-    ESP_LOGI("Discover", " - Cluster ID: '0x%02x'", chip::app::Clusters::Descriptor::Id);
-    ESP_LOGI("Discover", " - Attribute ID: '0x%02x'", chip::app::Clusters::Descriptor::Attributes::PartsList::Id);
-    Subscription * sub =
-        Platform::New<Subscription>(peer_device, 0, chip::app::Clusters::Descriptor::Id,
-                                    chip::app::Clusters::Descriptor::Attributes::PartsList::Id, onAttributeReadCallback);
-
-    CHIP_ERROR error = sub->Read();
-
-    if (error == CHIP_NO_ERROR)
-    {
-        ESP_LOGI("Discover", "Succesfull Attribute Read Request");
-    }
+    DiscoverCommandData * data = reinterpret_cast<DiscoverCommandData*>(context); 
+    Platform::New<DescriptionManager>(peer_device);
+    Platform::Delete(data);
 }
 
-DiscoverCommandData::DiscoverCommandData() : BaseCommandData(onConnectionRequestCompleted, (void *) this) {}
-} // namespace shell
+DiscoverCommandData::DiscoverCommandData() :
+    BaseCommandData(onConnectionRequestCompleted, (void *) this)
+{}
+}

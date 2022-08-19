@@ -12,6 +12,7 @@
 #include "BindingHandler.h"
 #include "ClusterCommands.h"
 
+
 #include "CloudConnector.h"
 #include "DiscoverCommands.h"
 #include "MQTTCommands.h"
@@ -68,13 +69,14 @@ extern "C" void app_main()
     }
 
     ESP_LOGI(TAG, "==================================================");
-    ESP_LOGI(TAG, "chip-esp32-light-switch-example starting");
+    ESP_LOGI(TAG, "matterHub starting");
     ESP_LOGI(TAG, "==================================================");
 
 #if CONFIG_ENABLE_CHIP_SHELL
     chip::LaunchShell();
     shell::RegisterClusterCommands();
     shell::RegisterSubscribeCommands();
+
     shell::RegisterMQTTCommands();
     shell::RegisterDiscoverCommands();
 #endif // CONFIG_ENABLE_CHIP_SHELL

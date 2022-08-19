@@ -81,8 +81,6 @@ public:
     static void DCMD_callback(char * topic, int topic_len, char * data, int data_len)
     {
         ESP_LOGI(TAG, "DCMD Callback");
-        printf("TOPIC=%.*s\r\n", topic_len, topic);
-        printf("DATA=%.*s\r\n", data_len, data);
         /* Parse topic */
         std::string s_topic   = std::string(topic, topic_len);
         std::string delimiter = "/";

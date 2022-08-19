@@ -47,9 +47,11 @@ void MQTTManager::Publish(shell::MQTTCommandData * data)
         return;
     }
     int msg_id;
-    msg_id = esp_mqtt_client_publish(mClient, data->topic, data->data, 0, 0, 0);
+    msg_id = esp_mqtt_client_publish(mClient, data->topic, data->data, 0, 1, 0);
     ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
-    cJSON_free(data->data);
+    ESP_LOGI(TAG, "TOPIC=%s\r\n", data->topic);
+    ESP_LOGI(TAG, "DATA=%s\r\n", data->data);
+    Platform::Delete(data->data);
     Platform::Delete(data->topic);
     Platform::Delete(data);
 }
@@ -67,6 +69,7 @@ void MQTTManager::Subscribe(shell::MQTTCommandData * data, std::function<void(ch
     int msg_id;
     msg_id = esp_mqtt_client_subscribe(mClient, data->topic, 0);
     ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+    Platform::Delete(data->topic);
     Platform::Delete(data);
 }
 
@@ -95,6 +98,7 @@ void MQTTManager::Unsubscribe(shell::MQTTCommandData * data)
     int msg_id;
     msg_id = esp_mqtt_client_unsubscribe(mClient, data->topic);
     ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
+    Platform::Delete(data->topic);
     Platform::Delete(data);
 }
 
@@ -118,17 +122,6 @@ void MQTTManager::ProcessCommand(shell::MQTTCommandData * data)
     }
 }
 
-//
-// Note: this function is for testing purposes only publishing part of the active partition
-//       (to be checked against the original binary)
-//
-static void send_binary(esp_mqtt_client_handle_t client)
-{
-    const char * test_data = "test";
-    int msg_id             = esp_mqtt_client_publish(client, "/topic/binary", (const char *) test_data, strlen(test_data), 0, 0);
-    ESP_LOGI(TAG, "binary sent with msg_id=%d", msg_id);
-}
-
 /*
  * @brief Event handler registered to receive MQTT events
  *
@@ -146,25 +139,27 @@ static void mqtt_event_handler(void * handler_args, esp_event_base_t base, int32
     esp_mqtt_client_handle_t client = event->client;
     switch ((esp_mqtt_event_id_t) event_id)
     {
-    case MQTT_EVENT_CONNECTED:
+    case MQTT_EVENT_CONNECTED: {
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-        mConnected = true;
-        for (auto & storedCommand : mStoredCommands)
-        {
-            // Ugly edge-case, but this could happen I guess
+        mConnected         = true;
+        auto storedCommand = mStoredCommands.begin();
+        while (storedCommand != mStoredCommands.end())
+        { // Ugly edge-case, but this could happen I guess
             if (!mConnected)
             {
                 break;
             }
             ESP_LOGI(TAG, "Processing delay command:");
-            ESP_LOGI(TAG, " - Topic: '%s'", storedCommand->topic);
-            if (storedCommand->data)
+            ESP_LOGI(TAG, " - Topic: '%s'", (*storedCommand)->topic);
+            if ((*storedCommand)->data)
             {
-                ESP_LOGI(TAG, " - Data: '%s'", storedCommand->data);
+                ESP_LOGI(TAG, " - Data: '%s'", (*storedCommand)->data);
             }
-            MQTTManager::GetInstance().ProcessCommand(storedCommand);
+            MQTTManager::GetInstance().ProcessCommand((*storedCommand));
+            storedCommand = mStoredCommands.erase(storedCommand);
         }
-        break;
+    }
+    break;
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
         mConnected = false;
@@ -181,13 +176,6 @@ static void mqtt_event_handler(void * handler_args, esp_event_base_t base, int32
         break;
     case MQTT_EVENT_DATA: {
         ESP_LOGI(TAG, "MQTT_EVENT_DATA");
-        printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-        printf("DATA=%.*s\r\n", event->data_len, event->data);
-        if (strncmp(event->data, "send binary please", event->data_len) == 0)
-        {
-            ESP_LOGI(TAG, "Sending the binary");
-            send_binary(client);
-        }
         std::string key(event->topic, event->topic_len);
         ESP_LOGI(TAG, "key is: %s", key.c_str());
 
@@ -221,15 +209,20 @@ static void mqtt_event_handler(void * handler_args, esp_event_base_t base, int32
         ESP_LOGI(TAG, "Other event id:%d", event->event_id);
         break;
     }
+    ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
+
 }
 
 void MQTTManager::initMQTTManager()
 {
     const esp_mqtt_client_config_t mqtt_cfg = {
-        .uri      = CONFIG_MQTT_CLIENT_URI,
-        .username = CONFIG_MQTT_CLIENT_USERNAME,
-        .password = CONFIG_MQTT_CLIENT_PASSWORD,
-        .cert_pem = (const char *) mqtt_hivemq_pem_start,
+
+        .uri = CONFIG_MQTT_CLIENT_URI,
+
+        .username    = CONFIG_MQTT_CLIENT_USERNAME,
+        .password    = CONFIG_MQTT_CLIENT_PASSWORD,
+        .buffer_size = 1024,
+        .cert_pem    = (const char *) mqtt_hivemq_pem_start,
 
     };
     ESP_LOGI(TAG, "This is my name: %s and this is my key %s", CONFIG_MQTT_CLIENT_USERNAME, CONFIG_MQTT_CLIENT_PASSWORD);

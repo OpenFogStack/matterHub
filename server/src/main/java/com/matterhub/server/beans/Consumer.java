@@ -6,7 +6,7 @@ import org.eclipse.ditto.client.DittoClient;
 
 public class Consumer extends Thread {
 
-    private DittoClient client;
+    private final DittoClient client;
 
     public Consumer(DittoClient client) {
         this.client = client;
