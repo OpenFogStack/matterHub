@@ -1,7 +1,10 @@
 package com.matterhub.server.entities.matter;
 
-import com.matterhub.server.entities.Metric;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.matterhub.server.entities.metrics.Metric;
 import org.eclipse.ditto.json.JsonField;
+
+import java.util.Optional;
 
 public interface Attribute {
     // uint32_t See
@@ -16,16 +19,12 @@ public interface Attribute {
 
     Cluster Parent();
 
-    /**
-     * Encodes the state as a command that will then be executed by the matterHub
-     */
-    Metric toMetric();
 
     /**
      * Parses the attributes internal representation
-     * from a byte array that was sent by the matterHub
+     * from a JSON representation that was sent by the Matter hub
      */
-    void fromMatterValue(byte[] matterValue);
+    void fromMatterValue(JsonNode value);
 
     /**
      * This method serializes the attributes internal representation to be stored
@@ -35,6 +34,8 @@ public interface Attribute {
 
     /**
      * Parses the property coming from the IOTT Cloud
+     * and emits a command that will set the Attribute
+     * on the real device if required
      */
-    void fromThingsRepresentation(JsonField featureValue);
+    Optional<Metric> fromThingsRepresentation(JsonField featureValue);
 }

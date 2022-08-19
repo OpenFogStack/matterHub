@@ -1,0 +1,13 @@
+{
+  "features": {
+    "onoff": {
+      "desiredProperties": {
+        "OnOff": false,
+        "GlobalSceneControl": false,
+        "OnTime": 0,
+        "OffWaitTime": 0,
+        "StartUpOnOff": 0
+      }
+    }
+  }
+}

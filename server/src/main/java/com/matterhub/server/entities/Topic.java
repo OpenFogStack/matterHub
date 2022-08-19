@@ -1,5 +1,11 @@
 package com.matterhub.server.entities;
 
+import com.matterhub.server.entities.matter.Endpoint;
+import com.matterhub.server.entities.matter.Matterhub;
+import com.matterhub.server.entities.matter.Node;
+
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -22,18 +28,14 @@ public class Topic {
     private static final String NAMESPACE = "spBv1.0";
     private static final String GROUP_ID = "matterhub";
     private final MessageType messageType;
-    private final String matterHubId;
-    private final Optional<String> matterNodeId;
-    private final Optional<String> matterEndpointId;
+    private final int matterHubId;
+    private final Optional<Long> matterNodeId;
+    private final Optional<Short> matterEndpointId;
 
     /**
      * The endpoint constructor
      */
-    public Topic(
-            MessageType messageType,
-            String matterHubId,
-            String matterNodeId,
-            String matterEndpointId) {
+    public Topic(MessageType messageType, int matterHubId, long matterNodeId, short matterEndpointId) {
         this.messageType = messageType;
         this.matterHubId = matterHubId;
         this.matterNodeId = Optional.of(matterNodeId);
@@ -43,7 +45,7 @@ public class Topic {
     /**
      * The matterHub constructor
      */
-    public Topic(MessageType messageType, String matterHubId) {
+    public Topic(MessageType messageType, int matterHubId) {
         this.messageType = messageType;
         this.matterHubId = matterHubId;
         this.matterNodeId = Optional.empty();
@@ -55,7 +57,7 @@ public class Topic {
         assert NAMESPACE.equals(elements[0]);
         assert GROUP_ID.equals(elements[1]);
         this.messageType = MessageType.getMessageType(elements[2]);
-        this.matterHubId = elements[3];
+        this.matterHubId = Integer.parseInt(elements[3]);
 
         if (elements.length == 4) {
             // Matterhub
@@ -63,12 +65,12 @@ public class Topic {
             this.matterEndpointId = Optional.empty();
         } else if (elements.length == 5) {
             // Node
-            this.matterNodeId = Optional.of(elements[4]);
+            this.matterNodeId = Optional.of(Long.parseLong(elements[4]));
             this.matterEndpointId = Optional.empty();
         } else if (elements.length == 6) {
             // Endpoint
-            this.matterNodeId = Optional.of(elements[4]);
-            this.matterEndpointId = Optional.of(elements[5]);
+            this.matterNodeId = Optional.of(Long.parseLong(elements[4]));
+            this.matterEndpointId = Optional.of(Short.parseShort(elements[5]));
         } else {
             throw new IllegalArgumentException("Topic is malformed:" + topic);
         }
@@ -80,7 +82,7 @@ public class Topic {
     }
 
     public Integer getMatterHubId() {
-        return Integer.valueOf(this.matterHubId);
+        return this.matterHubId;
     }
 
     public String getThingId() {
@@ -109,6 +111,19 @@ public class Topic {
         if (o == null || getClass() != o.getClass()) return false;
         Topic topic = (Topic) o;
         return getThingId().equals(topic.getThingId());
+    }
+
+    public Matterhub toMatterHub() {
+        return new Matterhub(this.matterHubId, new HashSet<>());
+    }
+
+    public Optional<Node> toNode() {
+        return this.matterNodeId.map(nodeId -> new Node(toMatterHub(), nodeId,  new HashSet<>()));
+    }
+
+    public Optional<Endpoint> toEndpoint() {
+        return this.toNode().flatMap(node -> this.matterEndpointId.map(endpointId ->
+                new Endpoint(node, endpointId,  new HashSet<>())));
     }
 
     @Override

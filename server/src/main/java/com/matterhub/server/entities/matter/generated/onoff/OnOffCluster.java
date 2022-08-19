@@ -1,14 +1,21 @@
 package com.matterhub.server.entities.matter.generated.onoff;
 
-import com.matterhub.server.entities.Metric;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.matterhub.server.entities.matter.Attribute;
 import com.matterhub.server.entities.matter.Cluster;
 import com.matterhub.server.entities.matter.Command;
+import com.matterhub.server.entities.metrics.DCMDCommandMetric;
+import com.matterhub.server.entities.metrics.DataType;
+import com.matterhub.server.entities.metrics.Metric;
+import lombok.ToString;
 import org.eclipse.ditto.json.JsonField;
 import org.eclipse.ditto.json.JsonValue;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 enum StartUpOnOff {
     Off(0x00), On(0x01), TogglePreviousOnOff(0x02);
@@ -63,23 +70,24 @@ enum OnOffDelayedAllOffEffectVariant {
         throw new IllegalArgumentException("No such enum variant");
     }
 }
+@ToString
+public class OnOffCluster
+        extends Cluster {
 
-public class OnOffCluster extends Cluster {
-
-    private final List<Attribute> attributes;
-    private final List<Command> commands;
+    private final Set<Attribute> attributes;
+    private final Set<Command> commands;
 
     public OnOffCluster(List<Integer> attributeIds, List<Integer> commandIds, Integer filler) {
-        this.attributes = attributeIds.stream().map(this::getAttribute).filter(Objects::nonNull).toList();
+        this.attributes = attributeIds.stream().map(this::getAttribute).filter(Objects::nonNull).collect(Collectors.toSet());
         // TODO assert that it contains the required attributes
-        this.commands = commandIds.stream().map(this::getCommand).toList();
+        this.commands = commandIds.stream().map(this::getCommand).collect(Collectors.toSet());
         // TODO assert that it contains the required commands
     }
 
     public OnOffCluster(List<String> attributeNames, List<String> commandNames, String filler) {
-        this.attributes = attributeNames.stream().map(this::getAttribute).toList();
+        this.attributes = attributeNames.stream().map(this::getAttribute).collect(Collectors.toSet());
         // TODO assert that it contains the required attributes
-        this.commands = commandNames.stream().map(this::getCommand).toList();
+        this.commands = commandNames.stream().map(this::getCommand).collect(Collectors.toSet());
         // TODO assert that it contains the required commands
     }
 
@@ -94,12 +102,12 @@ public class OnOffCluster extends Cluster {
     }
 
     @Override
-    public List<Attribute> Attributes() {
+    public Set<Attribute> Attributes() {
         return attributes;
     }
 
     @Override
-    public List<Command> Commands() {
+    public Set<Command> Commands() {
         return commands;
     }
 
@@ -117,9 +125,7 @@ public class OnOffCluster extends Cluster {
                 return attr;
             }
             case 0x4001: {
-                var attr = new OnTimeAttribute();
-                attr.parentCluster = this;
-                return attr;
+                return new OnTimeAttribute(this);
             }
             case 0x4002: {
                 var attr = new OffWaitTimeAttribute();
@@ -153,9 +159,7 @@ public class OnOffCluster extends Cluster {
                 return attr;
             }
             case "OnTime": {
-                var attr = new OnTimeAttribute();
-                attr.parentCluster = this;
-                return attr;
+                return new OnTimeAttribute(this);
             }
             case "OffWaitTime": {
                 var attr = new OffWaitTimeAttribute();
@@ -176,14 +180,10 @@ public class OnOffCluster extends Cluster {
     public Command getCommand(int id) {
         switch (id) {
             case 0x00: {
-                var cmd = new OffCommand();
-                cmd.parentCluster = this;
-                return cmd;
+                return new OffCommand(this);
             }
             case 0x01: {
-                var cmd = new OnCommand();
-                cmd.parentCluster = this;
-                return cmd;
+                return new OnCommand(this);
             }
             case 0x02: {
                 var cmd = new ToggleCommand();
@@ -214,14 +214,10 @@ public class OnOffCluster extends Cluster {
     public Command getCommand(String name) {
         switch (name) {
             case "Off": {
-                var cmd = new OffCommand();
-                cmd.parentCluster = this;
-                return cmd;
+                return new OffCommand(this);
             }
             case "On": {
-                var cmd = new OnCommand();
-                cmd.parentCluster = this;
-                return cmd;
+                return new OnCommand(this);
             }
             case "Toggle": {
                 var cmd = new ToggleCommand();
@@ -232,11 +228,12 @@ public class OnOffCluster extends Cluster {
         throw new IllegalArgumentException("Unknown attribute id: " + name);
     }
 }
-
-class OnOffAttribute implements Attribute {
+@ToString
+class OnOffAttribute
+        implements Attribute {
 
     boolean state;
-    Cluster parentCluster;
+    @ToString.Exclude Cluster parentCluster;
 
     @Override
     public int Id() {
@@ -254,17 +251,8 @@ class OnOffAttribute implements Attribute {
     }
 
     @Override
-    public Metric toMetric() {
-        if (state) {
-            return new OnCommand(this.parentCluster).toMetric();
-        } else {
-            return new OffCommand(this.parentCluster).toMetric();
-        }
-    }
-
-    @Override
-    public void fromMatterValue(byte[] matterValue) {
-        // TODO Auto-generated method stub
+    public void fromMatterValue(JsonNode matterValue) {
+        this.state = matterValue.asBoolean();
     }
 
     @Override
@@ -273,14 +261,24 @@ class OnOffAttribute implements Attribute {
     }
 
     @Override
-    public void fromThingsRepresentation(JsonField featureValue) {
+    public Optional<Metric> fromThingsRepresentation(JsonField featureValue) {
         assert this.Name().contentEquals(featureValue.getKey());
-        this.state = featureValue.getValue().asBoolean();
+        boolean newState = featureValue.getValue().asBoolean();
+        if (newState == this.state) {
+            return Optional.empty();
+        }
+        this.state = newState;
+        if (state) {
+            return Optional.of(new OnCommand(this.parentCluster).toMetric());
+        } else {
+            return Optional.of(new OffCommand(this.parentCluster).toMetric());
+        }
     }
 }
-
-class GlobalSceneControlAttribute implements Attribute {
-    Cluster parentCluster;
+@ToString
+class GlobalSceneControlAttribute
+        implements Attribute {
+    @ToString.Exclude Cluster parentCluster;
     boolean state;
 
     @Override
@@ -299,14 +297,8 @@ class GlobalSceneControlAttribute implements Attribute {
     }
 
     @Override
-    public Metric toMetric() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void fromMatterValue(byte[] matterValue) {
-        // TODO Auto-generated method stub
+    public void fromMatterValue(JsonNode matterValue) {
+        this.state = matterValue.asBoolean();
     }
 
     @Override
@@ -315,16 +307,22 @@ class GlobalSceneControlAttribute implements Attribute {
     }
 
     @Override
-    public void fromThingsRepresentation(JsonField featureValue) {
+    public Optional<Metric> fromThingsRepresentation(JsonField featureValue) {
         assert this.Name().contentEquals(featureValue.getKey());
         this.state = featureValue.getValue().asBoolean();
+        return Optional.empty();
     }
 
 }
+@ToString
+class OnTimeAttribute
+        implements Attribute {
+    @ToString.Exclude private final Cluster parentCluster;
+    private short state;
 
-class OnTimeAttribute implements Attribute {
-    Cluster parentCluster;
-    short state;
+    OnTimeAttribute(Cluster parentCluster) {
+        this.parentCluster = parentCluster;
+    }
 
     @Override
     public int Id() {
@@ -342,15 +340,7 @@ class OnTimeAttribute implements Attribute {
     }
 
     @Override
-    public Metric toMetric() {
-        // TODO Auto-generated method stub
-
-        //Writable true
-        return null;
-    }
-
-    @Override
-    public void fromMatterValue(byte[] matterValue) {
+    public void fromMatterValue(JsonNode matterValue) {
         // TODO Auto-generated method stub
     }
 
@@ -360,15 +350,19 @@ class OnTimeAttribute implements Attribute {
     }
 
     @Override
-    public void fromThingsRepresentation(JsonField featureValue) {
+    public Optional<Metric> fromThingsRepresentation(JsonField featureValue) {
         assert this.Name().contentEquals(featureValue.getKey());
         this.state = (short) featureValue.getValue().asInt();
+
+        //Writable true
+        return Optional.empty();
     }
 
 }
-
-class OffWaitTimeAttribute implements Attribute {
-    Cluster parentCluster;
+@ToString
+class OffWaitTimeAttribute
+        implements Attribute {
+    @ToString.Exclude Cluster parentCluster;
     short state;
 
     @Override
@@ -386,16 +380,9 @@ class OffWaitTimeAttribute implements Attribute {
         return this.parentCluster;
     }
 
-    @Override
-    public Metric toMetric() {
-        // TODO Auto-generated method stub
-        //Writable true
-
-        return null;
-    }
 
     @Override
-    public void fromMatterValue(byte[] matterValue) {
+    public void fromMatterValue(JsonNode matterValue) {
         // TODO Auto-generated method stub
     }
 
@@ -405,16 +392,19 @@ class OffWaitTimeAttribute implements Attribute {
     }
 
     @Override
-    public void fromThingsRepresentation(JsonField featureValue) {
+    public Optional<Metric> fromThingsRepresentation(JsonField featureValue) {
         assert this.Name().contentEquals(featureValue.getKey());
         this.state = (short) featureValue.getValue().asInt();
+        //Writable true
+        return Optional.empty();
     }
 
 }
-
-class StartUpOnOffAttribute implements Attribute {
-    Cluster parentCluster;
-    StartUpOnOff state;
+@ToString
+class StartUpOnOffAttribute
+        implements Attribute {
+    @ToString.Exclude Cluster parentCluster;
+    StartUpOnOff state = StartUpOnOff.Off;
 
     @Override
     public int Id() {
@@ -432,30 +422,30 @@ class StartUpOnOffAttribute implements Attribute {
     }
 
     @Override
-    public Metric toMetric() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void fromMatterValue(byte[] matterValue) {
+    public void fromMatterValue(JsonNode matterValue) {
         // TODO Auto-generated method stub
     }
 
     @Override
     public JsonField toThingsRepresentation() {
-        return JsonField.newInstance(Name(), JsonValue.of(state));
+        return JsonField.newInstance(Name(), JsonValue.of(state.value));
     }
 
     @Override
-    public void fromThingsRepresentation(JsonField featureValue) {
+    public Optional<Metric> fromThingsRepresentation(JsonField featureValue) {
         assert this.Name().contentEquals(featureValue.getKey());
         this.state = StartUpOnOff.fromValue(featureValue.getValue().asInt());
+        return Optional.empty();
     }
 }
 
-class OffCommand implements Command {
-    Cluster parentCluster;
+class OffCommand
+        implements Command {
+    private final Cluster parentCluster;
+
+    OffCommand(Cluster parentCluster) {
+        this.parentCluster = parentCluster;
+    }
 
     @Override
     public int Id() {
@@ -474,12 +464,17 @@ class OffCommand implements Command {
 
     @Override
     public Metric toMetric() {
-        return null;
+        return new DCMDCommandMetric(parentCluster.Parent().Id(), parentCluster.Id(), this.Id(), System.currentTimeMillis() / 1000L, DataType.None, null);
     }
 }
 
-class OnCommand implements Command {
-    Cluster parentCluster;
+class OnCommand
+        implements Command {
+    private final Cluster parentCluster;
+
+    OnCommand(Cluster parentCluster) {
+        this.parentCluster = parentCluster;
+    }
 
     @Override
     public int Id() {
@@ -498,11 +493,12 @@ class OnCommand implements Command {
 
     @Override
     public Metric toMetric() {
-        return null;
+        return new DCMDCommandMetric(parentCluster.Parent().Id(), parentCluster.Id(), this.Id(), System.currentTimeMillis() / 1000L, DataType.None, null);
     }
 }
 
-class ToggleCommand implements Command {
+class ToggleCommand
+        implements Command {
     Cluster parentCluster;
 
     @Override
@@ -526,11 +522,15 @@ class ToggleCommand implements Command {
     }
 }
 
-class OffWithEffectCommand implements Command {
+class OffWithEffectCommand
+        implements Command {
     Cluster parentCluster;
     OnOffEffectIdentifier effectId;
     OnOffDelayedAllOffEffectVariant effectVariant;
-    OffWithEffectCommand() {}
+
+    OffWithEffectCommand() {
+    }
+
     OffWithEffectCommand(OnOffEffectIdentifier effectId, OnOffDelayedAllOffEffectVariant effectVariant) {
         this.effectId = effectId;
         this.effectVariant = effectVariant;
@@ -558,7 +558,8 @@ class OffWithEffectCommand implements Command {
 }
 
 //TODO create constructor
-class OnWithRecallGlobalSceneCommand implements Command {
+class OnWithRecallGlobalSceneCommand
+        implements Command {
     Cluster parentCluster;
 
     @Override
@@ -583,7 +584,8 @@ class OnWithRecallGlobalSceneCommand implements Command {
 }
 
 //TODO create constructor
-class OnWithTimedOffCommand implements Command {
+class OnWithTimedOffCommand
+        implements Command {
     Cluster parentCluster;
 
     @Override

@@ -2,16 +2,16 @@ package com.matterhub.server.beans;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.matterhub.cache.Cache;
-import com.matterhub.server.entities.matter.Matterhub;
-import com.matterhub.server.entities.Metric;
-import com.matterhub.server.entities.MqttMatterMessage;
+import com.matterhub.server.WorldState;
+import com.matterhub.server.entities.MessageType;
 import com.matterhub.server.entities.Topic;
+import com.matterhub.server.entities.matter.Cluster;
 import com.matterhub.server.entities.matter.Endpoint;
 import com.matterhub.server.entities.matter.Node;
-import com.matterhub.server.entities.payloads.BasePayload;
 import com.matterhub.server.entities.payloads.DBirthPayload;
+import com.matterhub.server.entities.payloads.DDataPayload;
 import com.matterhub.server.entities.payloads.Payload;
+import com.matterhub.server.entities.payloads.PayloadDTO;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,9 @@ import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.MessagingException;
 
 import javax.net.ssl.SSLSocketFactory;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Configuration
 public class MqttBeans {
@@ -48,6 +50,9 @@ public class MqttBeans {
     private String password;
     @Autowired
     private MatterDittoClient client;
+
+    @Autowired
+    private WorldState worldState;
 
     @Bean
     public MqttPahoClientFactory mqttClientFactory() {
@@ -72,8 +77,8 @@ public class MqttBeans {
     @Bean
     public MessageProducer inbound() {
         MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter("PublisherId",
-                mqttClientFactory(),
-                "#");
+                                                                                              mqttClientFactory(),
+                                                                                              "#");
         adapter.setConverter(new DefaultPahoMessageConverter());
         adapter.setOutputChannel(mqttChannel());
         return adapter;
@@ -87,18 +92,17 @@ public class MqttBeans {
             @Override
             public void handleMessage(Message<?> message) throws MessagingException {
                 LOGGER.info("Getting message from HiveMQ\n Topic: {} \n Body: {}",
-                        message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString(), message.getPayload());
+                            message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString(), message.getPayload());
 
                 Topic topic = new Topic(message.getHeaders().get(MqttHeaders.RECEIVED_TOPIC).toString());
                 Payload payload;
                 try {
                     payload = Payload.parseMessage(topic.getMessageType(),
-                            OBJECT_MAPPER.readTree(message.getPayload().toString()));
+                                                   OBJECT_MAPPER.readTree(message.getPayload().toString()));
                 } catch (JsonProcessingException | IllegalArgumentException e) {
                     LOGGER.error("Unable to parse message", e);
                     throw new MessagingException(message, e);
                 }
-                Cache.put(new MqttMatterMessage(topic, payload));
 
                 client.initializeDittoClient();
                 if (topic.getMessageType() == null) {
@@ -106,26 +110,41 @@ public class MqttBeans {
                 }
                 if (payload instanceof DBirthPayload) {
                     handleDBirthMessage(topic, (DBirthPayload) payload);
+                } else if (payload instanceof DDataPayload) {
+                    handleDDataMessage(topic, (DDataPayload) payload);
                 } else {
-                    handleBasePayload(topic, (BasePayload) payload);
+                    handleBasePayload(topic, (PayloadDTO) payload);
                 }
 
             }
 
             private void handleDBirthMessage(Topic topic, DBirthPayload payload) {
-                List<Endpoint> eps = payload.getEndpoints();
+                assert topic.getMessageType() == MessageType.DBIRTH;
+                Set<Endpoint> eps = new HashSet<>(payload.getEndpoints());
                 LOGGER.info("Topic {} contained endpoints {}", topic.getThingId(), eps);
-                Matterhub hub = new Matterhub(topic.getMatterHubId());
+                Node topicNode = topic.toNode().orElseThrow();
+
                 // This sets this node as the parent of the endpoints. DO NOT DELETE
-                Node node = new Node(hub, topic.getMatterNodeId().orElseThrow(), eps);
+                Node node = new Node(topicNode.hub(), topicNode.Id(), eps);
+                worldState.apply(node.hub());
                 eps.forEach(ep -> client.createThing(ep));
 
             }
 
-            private void handleBasePayload(Topic topic, BasePayload payload) {
-                for (Metric m : payload.getMetrics()) {
-                    client.updateThing(topic.getThingId(), m.getAttribute(), String.valueOf(m.getValue()), m.getCluster());
-                }
+            private void handleDDataMessage(Topic topic, DDataPayload payload) {
+                assert topic.getMessageType() == MessageType.DDATA;
+                Set<Cluster> clusters = new HashSet<>(payload.getClusters());
+                LOGGER.info("Topic {} contained clusters {}", topic.getThingId(), clusters);
+                Endpoint topicEndpoint = topic.toEndpoint().orElseThrow();
+
+                // This sets this node as the parent of the endpoints. DO NOT DELETE
+                Endpoint ep = new Endpoint(topicEndpoint.Parent(), topicEndpoint.Id(), clusters);
+                worldState.apply(ep.Parent().hub());
+                clusters.forEach(cluster -> client.updateThing(cluster));
+            }
+
+            private void handleBasePayload(Topic topic, PayloadDTO payload) {
+                LOGGER.error("Unhandled topic {}", topic);
             }
         };
     }
