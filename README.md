@@ -8,7 +8,7 @@
 - 2x ESP32
 
 Bonus:
-- Breadboard with 330k resistor and LED
+- Breadboard, 330 Ohm resistor and an LED
 
 ## Setup
 ### Prepare the Operating System
@@ -49,23 +49,7 @@ ninja -C out/host
 return to the base directory:
 ```cd ../../..```
 
-### Create the required accounts:
-#### HiveMQ
-- Visit hiveMQ  https://console.hivemq.cloud/
-- Sign up for a new account
-- Confirm your E-Mail
-- log in
-- Enter further details 
-- create a free cluster
-- choose a cloud 
-- create a new user:
-    - manage cluster
-    - access management
-    - enter username and password: 
-    - we will use:
-        - Username: publicTest
-        - Password: TODO:chooseABetterPassw0rd!
-    - click "add"
+
 
 
 ### Configuration
@@ -92,6 +76,47 @@ replace "SSID" and "YOUR PASSWORD" with your WiFi-SSID and your WiFi-password (s
 
 If you use the recommended setup (M5 Stack for the matterHub and an ESP32 for the lighting app) you can save and leave the file. 
 Otherwise adjust the "M5_TTY" and "ESP32_TTY" entries accordingly.
+
+### Configure MQTT:
+####  Create HiveMQ Account and User
+- Visit hiveMQ  https://console.hivemq.cloud/
+- Sign up for a new account
+- Confirm your E-Mail
+- log in
+- Enter further details 
+- create a free cluster
+- choose a cloud 
+- create a new user:
+    - manage cluster
+    - access management
+    - enter username and password: 
+    - we will use:
+        - Username: publicTest
+        - Password: TODO:chooseABetterPassw0rd!
+    - click "add"
+#### Edit the matterHub configuration:
+change into the source directory:
+```
+cd ~/matterHub/src/
+```
+
+Open menuconfig:
+```
+idf.py menuconfig
+```
+
+select "MQTT Configuration"
+
+enter your HiveMQ credentials:
+
+MQTT URI (you can find your under "overview"): it should look something like this:
+```
+mqtts://<some_prefix>.hivemq.cloud:8883 
+```
+Username and password are those you just chose.
+
+Quit and save.
+
 
 ## Known Errors:
 Connection timeout, Can not establish connection:
