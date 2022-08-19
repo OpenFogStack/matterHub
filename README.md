@@ -115,6 +115,10 @@ mqtts://<some_prefix>.hivemq.cloud:8883
 ```
 Username and password are those you just chose.
 
+Optional: change your matterHub Id:
+
+Also consider setting you MatterHub ID Configuration, so you don't collide with other matterHubs.
+
 Quit and save.
 
 
@@ -132,27 +136,68 @@ sudo adduser $USER dialout
 ```
 you probably need to reboot after this. 
 
+After the reboot run the activate script again:
 
-for esp32/m5-Stack:\
-`cd src; idf.py build`
+```
+source scripts/activate.sh 
+```
 
-## Interaction Example
+For the actual demo we provide a simple script:
 
+```
+scripts/demo/demo.sh
+```
+
+This should open three additional terminal windows:
+- one used for commissioning the esp32 via the chip-tool
+- one for flashing the lighting app on the esp32
+- one for flashing the matterHub on the M5 stack
+
+If everything works as designed you should see an MQTT_EVENT_CONNECTED on one of the shells
+and No erros in the chip-tool shell.
+
+If not possible causes of error:
+- The Wifi is not reachable (yes the wifi chip of the esp32 is quite bad and for reliable communication you need to be quite close)
+- Wifi password/user name is not correct
+- MQTT has not been configured successfully
+
+If all of the previous steps failed you can try to debug the situation by manually commissioning the devices (however we highly discourage you from doing this. This is a way into insanity. Trust me.)
+
+#### Manual Configuration (USE ONLY IF THE DEMO SCRIPT DID NOT WORK)
+you have been warned.
+
+You again need three shells:
+0. Setup:
+    &emsp; $matterhub
+    ```
+    cd ~/matterHub/src
+    ```
+    
+      &emsp; $chip-tool:
+      ```
+      cd ~/matterHub/thirdparty/chip/repo/out/host
+          ```
+          
+        &emsp; $~/matterHub/thirdparty/chip/repo/examples/lighting-app/esp32
+     ```
+     cd ~/matterHub/thirdparty/chip/repo/examples/lighting-app/esp32
+     ```
+     
 1. Cleanup:
 
     ``` bash
-    idf.py erase-flash -p "${PORT_TO_HUB}"
-    idf.py erase-flash -p "${PORT_TO_DEVICE}"
+    idf.py erase-flash -p "${PORT_TO_M5}"
+    idf.py erase-flash -p "${PORT_TO_ESP32}"
     rm -rf /tmp/*.ini /tmp/chip_*
     ```
 
 2. Setup hub
 
-    &emsp; $matterhub:
+    &emsp; $~/matterHub/src
 
     ```bash
     idf.py build
-    idf.py flash monitor -p "${PORT_TO_HUB}"
+    idf.py flash monitor -p "${PORT_TO_M5}"
     ```
 
     &emsp; $chip-tool:
@@ -163,11 +208,11 @@ for esp32/m5-Stack:\
 
 3. Setup end-device:
 
-    &emsp; $connectedhomeip/examples/lighting-app/esp32
+    &emsp; $~/matterHub/thirdparty/chip/repo/examples/lighting-app/esp32
 
     ```bash
     idf.py build
-    idf.py flash monitor -p "${PORT_TO_DEVICE}"
+    idf.py flash monitor -p "${PORT_TO_ESP32}"
     ```
 
     &emsp; $chip-tool:
@@ -182,35 +227,17 @@ for esp32/m5-Stack:\
     chip-tool accesscontrol write acl '[{"fabricIndex": 1, "privilege": 5, "authMode": 2, "subjects": [112233], "targets": null },{"fabricIndex": 1, "privilege": 5, "authMode": 2, "subjects": [111], "targets": null }]' 333 0
     ```
 
-5. Connect to end-device
+If you want to use multiple end-devices repeat steps 3 and 4, and replace 333 with a different number.
 
-    &emsp; $ Hub -> Shell (`matter switch binding unicast <fabric index> <node id> <endpoint>`):
 
-    ```bash
-    matter switch binding unicast 1 333 1
-    ```
 
-6. Switch LED:
+Sidenote: A lot of the configuration (Comissioning, WiFi credentials, etc is stored permanently. Should something go wrong consider erasing the flash of the esp32 (idf.py erase-flash) and cleanup the data stored by the chip-tool (rm -rf /tmp/*.ini /tmp/chip_*)
+The demo script will do this automaticly. 
 
-    ```bash
-    matter switch onoff on 1
-    matter switch onoff off 1
-    ```
 
-## Optional 
+Gratulations! You setup the ESP32 Part. 
 
-### Configure MQTT
-
-The MQTT options can be configured via:
-
-idf.py menuconfig -> MQTT Configuration 
-
-For example:
-MQTT URI: mqtts://prefix.hivemq.cloud:8883
-MQTT Username: user
-MQTT Password: password
-
-Also consider setting you MatterHub ID Configuration, so you don't collide with other matterHubs.
+## Server:
 
 ## References
 
