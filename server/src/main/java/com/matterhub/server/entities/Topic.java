@@ -85,7 +85,7 @@ public class Topic {
     }
 
     public Optional<Long> getMatterNodeId() {
-        return this.matterNodeId.map(Long::valueOf);
+        return this.matterNodeId;
     }
 
     public Integer getMatterHubId() {

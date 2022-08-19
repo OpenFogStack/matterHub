@@ -142,58 +142,6 @@ void PublishToMqttCompact(intptr_t context){
     Platform::Delete(manager);
 }
 
-void PublishToMqttExpandedForm(intptr_t context){
-    ESP_LOGI("Discover", "Starting JSON");
-    DescriptionManager * manager = reinterpret_cast<shell::DescriptionManager *>(context);
-    char * topic = (char *) chip::Platform::MemoryAlloc(sizeof(char) * 256);
-    snprintf(topic, 256, "spBv1.0/matterhub/DBIRTH/%d/%llu", CONFIG_MATTERHUBID, manager->mDevice->GetDeviceId());
-
-    cJSON * dbirth = cJSON_CreateObject();
-    cJSON_AddNumberToObject(dbirth,"timestamp", esp_log_timestamp());
-    std::vector<char*> names = {};
-    cJSON * metrics = cJSON_AddArrayToObject(dbirth,"metrics");
-    for(auto& endpoint:manager->mEndpoints){
-        for(auto& cluster:endpoint.second.clusters){
-            for(auto& attribute: cluster.second.attributes){
-                cJSON * metric = cJSON_CreateObject();
-                size_t const size = 64;  
-                char* name = (char *)Platform::MemoryAlloc(size);
-                names.push_back(name);
-                snprintf(name, size, "%u/%u/attribute/%u", endpoint.first, cluster.first, attribute);
-                cJSON_AddStringToObject(metric,"name", name);
-                cJSON_AddNumberToObject(metric,"timestamp",esp_log_timestamp());
-                cJSON_AddItemToArray(metrics,metric);
-            }
-            for(auto& command: cluster.second.commands){
-                cJSON * metric = cJSON_CreateObject();
-                size_t const size = 64;  
-                char* name = (char *)Platform::MemoryAlloc(size);
-                names.push_back(name);
-                snprintf(name, size, "%u/%u/command/%u", endpoint.first, cluster.first, command);
-                cJSON_AddStringToObject(metric,"name", name);
-                cJSON_AddNumberToObject(metric,"timestamp",esp_log_timestamp());
-                cJSON_AddItemToArray(metrics,metric);
-            }
-        }
-    }
-    cJSON_AddNumberToObject(dbirth, "seq", sSeq++);
-    Platform::Delete(manager);
-
-    MQTTCommandData* data = Platform::New<MQTTCommandData>();
-    //printing this unformatted saves almost 2kb of ram :O
-    data->data = cJSON_PrintUnformatted(dbirth);
-    cJSON_Delete(dbirth);
-    data->topic = topic;
-    data->task = MQTTCommandTask::publish; 
-
-    ESP_LOGI("Discover","%s\n%s",topic,data->data);
-    MQTTManager::GetInstance().Publish(data);
-
-    for(auto name: names){
-        Platform::MemoryFree(name);
-    }
-}
-
 void onCommandsReadCallback(const chip::app::ConcreteDataAttributePath& path, chip::TLV::TLVReader* data, void* context){
     DescriptionManager * manager = reinterpret_cast<shell::DescriptionManager *>(context);
     ESP_LOGI("Discover", "Command list for node: '0x%02llx' endpoint: '0x%02x' cluster '0x%02x'", manager->mDevice->GetDeviceId(), path.mEndpointId, path.mClusterId);
