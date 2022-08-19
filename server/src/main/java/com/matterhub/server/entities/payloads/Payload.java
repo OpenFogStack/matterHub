@@ -5,7 +5,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.matterhub.server.entities.MessageType;
+import com.matterhub.server.entities.metrics.DDataMetric;
 import lombok.Builder;
+
+import java.util.Arrays;
 
 public sealed abstract class Payload permits PayloadDTO, DBirthPayload, DDataPayload{
 
@@ -15,6 +18,9 @@ public sealed abstract class Payload permits PayloadDTO, DBirthPayload, DDataPay
         switch (messageType) {
             case DBIRTH:
                 return OBJECT_MAPPER.treeToValue(payload, DBirthPayload.class);
+            case DDATA:
+                PayloadDTO dto = OBJECT_MAPPER.treeToValue(payload, PayloadDTO.class);
+                return new DDataPayload(dto.getSeq(), dto.getTimestamp(), Arrays.stream(dto.getMetrics()).map(DDataMetric::fromDTO).toList());
             default:
                 PayloadDTO bp = OBJECT_MAPPER.treeToValue(payload, PayloadDTO.class);
                 bp.setMessageType(messageType);

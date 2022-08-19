@@ -122,17 +122,6 @@ void MQTTManager::ProcessCommand(shell::MQTTCommandData * data)
     }
 }
 
-//
-// Note: this function is for testing purposes only publishing part of the active partition
-//       (to be checked against the original binary)
-//
-static void send_binary(esp_mqtt_client_handle_t client)
-{
-    const char * test_data = "test";
-    int msg_id             = esp_mqtt_client_publish(client, "/topic/binary", (const char *) test_data, strlen(test_data), 0, 0);
-    ESP_LOGI(TAG, "binary sent with msg_id=%d", msg_id);
-}
-
 /*
  * @brief Event handler registered to receive MQTT events
  *
@@ -187,13 +176,6 @@ static void mqtt_event_handler(void * handler_args, esp_event_base_t base, int32
         break;
     case MQTT_EVENT_DATA: {
         ESP_LOGI(TAG, "MQTT_EVENT_DATA");
-        printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-        printf("DATA=%.*s\r\n", event->data_len, event->data);
-        if (strncmp(event->data, "send binary please", event->data_len) == 0)
-        {
-            ESP_LOGI(TAG, "Sending the binary");
-            send_binary(client);
-        }
         std::string key(event->topic, event->topic_len);
         ESP_LOGI(TAG, "key is: %s", key.c_str());
 

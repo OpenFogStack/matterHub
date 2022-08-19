@@ -141,12 +141,15 @@ public class MatterDittoClient {
     }
 
     /**
-     * @param cluster - The new value of the cluster
+     * @param endpoint - The new value of the endpoint
      */
-    public void updateThing(@NonNull Cluster cluster) {
-        ThingId thingId = ThingId.of(namespace, cluster.Parent().thingIdAString());
-        Feature feature = clusterToFeature(cluster);
-        disconnectedDittoClient.connect().thenAccept(client -> this.update(client, thingId, feature));
+    public void updateThing(@NonNull Endpoint endpoint) {
+        ThingId thingId = ThingId.of(namespace, endpoint.thingIdAString());
+        endpoint.Clusters().stream().map(this::clusterToFeature)
+                .forEach(feature -> disconnectedDittoClient
+                        .connect()
+                        .thenAccept(client -> this.update(client, thingId, feature)
+                        ));
     }
 
     public void createThing(Endpoint endpoint) {
@@ -193,7 +196,7 @@ public class MatterDittoClient {
                 LOGGER.info("No metrics generated");
                 return;
             }
-            Topic topic = new Topic(MessageType.DCMD, hub.Id(), node.Id(), ep.Id());
+            Topic topic = new Topic(MessageType.DCMD, hub.Id(), node.Id());
 
             long timestamp = change.getTimestamp().orElseThrow().toEpochMilli();
             PayloadDTO payload = new PayloadDTO(MessageType.DCMD,
@@ -216,7 +219,11 @@ public class MatterDittoClient {
             cluster.setParent(parent);
             // Set their values
             attributeNames.forEach(name -> {
-                Attribute attr = cluster.Attributes().stream().filter(attribute -> attribute.Name().equals(name)).findFirst().orElseThrow();
+                Attribute attr = cluster.Attributes()
+                                        .stream()
+                                        .filter(attribute -> attribute.Name().equals(name))
+                                        .findFirst()
+                                        .orElseThrow();
                 attr.fromThingsRepresentation(inner.getField(name).orElseThrow());
             });
             return cluster;
@@ -240,9 +247,6 @@ public class MatterDittoClient {
             connOpts.setPassword(password.toCharArray());
             mqttClient.connect(connOpts);
             mqttClient.publish(topic.toString(), mqttMessage);
-        } catch (Exception e) {
-            LOGGER.error("Error while sending message", e);
-            throw e;
         }
 
     }

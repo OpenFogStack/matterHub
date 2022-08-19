@@ -2,6 +2,7 @@ package com.matterhub.server;
 
 import com.matterhub.server.entities.matter.Matterhub;
 import com.matterhub.server.entities.metrics.Metric;
+import lombok.Synchronized;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ public class WorldState {
         mattterHubs.add(hub);
     }
 
-    public List<Metric> apply(Matterhub other) {
+    synchronized public List<Metric> apply(Matterhub other) {
         return this.get(other.Id()).map(existing -> existing.apply(other)).orElseGet(() -> {
             this.addHub(other);
             return List.of();

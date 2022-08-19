@@ -1,9 +1,10 @@
 package com.matterhub.server.entities.payloads;
 
 import com.matterhub.server.entities.MessageType;
-import com.matterhub.server.entities.matter.Cluster;
+import com.matterhub.server.entities.matter.Endpoint;
 import com.matterhub.server.entities.metrics.DDataMetric;
 
+import java.util.HashMap;
 import java.util.List;
 
 public final class DDataPayload extends Payload {
@@ -18,7 +19,24 @@ public final class DDataPayload extends Payload {
         return MessageType.DDATA;
     }
 
-    public List<Cluster> getClusters() {
-       return metrics.stream().map(DDataMetric::toCluster).toList();
+    public List<Endpoint> getEndpoints() {
+       HashMap<Short, Endpoint> kv = metrics.stream()
+                                            .map(DDataMetric::toEndpoint)
+                     .reduce(new HashMap<>(), (map, endpoint) -> {
+                         if (!map.containsKey(endpoint.Id())) {
+                             map.put(endpoint.Id(), endpoint);
+                         }
+                         map.get(endpoint.Id()).apply(endpoint);
+                         return map;
+                     }, (map1, map2) -> {
+                         for (Short key : map2.keySet()) {
+                             if (!map1.containsKey(key)) {
+                                 map1.put(key, map2.get(key));
+                             }
+                             map1.get(key).apply(map2.get(key));
+                         }
+                         return map1;
+                     });
+       return kv.values().stream().toList();
     }
 }

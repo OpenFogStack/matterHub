@@ -77,6 +77,13 @@ public class Topic {
 
     }
 
+    public Topic(MessageType messageType, int matterHubId, long nodeId) {
+        this.messageType = messageType;
+        this.matterHubId = matterHubId;
+        this.matterNodeId = Optional.of(nodeId);
+        this.matterEndpointId = Optional.empty();
+    }
+
     public Optional<Long> getMatterNodeId() {
         return this.matterNodeId.map(Long::valueOf);
     }

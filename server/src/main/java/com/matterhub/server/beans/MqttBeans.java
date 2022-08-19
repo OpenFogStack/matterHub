@@ -34,7 +34,6 @@ import org.springframework.messaging.MessagingException;
 
 import javax.net.ssl.SSLSocketFactory;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Configuration
@@ -133,14 +132,14 @@ public class MqttBeans {
 
             private void handleDDataMessage(Topic topic, DDataPayload payload) {
                 assert topic.getMessageType() == MessageType.DDATA;
-                Set<Cluster> clusters = new HashSet<>(payload.getClusters());
-                LOGGER.info("Topic {} contained clusters {}", topic.getThingId(), clusters);
-                Endpoint topicEndpoint = topic.toEndpoint().orElseThrow();
+                Set<Endpoint> endpoints = new HashSet<>(payload.getEndpoints());
+                LOGGER.info("Topic {} contained clusters {}", topic.getThingId(), endpoints);
+                Node topicNode = topic.toNode().orElseThrow();
 
                 // This sets this node as the parent of the endpoints. DO NOT DELETE
-                Endpoint ep = new Endpoint(topicEndpoint.Parent(), topicEndpoint.Id(), clusters);
-                worldState.apply(ep.Parent().hub());
-                clusters.forEach(cluster -> client.updateThing(cluster));
+                Node node = new Node(topicNode.hub(), topicNode.Id(), endpoints);
+                worldState.apply(node.hub());
+                endpoints.forEach(endpoint -> client.updateThing(endpoint));
             }
 
             private void handleBasePayload(Topic topic, PayloadDTO payload) {
