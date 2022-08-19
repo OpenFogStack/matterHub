@@ -95,7 +95,7 @@ public class MatterDittoClient {
             return;
         }
         try {
-            client.twin().forId(thingId).putFeature(feature);
+            client.twin().forId(thingId).mergeFeature(feature);
         } catch (Exception e) {
             LOGGER.error("Couldn't update " + thingId, e);
         }
