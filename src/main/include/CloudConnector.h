@@ -89,28 +89,28 @@ public:
         case chip::TLV::TLVElementType::UInt8: {
             uint8_t value;
             data->Get(value);
-            cJSON_AddStringToObject(element, "dataType", "uInt8");
+            cJSON_AddStringToObject(element, "dataType", "UInt8");
             cJSON_AddNumberToObject(element, "value", value);
             break;
         }
         case chip::TLV::TLVElementType::UInt16: {
             uint16_t value;
             data->Get(value);
-            cJSON_AddStringToObject(element, "dataType", "uInt16");
+            cJSON_AddStringToObject(element, "dataType", "UInt16");
             cJSON_AddNumberToObject(element, "value", value);
             break;
         }
         case chip::TLV::TLVElementType::UInt32: {
             uint32_t value;
             data->Get(value);
-            cJSON_AddStringToObject(element, "dataType", "uInt32");
+            cJSON_AddStringToObject(element, "dataType", "UInt32");
             cJSON_AddNumberToObject(element, "value", value);
             break;
         }
         case chip::TLV::TLVElementType::UInt64: {
             uint64_t value;
             data->Get(value);
-            cJSON_AddStringToObject(element, "dataType", "uInt64");
+            cJSON_AddStringToObject(element, "dataType", "UInt64");
             cJSON_AddNumberToObject(element, "value", value);
             break;
         }

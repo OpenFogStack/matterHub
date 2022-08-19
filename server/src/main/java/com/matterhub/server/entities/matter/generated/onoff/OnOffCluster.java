@@ -358,6 +358,7 @@ class OnTimeAttribute
         if (newState == this.state) {
             return Optional.empty();
         }
+        this.state = newState;
         //Writable true
         return Optional.of(new DCMDWriteMetric(parentCluster.Parent().Id(), parentCluster.Id(), this.Id(), System.currentTimeMillis() / 1000L, DataType.UInt16, new IntNode(this.state)));
     }
