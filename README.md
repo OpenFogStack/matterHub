@@ -27,7 +27,7 @@ sudo apt -y install git gcc g++ pkg-config libssl-dev libdbus-1-dev \
 ```
 Choose a location and set the environment variable:
 ```
-set MATTER_HUB_DIR="~"
+export MATTER_HUB_DIR="$HOME/matterHub/"
 ``` 
 
 Clone this repository:
