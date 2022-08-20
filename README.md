@@ -331,22 +331,47 @@ Inside the server folder run
 `mvn clean package`
 and `java -jar target/server-0.0.1-SNAPSHOT.jar`
 
+At this point you should have:
+- configured the ESP32 setup
+- been able to build the sources for the ESP32
+- start the demo
+- created and configured the hiveMQ Account
+- created and configured the Bosch IoT Account
+- been able to build and run the server
+
+Congratulation, we can get started now.
 # A simple Use-case
 
-6. Copy the Test Access Token
+If not already happened: 
+Build and start the server:
+```
+cd  ${MATTER_HUB_DIR}/server
+mvn clean package
+java -jar target/server-0.0.1-SNAPSHOT.jar
+```
+
+Start the demo:
+```
+cd ${MATTER_HUB_DIR}/scripts/demo/
+./demo.sh
+```
+
+
+Discover commissioned device on the Matter Hub
+`matter discover describe 1 333` 
+
+Verify that the discover was successful via the IoT API:
+
+Copy the Test Access Token
     - Go to [OAuth2 Clients](https://accounts.bosch-iot-suite.com/oauth2-clients/)
     - Click on "Use" and copy the blue Test Access Token field.
 
-7. Go to the [Bosch IoT API](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)) and click on "Authorize" Now you can insert the Test Access Token and click on "Authorize".
+Go to the [Bosch IoT API](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)) and click on "Authorize" Now you can insert the Test Access Token and click on "Authorize".
 
 
-8. Discover commissioned device: `matter discover describe 1 333` on the Matter Hub
-
-9. Now you should be able to discover the newly created thing here:
-https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)#/Things/get_things__thingId_
-
-Enter the thingid: `<namespace>:<matterhub id>_<node id>_<endpoint id>`
-
+Now you should be able to discover the newly created thing via [get_things](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)#/Things/get_things__thingId_)
+     - Click on "try it out"
+     - Enter the thingid: `<namespace>:<matterhub id>_<node id>_<endpoint id>`
 For example:
 `namespace:0_333_1`
 
@@ -390,7 +415,18 @@ enter again the thingid and a changed JSON representation of the thing:
 }
 ```
 
+Currently only "OnOff" is supported.
+
 Now the light should be turned on!
+
+To verify the other direction you can either use a button to turn on the LED (see advanced use-case below).
+
+or use a mqtt client to send commands directly to the Matter Hub. 
+We used the hiveMQ cli: (https://github.com/hivemq/mqtt-cli/releases/)
+But every other way to send mqtt messages to the topic should be fine.
+
+Turn on a light via MQTT:
+
 
 
 ## Known bugs
