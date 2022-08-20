@@ -147,7 +147,9 @@ source scripts/activate.sh
 For the actual demo we provide a simple script:
 
 ```
-scripts/demo/demo.sh
+
+cd ${MATTER_HUB_DIR}/scripts/demo/
+./demo.sh
 ```
 
 This should open three additional terminal windows:
