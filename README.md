@@ -132,9 +132,6 @@ consider setting you MatterHub ID Configuration, so you don't collide with other
 Quit and save.
 
 
-## Known Errors:
-Connection timeout, Can not establish connection:
-In our experience the WiFi module in the ESP32 is quite bad. So you should test as close to the WiFi-Hotspot as possbile (using the PC as a hotspot worked quite well too)
 
 
 
@@ -513,6 +510,16 @@ mqtt pub -s -h <prefix>.s1.eu.hivemq.cloud -p 8883 -u publicTest -pw TODO:choose
 ```
 
 Now you can interact with it in the same way as with 333!
+
+## FAQ:
+Connection timeout, Can not establish connection:
+In our experience the WiFi module in the ESP32 is quite bad. So you should test as close to the WiFi-Hotspot as possbile (using the PC as a hotspot worked quite well too)
+
+idf.py: command not found
+```
+cd ${MATTER_HUB_DIR}
+source scripts/activate.sh
+```
 
 
 ## Known bugs
