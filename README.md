@@ -458,12 +458,61 @@ mqtt pub -s -h b9fbe0bc6f56486fab5642f0b79f127e.s1.eu.hivemq.cloud -p 8883 -u pu
 For the hardware part follow this guide:
 https://medium.com/@madeadhika39/turn-on-led-on-esp32-with-push-button-8c8ee1b3652f
 
-
-We used GPIO 18 for the button so change the following line in 
+We used the default of GPIO 5 for the LED.
+We used GPIO 18 for the button so change the following line in:
+``` 
 $MATTER_HUB_DIR/thirdparty/chip/repo/examples/lighting-app/esp32/main/Button.cpp:
 -#define GPIO_INPUT_IO_0 9
 +#define GPIO_INPUT_IO_0 18
+```
 
+Follow the same steps as in the easy use-case. 
+
+Now you can add another device
+
+Open a new terminal:
+
+move to the lighting example dir:
+```
+cd ${MATTER_HUB_DIR}/thirdparty/chip/repo/examples/lighting-app/esp32
+```
+
+cleanup the ESP (the port is probably /dev/ttyUSB1):     
+```
+idf.py erase-flash -p "${PORT_TO_ESP32_2}"
+```
+
+Setup end-device:
+
+    &emsp; $~/matterHub/thirdparty/chip/repo/examples/lighting-app/esp32
+
+```bash
+idf.py build
+idf.py flash monitor -p "${PORT_TO_ESP32_2}"
+```
+
+Use the chip-tool (you can find one in the matter repository $MATTER_HUB_DIR/thirdparty/chip/repo/out/host/chip-tool) to commission the device
+
+```
+chip-tool pairing ble-wifi 444 "${SSID}" "${PASSWORD}" 20202021 3840
+```
+
+Give hub permission to access the end-device:
+
+    ```bash
+    chip-tool accesscontrol write acl '[{"fabricIndex": 1, "privilege": 5, "authMode": 2, "subjects": [112233], "targets": null },{"fabricIndex": 1, "privilege": 5, "authMode": 2, "subjects": [111], "targets": null }]' 444 0
+    ```
+
+Again discover commissioned device on the Matter Hub
+`matter discover describe 1 444` 
+
+Subscribe to an attribute (for example OnOff): 
+```
+mqtt pub -s -h <prefix>.s1.eu.hivemq.cloud -p 8883 -u publicTest -pw TODO:chooseABetterPassw0rd! --topic spBv1.0/matterhub/DCMD/0/444 -m '{"timestamp": 1234,"metrics": [{"name": "1/6/subscribe/0","timestamp": 1234}],"seq": 0}'
+
+```
+
+Now you can interact with it in the same way as with 333!
 
 
 ## Known bugs
