@@ -10,6 +10,10 @@
 Bonus:
 - Breadboard, 330 Ohm resistor and an LED
 
+
+
+
+
 ## Setup
 ### Prepare the Operating System
 Install Ubuntu 20.04 LTS
@@ -374,15 +378,15 @@ mqtt pub -s -h <prefix>.s1.eu.hivemq.cloud -p 8883 -u publicTest -pw TODO:choose
 Verify that the discover was successful via the IoT API:
 
 Copy the Test Access Token
-    - Go to [OAuth2 Clients](https://accounts.bosch-iot-suite.com/oauth2-clients/)
-    - Click on "Use" and copy the blue Test Access Token field.
+- Go to [OAuth2 Clients](https://accounts.bosch-iot-suite.com/oauth2-clients/)
+- Click on "Use" and copy the blue Test Access Token field.
 
 Go to the [Bosch IoT API](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)) and click on "Authorize" Now you can insert the Test Access Token and click on "Authorize".
 
 
 Now you should be able to discover the newly created thing via [get_things](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)#/Things/get_things__thingId_)
-     - Click on "try it out"
-     - Enter the thingid: `<namespace>:<matterhub id>_<node id>_<endpoint id>`
+- Click on "try it out"
+- Enter the thingid: `<namespace>:<matterhub id>_<node id>_<endpoint id>`
 For example:
 `namespace:0_333_1`
 
@@ -432,7 +436,7 @@ Now the light should be turned on!
 
 To verify the other direction you can either use a button to turn on the LED (see advanced use-case below) or use the MQTT Client
 
-Turn toggle the light via MQTT:
+Toggle the light via MQTT:
 ```
 mqtt pub -s -h b9fbe0bc6f56486fab5642f0b79f127e.s1.eu.hivemq.cloud -p 8883 -u publicTest -pw TODO:chooseABetterPassw0rd! --topic spBv1.0/matterhub/DCMD/0/333 -m '{"timestamp": 1234,"metrics": [{"name": "1/6/cmd/2","timestamp": 1234}],"seq": 0}'
 ```
@@ -448,6 +452,19 @@ Turn the light on:
 ```
 mqtt pub -s -h b9fbe0bc6f56486fab5642f0b79f127e.s1.eu.hivemq.cloud -p 8883 -u publicTest -pw TODO:chooseABetterPassw0rd! --topic spBv1.0/matterhub/DCMD/0/333 -m '{"timestamp": 1234,"metrics": [{"name": "1/6/cmd/1","timestamp": 1234}],"seq": 0}'
 ```
+# An advanced use-case
+## Bonus: Button and LED
+
+For the hardware part follow this guide:
+https://medium.com/@madeadhika39/turn-on-led-on-esp32-with-push-button-8c8ee1b3652f
+
+
+We used GPIO 18 for the button so change the following line in 
+$MATTER_HUB_DIR/thirdparty/chip/repo/examples/lighting-app/esp32/main/Button.cpp:
+-#define GPIO_INPUT_IO_0 9
++#define GPIO_INPUT_IO_0 18
+
+
 
 ## Known bugs
 
