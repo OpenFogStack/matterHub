@@ -525,8 +525,10 @@ If you want to repeat the demo, you have to remove the
 and [policies](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)#/Policies/delete_policies__policyId_)
 for the things you created!
 
-
-
+you can leave the monitor with:
+```
+strg + altgr + 0
+```
 
 ## Known bugs
 
