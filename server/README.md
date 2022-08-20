@@ -88,24 +88,58 @@ mvn -version
 
 7. Go to the [Bosch IoT API](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)) and click on "Authorize" Now you can insert the Test Access Token and click on "Authorize".
 
-8. Create a Thing via the [Bosch IoT API](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2))
-    - Click on Things and then on PUT /thing/{thingId}
-    - Click on Try it out.
-    - In the first field write your thingId which means: your Namespace (from Step 6), your hubId(0) and your nodeId(333). \
-      The thingId should follow this schema: ``` namespace:hubId_nodeId ```
-    - On the request body you have to enter this JSON Code:
 
-``` json
+8. Discover commissioned device: `matter discover describe 1 333` on the Matter Hub
+
+9. Now you should be able to discover the newly created thing here:
+https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)#/Things/get_things__thingId_
+
+Enter the thingid: `<namespace>:<matterhub id>_<node id>_<endpoint id>`
+
+For example:
+`namespace:0_333_1`
+
+It should look like this:
+```
 {
+  "thingId": "namespace:0_333_1",
+  "policyId": "namespace:0_333_1",
   "features": {
-    "on-off": {
+    "onoff": {
       "desiredProperties": {
-        "on": 0
+        "OnOff": false,
+        "GlobalSceneControl": false,
+        "OnTime": 0,
+        "StartUpOnOff": 0,
+        "OffWaitTime": 0
       }
     }
   }
 }
 ```
+
+To change the thing you can send a [put request](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)#/Things/put_things__thingId_)
+
+enter again the thingid and a changed JSON representation of the thing:
+```
+{
+  "thingId": "namespace:0_333_1",
+  "policyId": "namespace:0_333_1",
+  "features": {
+    "onoff": {
+      "desiredProperties": {
+        "OnOff": true,
+        "GlobalSceneControl": false,
+        "OnTime": 0,
+        "StartUpOnOff": 0,
+        "OffWaitTime": 0
+      }
+    }
+  }
+}
+```
+
+Now the light should be turned on!
 
 ### Solution ID
 
