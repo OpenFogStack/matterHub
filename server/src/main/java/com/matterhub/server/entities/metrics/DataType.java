@@ -9,7 +9,7 @@ public enum DataType {
     UInt16,
     UInt32,
     UInt64,
-    Bool,
+    Boolean,
     Float,
     Double,
     None,

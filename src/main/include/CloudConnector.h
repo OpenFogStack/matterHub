@@ -1,8 +1,10 @@
 #include "InteractionModelHelper.h"
+#include "InteractionModelHelperWriteTemplates.h"
 #include "MQTTCommands.h"
 #include "MQTTManager.h"
 #include "cJSON.h"
 #include "esp_log.h"
+#include <string>
 
 #include <vector>
 namespace matterHub {
@@ -21,61 +23,168 @@ public:
         ESP_LOGI(TAG, "mdevice: %p", subscription->mDevice);
         ESP_LOGI(TAG, "Nodeid: %llu", subscription->mDevice->GetDeviceId());
 
-        // TODO: What we want to use:
-        // https://github.com/project-chip/connectedhomeip/blob/cb116b9fba7f738e5efb52115d891c5094de1442/examples/chip-tool/templates/logging/DataModelLogger-src.zapt
-        switch (path.mClusterId)
+        data->GetContainerType();
+        data->GetType();
+        data->GetLengthRead();
+        uint16_t controlByte = data->GetControlByte();
+        /* May removed in the comming releases of ConnectedHomeIP */
+        chip::TLV::TLVElementType elemType;
+        /* May switch to GetType()? */
+        if (controlByte == static_cast<uint16_t>(chip::TLV::kTLVControlByte_NotSpecified))
         {
-        case chip::app::Clusters::OnOff::Id: {
-            switch (path.mAttributeId)
-            {
-            case chip::app::Clusters::OnOff::Attributes::OnOff::Id: {
-                bool value;
-                CHIP_ERROR error = data->Get(value);
-                if (error != CHIP_NO_ERROR)
-                {
-                    ESP_LOGE(TAG, "Decoding error: %s", error.AsString());
-                    return;
-                }
-                ESP_LOGI(TAG, "OnOff: OnOff: %d", value);
-                shell::MQTTCommandData * mqttCommand = chip::Platform::New<shell::MQTTCommandData>();
-
-                char * topic = (char *) chip::Platform::MemoryAlloc(sizeof(char) * 256);
-                snprintf(topic, 256, "spBv1.0/matterhub/DDATA/%d/%llu", CONFIG_MATTERHUBID, subscription->mDevice->GetDeviceId());
-                char name[256] = { 0 };
-                snprintf(name, sizeof(name), "%u/%u/%u", path.mEndpointId, path.mClusterId, path.mAttributeId);
-                cJSON * root;
-                root = cJSON_CreateObject();
-                cJSON_AddNumberToObject(root, "timestamp", 13371337);
-                cJSON * metrics;
-                metrics = cJSON_AddArrayToObject(root, "metrics");
-                cJSON * element;
-                element = cJSON_CreateObject();
-                cJSON_AddStringToObject(element, "name", name);
-                cJSON_AddNumberToObject(element, "timestamp", 13371337);
-                cJSON_AddStringToObject(element, "dataType", "Bool");
-                cJSON_AddBoolToObject(element, "value", value);
-                cJSON_AddItemToArray(metrics, element);
-                char * my_json_string = cJSON_Print(root);
-                cJSON_Delete(root);
-
-                mqttCommand->topic = topic;
-                mqttCommand->data  = my_json_string;
-                mqttCommand->task  = shell::MQTTCommandTask::publish;
-
-                chip::MQTTManager::GetInstance().ProcessCommand(mqttCommand);
-            }
-            break;
-            default:
-                ESP_LOGE(TAG, "Unknown Attribute ID");
-                break;
-            }
+            ESP_LOGE(TAG, "control Byte not specified");
+            return;
         }
-        break;
 
-        default:
-            ESP_LOGE("Subscription", "Unknown Cluster ID");
+        char * topic = (char *) chip::Platform::MemoryAlloc(sizeof(char) * 256);
+
+        snprintf(topic, 256, "spBv1.0/matterhub/DDATA/%d/%llu", CONFIG_MATTERHUBID, subscription->mDevice->GetDeviceId());
+
+        char name[256] = { 0 };
+        snprintf(name, sizeof(name), "%u/%u/%u", path.mEndpointId, path.mClusterId, path.mAttributeId);
+        cJSON * root;
+        root = cJSON_CreateObject();
+        cJSON_AddNumberToObject(root, "timestamp", esp_log_timestamp());
+        cJSON * metrics;
+        metrics = cJSON_AddArrayToObject(root, "metrics");
+        cJSON * element;
+        element = cJSON_CreateObject();
+        cJSON_AddStringToObject(element, "name", name);
+        cJSON_AddNumberToObject(element, "timestamp", esp_log_timestamp());
+        elemType = static_cast<chip::TLV::TLVElementType>(controlByte & chip::TLV::kTLVTypeMask);
+
+        switch (elemType)
+        {
+        case chip::TLV::TLVElementType::NotSpecified: {
             break;
         }
+        case chip::TLV::TLVElementType::Int8: {
+            int8_t value;
+            data->Get(value);
+            cJSON_AddStringToObject(element, "dataType", "Int8");
+            cJSON_AddNumberToObject(element, "value", value);
+            break;
+        }
+        case chip::TLV::TLVElementType::Int16: {
+            int16_t value;
+            data->Get(value);
+            cJSON_AddStringToObject(element, "dataType", "Int16");
+            cJSON_AddNumberToObject(element, "value", value);
+            break;
+        }
+        case chip::TLV::TLVElementType::Int32: {
+            int32_t value;
+            data->Get(value);
+            cJSON_AddStringToObject(element, "dataType", "Int32");
+            cJSON_AddNumberToObject(element, "value", value);
+            break;
+        }
+        case chip::TLV::TLVElementType::Int64: {
+            int64_t value;
+            data->Get(value);
+            cJSON_AddStringToObject(element, "dataType", "Int64");
+            cJSON_AddNumberToObject(element, "value", value);
+            break;
+        }
+        case chip::TLV::TLVElementType::UInt8: {
+            uint8_t value;
+            data->Get(value);
+            cJSON_AddStringToObject(element, "dataType", "UInt8");
+            cJSON_AddNumberToObject(element, "value", value);
+            break;
+        }
+        case chip::TLV::TLVElementType::UInt16: {
+            uint16_t value;
+            data->Get(value);
+            cJSON_AddStringToObject(element, "dataType", "UInt16");
+            cJSON_AddNumberToObject(element, "value", value);
+            break;
+        }
+        case chip::TLV::TLVElementType::UInt32: {
+            uint32_t value;
+            data->Get(value);
+            cJSON_AddStringToObject(element, "dataType", "UInt32");
+            cJSON_AddNumberToObject(element, "value", value);
+            break;
+        }
+        case chip::TLV::TLVElementType::UInt64: {
+            uint64_t value;
+            data->Get(value);
+            cJSON_AddStringToObject(element, "dataType", "UInt64");
+            cJSON_AddNumberToObject(element, "value", value);
+            break;
+        }
+        case chip::TLV::TLVElementType::BooleanFalse: {
+            cJSON_AddStringToObject(element, "dataType", "Boolean");
+            cJSON_AddBoolToObject(element, "value", false);
+            break;
+        }
+
+        case chip::TLV::TLVElementType::BooleanTrue: {
+            cJSON_AddStringToObject(element, "dataType", "Boolean");
+            cJSON_AddBoolToObject(element, "value", true);
+            break;
+        }
+        case chip::TLV::TLVElementType::FloatingPointNumber32: {
+            float value;
+            data->Get(value);
+            cJSON_AddStringToObject(element, "dataType", "float");
+            cJSON_AddNumberToObject(element, "value", value);
+            break;
+        }
+        case chip::TLV::TLVElementType::FloatingPointNumber64: {
+            double value;
+            data->Get(value);
+            cJSON_AddStringToObject(element, "dataType", "double");
+            cJSON_AddNumberToObject(element, "value", value);
+            break;
+        }
+        case chip::TLV::TLVElementType::UTF8String_1ByteLength:
+            break;
+        case chip::TLV::TLVElementType::UTF8String_2ByteLength:
+            break;
+        case chip::TLV::TLVElementType::UTF8String_4ByteLength:
+            break;
+        case chip::TLV::TLVElementType::UTF8String_8ByteLength:
+            break;
+        case chip::TLV::TLVElementType::ByteString_1ByteLength:
+        case chip::TLV::TLVElementType::ByteString_2ByteLength:
+        case chip::TLV::TLVElementType::ByteString_4ByteLength:
+        case chip::TLV::TLVElementType::ByteString_8ByteLength: {
+            uint16_t length = data->GetLength();
+            /* TODO Overflow check? */
+            length++;
+            char * value = (char *) chip::Platform::MemoryAlloc(sizeof(char) * length);
+            data->GetString(value, length);
+            cJSON_AddStringToObject(element, "dataType", "String");
+            cJSON_AddStringToObject(element, "value", value);
+            chip::Platform::Delete(value);
+            break;
+        }
+        // IMPORTANT: Values starting at Null must match the corresponding values of
+        // TLVType.
+        case chip::TLV::TLVElementType::Null:
+            break;
+        case chip::TLV::TLVElementType::Structure:
+            break;
+        case chip::TLV::TLVElementType::Array:
+            break;
+        case chip::TLV::TLVElementType::List:
+            break;
+        case chip::TLV::TLVElementType::EndOfContainer:
+            break;
+        }
+
+        // TODO: What we want to use:
+        cJSON_AddItemToArray(metrics, element);
+        char * my_json_string = cJSON_Print(root);
+        cJSON_Delete(root);
+
+        shell::MQTTCommandData * mqttCommand = chip::Platform::New<shell::MQTTCommandData>();
+        mqttCommand->topic                   = topic;
+        mqttCommand->data                    = my_json_string;
+        mqttCommand->task                    = shell::MQTTCommandTask::publish;
+        chip::MQTTManager::GetInstance().ProcessCommand(mqttCommand);
     }
     // TODO handle data_total length...
     static void DCMD_callback(char * topic, int topic_len, char * data, int data_len)
@@ -171,18 +280,24 @@ public:
             ESP_LOGE(TAG, "action_specific_id: %d", action_specific_id);
             if (!action.compare("cmd"))
             {
-                CHIP_ERROR error = chip::InteractionModelHelper::command(nodeId, endpointId, clusterId, action_specific_id);
+                chip::InteractionModelHelper::command(nodeId, endpointId, clusterId, action_specific_id);
             }
 
             if (!action.compare("read"))
             {
-                CHIP_ERROR error =
-                    chip::InteractionModelHelper::read(nodeId, endpointId, clusterId, action_specific_id, &onAttributeReadCallback);
+
+                chip::InteractionModelHelper::read(nodeId, endpointId, clusterId, action_specific_id, &onAttributeReadCallback);
             }
-            if (!action.compare("subscribe"))
+
+            else if (!action.compare("subscribe"))
             {
-                CHIP_ERROR error = chip::InteractionModelHelper::subscribe(nodeId, endpointId, clusterId, action_specific_id, 1, 10,
-                                                                           &onAttributeReadCallback);
+                chip::InteractionModelHelper::subscribe(nodeId, endpointId, clusterId, action_specific_id, 1, 10,
+                                                        &onAttributeReadCallback);
+            }
+
+            else if (!action.compare("write"))
+            {
+                handleWrite(nodeId, endpointId, clusterId, action_specific_id, element2);
             }
         }
 
@@ -197,6 +312,103 @@ public:
             JSON_Print(element2);
         }*/
         cJSON_Delete(root2);
+    }
+    static void handleWrite(chip::NodeId nodeId, chip::EndpointId endpointId, chip::ClusterId clusterId,
+                            chip::AttributeId attributeId, cJSON * element)
+    {
+        std::string dataType;
+        if (cJSON_GetObjectItem(element, "dataType"))
+        {
+            dataType = cJSON_GetObjectItem(element, "dataType")->valuestring;
+        }
+        else
+        {
+            ESP_LOGE(TAG, "dataType is missing");
+            return;
+        }
+
+        if (dataType == "Int8")
+        {
+            int value = element->valueint;
+            ESP_LOGE(TAG, "dataType is Int8");
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        else if (!dataType.compare("Int16"))
+        {
+            int16_t value = element->valueint;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        else if (!dataType.compare("Int32"))
+        {
+            int32_t value = element->valueint;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        else if (!dataType.compare("Int64"))
+        {
+            int64_t value = element->valueint;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        if (!dataType.compare("UInt8"))
+        {
+            uint8_t value = element->valueint;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        else if (!dataType.compare("UInt16"))
+        {
+            uint16_t value = element->valueint;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        else if (!dataType.compare("UInt32"))
+        {
+            uint32_t value = element->valueint;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        else if (!dataType.compare("UInt64"))
+        {
+            uint64_t value = element->valueint;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+
+        else if (!dataType.compare("Boolean"))
+        {
+            bool value;
+            if (element->type == cJSON_True)
+            {
+                value = true;
+            }
+            else if (element->type == cJSON_False)
+            {
+                value = false;
+            }
+            else
+            {
+                ESP_LOGE(TAG, "Invalid value for dataType Boolean");
+                return;
+            }
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+
+        else if (!dataType.compare("float"))
+        {
+            float value = element->valuedouble;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        }
+        else if (!dataType.compare("double"))
+        {
+            double value = element->valuedouble;
+            chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+        } /*
+         else if (!dataType.compare("String"))
+         {
+             char * value = element->valuestring;
+             chip::InteractionModelHelper::write(nodeId, endpointId, clusterId, attributeId, value);
+         }*/
+
+        else
+        {
+            ESP_LOGE(TAG, "Invalid: dataType \"%s\"", dataType.c_str());
+            return;
+        }
     }
     static void InitDCMD()
     {
