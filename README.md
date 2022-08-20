@@ -93,6 +93,11 @@ Otherwise adjust the "M5_TTY" and "ESP32_TTY" entries accordingly.
         - Username: publicTest
         - Password: TODO:chooseABetterPassw0rd!
     - click "add"
+
+Download a mqtt client to send commands directly to the Matter Hub. 
+We used the hiveMQ cli: (https://github.com/hivemq/mqtt-cli/releases/)
+But every other way to send mqtt messages to the topic should be fine.
+
 #### Edit the matterHub configuration:
 change into the source directory:
 ```
@@ -360,6 +365,12 @@ cd ${MATTER_HUB_DIR}/scripts/demo/
 Discover commissioned device on the Matter Hub
 `matter discover describe 1 333` 
 
+Subscribe to an attribute (for example OnOff): 
+```
+mqtt pub -s -h <prefix>.s1.eu.hivemq.cloud -p 8883 -u publicTest -pw TODO:chooseABetterPassw0rd! --topic spBv1.0/matterhub/DCMD/0/333 -m '{"timestamp": 1234,"metrics": [{"name": "1/6/subscribe/0","timestamp": 1234}],"seq": 0}'
+
+```
+
 Verify that the discover was successful via the IoT API:
 
 Copy the Test Access Token
@@ -419,15 +430,24 @@ Currently only "OnOff" is supported.
 
 Now the light should be turned on!
 
-To verify the other direction you can either use a button to turn on the LED (see advanced use-case below).
+To verify the other direction you can either use a button to turn on the LED (see advanced use-case below) or use the MQTT Client
 
-or use a mqtt client to send commands directly to the Matter Hub. 
-We used the hiveMQ cli: (https://github.com/hivemq/mqtt-cli/releases/)
-But every other way to send mqtt messages to the topic should be fine.
+Turn toggle the light via MQTT:
+```
+mqtt pub -s -h b9fbe0bc6f56486fab5642f0b79f127e.s1.eu.hivemq.cloud -p 8883 -u publicTest -pw TODO:chooseABetterPassw0rd! --topic spBv1.0/matterhub/DCMD/0/333 -m '{"timestamp": 1234,"metrics": [{"name": "1/6/cmd/2","timestamp": 1234}],"seq": 0}'
+```
 
-Turn on a light via MQTT:
+Turn the light off: 
 
+```
+mqtt pub -s -h b9fbe0bc6f56486fab5642f0b79f127e.s1.eu.hivemq.cloud -p 8883 -u publicTest -pw TODO:chooseABetterPassw0rd! --topic spBv1.0/matterhub/DCMD/0/333 -m '{"timestamp": 1234,"metrics": [{"name": "1/6/cmd/0","timestamp": 1234}],"seq": 0}'
+```
 
+Turn the light on: 
+
+```
+mqtt pub -s -h b9fbe0bc6f56486fab5642f0b79f127e.s1.eu.hivemq.cloud -p 8883 -u publicTest -pw TODO:chooseABetterPassw0rd! --topic spBv1.0/matterhub/DCMD/0/333 -m '{"timestamp": 1234,"metrics": [{"name": "1/6/cmd/1","timestamp": 1234}],"seq": 0}'
+```
 
 ## Known bugs
 
