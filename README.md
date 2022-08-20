@@ -25,36 +25,35 @@ sudo apt -y install git gcc g++ pkg-config libssl-dev libdbus-1-dev \
      python3-pip unzip libgirepository1.0-dev libcairo2-dev libreadline-dev expect
 
 ```
+Choose a location and set the environment variable:
+```
+set MATTER_HUB_DIR="~"
+``` 
+
 Clone this repository:
 ```
-git clone https://github.com/OpenFogStack/matterHub.git
+git clone https://github.com/OpenFogStack/matterHub.git ${MATTER_HUB_DIR}
 ```
 change into the repository:
 ```
-cd matterHub
+cd ${MATTER_HUB_DIR}
 ```
 Initialize the project and matter:
 ```
-source ./scripts/activate.sh
+source ${MATTER_HUB_DIR}/scripts/activate.sh
 ```
 This will take some time...
 
 build the matter repo:
 ```
-cd thirdparty/chip/repo/
+cd ${MATTER_HUB_DIR}/thirdparty/chip/repo/
 gn gen out/host
 ninja -C out/host
 ```
 
-return to the base directory:
-```cd ../../..```
-
-
-
-
 ### Configuration
 move to the demo directory:
-`cd scripts/demo`
+`cd ${MATTER_HUB_DIR}/scripts/demo`
 
 copy the example config file:
 `cp config.example config`
@@ -62,7 +61,7 @@ copy the example config file:
 edit the example config with your favorite text editor:
 `vi config`
 
-replace YOUR MATTER HUB DIR with the path to the matter hub dir (if you cloned into your home directory it should look like this: 
+replace YOUR MATTER HUB DIR with the path to the matter hub dir. If you cloned into your home directory it should look like this: 
 ```
 set MATTER_HUB_DIR "~/matterHub"
 ```
@@ -97,7 +96,7 @@ Otherwise adjust the "M5_TTY" and "ESP32_TTY" entries accordingly.
 #### Edit the matterHub configuration:
 change into the source directory:
 ```
-cd ~/matterHub/src/
+cd ${MATTER_HUB_DIR}/src/
 ```
 
 Open menuconfig:
@@ -139,6 +138,7 @@ you probably need to reboot after this.
 After the reboot run the activate script again:
 
 ```
+cd ${MATTER_HUB_DIR}
 source scripts/activate.sh 
 ```
 
@@ -170,17 +170,17 @@ You again need three shells:
 0. Setup:
     &emsp; $matterhub
     ```
-    cd ~/matterHub/src
+    cd ${MATTER_HUB_DIR}/src
     ```
     
       &emsp; $chip-tool:
       ```
-      cd ~/matterHub/thirdparty/chip/repo/out/host
+      cd ${MATTER_HUB_DIR}/thirdparty/chip/repo/out/host
           ```
           
         &emsp; $~/matterHub/thirdparty/chip/repo/examples/lighting-app/esp32
      ```
-     cd ~/matterHub/thirdparty/chip/repo/examples/lighting-app/esp32
+     cd ${MATTER_HUB_DIR}/thirdparty/chip/repo/examples/lighting-app/esp32
      ```
      
 1. Cleanup:
