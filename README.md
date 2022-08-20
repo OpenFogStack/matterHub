@@ -495,10 +495,9 @@ chip-tool pairing ble-wifi 444 "${SSID}" "${PASSWORD}" 20202021 3840
 ```
 
 Give hub permission to access the end-device:
-
-    ```bash
+```bash
     chip-tool accesscontrol write acl '[{"fabricIndex": 1, "privilege": 5, "authMode": 2, "subjects": [112233], "targets": null },{"fabricIndex": 1, "privilege": 5, "authMode": 2, "subjects": [111], "targets": null }]' 444 0
-    ```
+```
 
 Again discover commissioned device on the Matter Hub
 `matter discover describe 1 444` 
