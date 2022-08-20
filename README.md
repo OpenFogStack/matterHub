@@ -523,7 +523,7 @@ source scripts/activate.sh
 If you want to repeat the demo, you have to remove the 
 [things](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)#/Things/delete_things__thingId_)
 and [policies](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)#/Policies/delete_policies__policyId_)
-for the things created!
+for the things you created!
 
 
 
