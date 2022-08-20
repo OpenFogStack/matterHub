@@ -114,9 +114,11 @@ mqtts://<some_prefix>.hivemq.cloud:8883
 ```
 Username and password are those you just chose.
 
-Optional: change your matterHub Id:
+Optional: 
 
-Also consider setting you MatterHub ID Configuration, so you don't collide with other matterHubs.
+consider setting you MatterHub ID Configuration, so you don't collide with other matterHubs
+
+"MatterHUB ID Configuration"
 
 Quit and save.
 
