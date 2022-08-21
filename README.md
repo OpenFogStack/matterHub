@@ -16,13 +16,10 @@ Bonus:
 
 ### Prepare the Operating System
 
-Install Ubuntu 20.04 LTS
+Install Ubuntu 20.04 LTS. A minium install is enough, as all dependecies are specified.
+Before proceeding update all software (`sudo apt update && sudo apt upgrade`)
 
-- minimal version is enough
-- update to the current version
-- name your pc "John of us"
-
-Install required software
+To install the required software run the following command:
 
 ```bash
 sudo apt -y install git gcc g++ pkg-config libssl-dev libdbus-1-dev \
@@ -34,7 +31,7 @@ Choose a location and set the environment variable:
 
 ```bash
 export MATTER_HUB_DIR="$HOME/matterHub/"
-``` 
+```
 
 Clone this repository:
 
@@ -42,7 +39,7 @@ Clone this repository:
 git clone https://github.com/OpenFogStack/matterHub.git ${MATTER_HUB_DIR}
 ```
 
-change into the repository:
+Change into the repository:
 
 ```bash
 cd ${MATTER_HUB_DIR}
@@ -54,9 +51,9 @@ Initialize the project and matter:
 source ${MATTER_HUB_DIR}/scripts/activate.sh
 ```
 
-This will take some time...
+This is expected to take some time.
 
-build the matter repo:
+Build the matter repo:
 
 ```bash
 cd ${MATTER_HUB_DIR}/thirdparty/chip/repo/
@@ -69,27 +66,27 @@ ninja -C out/host
 Move to the demo directory:
 `cd ${MATTER_HUB_DIR}/scripts/demo`
 
-copy the example config file:
+Copy the example config file:
 `cp config.example config`
 
-edit the example config with your favorite text editor:
+Edit the example config with your favorite text editor:
 `vi config`
 
-replace YOUR MATTER HUB DIR with the path to the matter hub dir. If you cloned into your home directory it should look like this:
+Replace "YOUR MATTER HUB DIR" with the path to the matterHub dir. If you cloned into your home directory it should look like this:
 
 ```bash
 set MATTER_HUB_DIR "~/matterHub"
 ```
 
-replace "YOUR CHIP-TOOL PATH" with the path to the chip tool. if you followed this guid so far your chip-tool should be here:
+Replace "YOUR CHIP-TOOL PATH" with the path to the chip tool. if you followed this guid so far your chip-tool should be here:
 
 ```bash
 set CHIP_TOOL_PATH "~/matterHub/thirdparty/chip/repo/out/host/chip-tool"
 ```
 
-replace "SSID" and "YOUR PASSWORD" with your WiFi-SSID and your WiFi-password (sorry can help you here)
+Replace "SSID" and "YOUR PASSWORD" with your WiFi-SSID and your WiFi-password.
 
-If you use the recommended setup (M5 Stack for the matterHub and an ESP32 for the lighting app) you can save and leave the file. 
+If you use the recommended setup (M5 Stack for the matterHub and an ESP32 for the lighting app) you can save and leave the file.
 Otherwise adjust the "M5_TTY" and "ESP32_TTY" entries accordingly.
 
 ### Configure MQTT
@@ -158,7 +155,7 @@ sudo adduser $USER dialout
 
 You probably need to reboot after this.
 
-After the reboot run the activate script again:
+After the reboot run the activate script again (this might require setting the `MATTER_HUB_DIR` env variable again):
 
 ```bash
 cd ${MATTER_HUB_DIR}
@@ -191,7 +188,7 @@ If all of the previous steps failed you can try to debug the situation by manual
 
 #### Manual Configuration (USE ONLY IF THE DEMO SCRIPT DID NOT WORK)
 
-We strongly recommend against this! Please contact us 
+We strongly recommend against this! Please contact us instead so we can assist in debugging.
 
 You again need three shells:
 
@@ -262,9 +259,9 @@ You again need three shells:
 If you want to use multiple end-devices repeat steps 3 and 4, and replace 333 with a different number.
 
 Sidenote: A lot of the configuration (Comissioning, WiFi credentials, etc is stored permanently. Should something go wrong consider erasing the flash of the esp32 (idf.py erase-flash) and cleanup the data stored by the chip-tool (rm -rf /tmp/*.ini /tmp/chip_*)
-The demo script will do this automaticly.
+The demo script will do this automatically.
 
-Gratulations! You setup the ESP32 Part.
+Gratulations! You setup the ESP32 part.
 
 ### Java Server
 
@@ -292,14 +289,8 @@ Create a link:
 sudo ln -s /opt/apache-maven-3.8.6 /opt/maven
 ```
 
-Setup the Environment Variables:
-in
-
-```bash
-/etc/profile.d/maven.sh
-```
-
-add the following
+Setup the environment variables in `/etc/profile.d/maven.sh`
+by adding the following:
 
 ```bash
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
@@ -314,7 +305,7 @@ Make the script executable:
 sudo chmod +x /etc/profile.d/maven.sh
 ```
 
-Load the environment Variables:
+Load the environment variables:
 
 ```bash
 source /etc/profile.d/maven.sh
@@ -330,15 +321,15 @@ mvn -version
 
 1. First of all, you need an active [Subscription](https://accounts.bosch-iot-suite.com/subscriptions/) to the Bosch IoT Suite:
     - If requried register a new Bosch-ID
-    - Click on "new Subscription" and select "Bosch IoT Device Management".
-    - Choose the Plan you want (free plan is fine) and give your subscription an Instance Name (Bosch recommends "unique" so maybe go with it?).
+    - Click on "new Subscription" and select "Bosch IoT Device Management"
+    - Choose the Plan you want (free plan is fine) and give your subscription an Instance Name
     - Click on "subscribe"
 
 2. You have to configure a new [OAuth2 Client](https://accounts.bosch-iot-suite.com/oauth2-clients/):
     - Click on "New OAuth2 Client"
     - Write your Client Name
-    - select *all* Options on the Client Scopes
-    - select the "Owner" Option from the Organization Scopes
+    - Select *all* Options on the Client Scopes
+    - Select the "Owner" Option from the Organization Scopes
     - Click on "Create"
 
 3. Update the application.properties. You will find the necessary credentials [here](https://accounts.bosch-iot-suite.com/oauth2-clients):
@@ -363,19 +354,20 @@ and `java -jar target/server-0.0.1-SNAPSHOT.jar`
 
 At this point you should have:
 
-- configured the ESP32 setup
-- been able to build the sources for the ESP32
-- start the demo
-- created and configured the hiveMQ Account
-- created and configured the Bosch IoT Account
-- been able to build and run the server
+- Configured the ESP32 setup
+- Been able to build the sources for the ESP32
+- Start the demo
+- Created and configured the hiveMQ Account
+- Created and configured the Bosch IoT Account
+- Been able to build and run the server
 
 Congratulation, we can get started now.
 
 ## Demo time
+
 ### A simple Use-case
 
-If not already happened: 
+If not already happened:
 Build and start the server:
 
 ```bash
@@ -392,7 +384,8 @@ cd ${MATTER_HUB_DIR}/scripts/demo/
 ```
 
 Discover commissioned device on the Matter Hub
-`matter discover describe 1 333` 
+by typing the following into the shell:
+`matter discover describe 1 333`
 
 Subscribe to an attribute (for example OnOff):
 
@@ -498,13 +491,11 @@ $MATTER_HUB_DIR/thirdparty/chip/repo/examples/lighting-app/esp32/main/Button.cpp
 +#define GPIO_INPUT_IO_0 18
 ```
 
-Follow the same steps as in the easy use-case. 
+Follow the same steps as in the easy use-case.
 
-Now you can add another device
+Now you can add another device.
 
-Open a new terminal:
-
-move to the lighting example dir:
+Open a new terminal and move to the lighting example dir:
 
 ```bash
 cd ${MATTER_HUB_DIR}/thirdparty/chip/repo/examples/lighting-app/esp32
@@ -538,17 +529,17 @@ Give hub permission to access the end-device:
 ```
 
 Again discover commissioned device on the Matter Hub
-`matter discover describe 1 444` 
+`matter discover describe 1 444`
 
-Subscribe to an attribute (for example OnOff): 
-```
+Subscribe to an attribute (for example OnOff):
+
+```bash
 mqtt pub -s -h <prefix>.s1.eu.hivemq.cloud -p 8883 -u publicTest -pw TODO:chooseABetterPassw0rd! --topic spBv1.0/matterhub/DCMD/0/444 -m '{"timestamp": 1234,"metrics": [{"name": "1/6/subscribe/0","timestamp": 1234}],"seq": 0}'
-
 ```
 
 Now you can interact with it in the same way as with 333!
 
-## FAQ:
+## FAQ
 
 Connection timeout, Can not establish connection:
 In our experience the WiFi module in the ESP32 is quite bad. So you should test as close to the WiFi-Hotspot as possbile (using the PC as a hotspot worked quite well too)
@@ -560,17 +551,18 @@ cd ${MATTER_HUB_DIR}
 source scripts/activate.sh
 ```
 
-If you want to repeat the demo, you have to remove the 
+If you want to repeat the demo, you have to remove the
 [things](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)#/Things/delete_things__thingId_)
 and [policies](https://apidocs.bosch-iot-suite.com/?urls.primaryName=Bosch%20IoT%20Things%20-%20HTTP%20API%20(v2)#/Policies/delete_policies__policyId_)
 for the things you created!
 
 You can leave the monitor with `ctrl + altgr + 0` or `ctrl + [`.
+
 ## Known bugs
 
 There is a bug which throws an Exception every time a topic is published (org.eclipse.paho.client.mqttv3.internal.ExceptionHelper.createMqttException(ExceptionHelper.java:31)). It seems like this Exception has no impact on the correct server functionality. See <https://github.com/eclipse/paho.mqtt.android/issues/209>
 
-## Resources:
+## Resources
 
 <https://phoenixnap.com/kb/install-maven-on-ubuntu>
 
