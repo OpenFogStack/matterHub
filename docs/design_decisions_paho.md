@@ -13,11 +13,11 @@
 
 |Solution hypothesis|
 |--------------|
-|Our choice decides on using a Sparkplug specific library with JAVA or a generic MQTT support with Paho using Python.|
+|Our choice decides on using a Sparkplug specific library or a generic MQTT support with Paho.|
 
 |  | Option 1 | Option 2 |
 |--|--|--|
 |<b>Overview</b>|Tahu with Sparkplug support|Paho with generic MQTT support|
 |<b>Link</b>|[Tahu](https://github.com/eclipse/tahu)|[Paho](https://www.eclipse.org/paho)|
-|<b>Benefits and risks</b>|+ JAVA|+ Python<br>+ generic MQTT support|
-|<b>Criteria</b>|+ JAVA is more convenient<br>+ is sufficient for our application area<br>– is not generic|+ generic MQTT support if Sparkplug is not good enough|
+|<b>Benefits and risks</b>|+ supports HiveMQ|+ supports HiveMQ<br>+ generic MQTT support|
+|<b>Criteria</b>|+ sufficient for our purpose<br>– is not generic|+ generic MQTT support if Sparkplug is not good enough|
