@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 SESSION=matterHUB
 TIMEOUT=10
 source ./config
@@ -24,8 +26,7 @@ function run_session(){
 }
 
 # https://pityonline.gitbooks.io/tmux-productive-mouse-free-development_zh/content/book-content/Chapter3.html
-tmux has-session -t ${SESSION}
-if [ $? != 0 ]
+if ! tmux has-session -t ${SESSION};
 then
   run_session ${SESSION}
 fi
