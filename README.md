@@ -7,6 +7,7 @@
 - PC with bluetooth hardware
 - Wifi (which offers access to the internet)
 - 2x ESP32
+- At least 28GB of free storage space
 
 Bonus:
 
